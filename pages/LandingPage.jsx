@@ -4,12 +4,10 @@ import {
   Bell,
   Check,
   ChevronRight,
-  FileCheck,
   Gauge,
   GitBranch,
   RefreshCw,
   Shield,
-  Users,
   Workflow,
 } from 'lucide-react'
 

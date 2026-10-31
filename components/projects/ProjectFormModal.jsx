@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 
+import { PROJECT_STATUS } from '../../constants/projectStatus'
 import { services } from '../../data/mockData'
 
 export default function ProjectFormModal({ project, onClose, onSave }) {
@@ -10,6 +11,7 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
     deadline: project?.deadline || '',
     owner: project?.owner || '',
     priority: project?.priority || 'medium',
+    status: project?.status || 'success',
     progress: project?.progress ?? 0,
     repositories: Array.isArray(project?.repositories)
       ? project.repositories
@@ -148,6 +150,29 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
             </select>
           </label>
         </div>
+
+        <label>
+          <strong style={{ display: 'block', marginBottom: '6px' }}>
+            Status
+          </strong>
+
+          <select
+            value={form.status}
+            onChange={(event) =>
+              setForm({
+                ...form,
+                status: event.target.value,
+              })
+            }
+            style={inputStyle}
+          >
+            {Object.entries(PROJECT_STATUS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <div
           style={{

@@ -1,5 +1,4 @@
-import { DEFAULT_SETTINGS } from '../constants/defaultSettings'
-import { STORAGE_KEYS } from '../constants/storageKeys'
+import { storageKeys } from '../constants/storageKeys'
 import { normalizeProject } from './projectUtils'
 
 export function getStoredProjects(initialProjects = []) {
@@ -10,7 +9,7 @@ export function getStoredProjects(initialProjects = []) {
     : []
 
   try {
-    const savedProjects = localStorage.getItem(STORAGE_KEYS.projects)
+    const savedProjects = localStorage.getItem(storageKeys.PROJECTS)
 
     if (!savedProjects) {
       return fallbackProjects
@@ -33,40 +32,8 @@ export function getStoredProjects(initialProjects = []) {
 
 export function saveProjects(projects) {
   try {
-    localStorage.setItem(STORAGE_KEYS.projects, JSON.stringify(projects))
+    localStorage.setItem(storageKeys.PROJECTS, JSON.stringify(projects))
   } catch (error) {
     console.error('Erro ao salvar projetos:', error)
-  }
-}
-
-export function getStoredSettings() {
-  try {
-    const savedSettings = localStorage.getItem(STORAGE_KEYS.settings)
-
-    if (!savedSettings) {
-      return DEFAULT_SETTINGS
-    }
-
-    const parsedSettings = JSON.parse(savedSettings)
-
-    return {
-      ...DEFAULT_SETTINGS,
-      ...parsedSettings,
-      notifications: {
-        ...DEFAULT_SETTINGS.notifications,
-        ...(parsedSettings.notifications || {}),
-      },
-    }
-  } catch (error) {
-    console.error('Erro ao carregar configurações:', error)
-    return DEFAULT_SETTINGS
-  }
-}
-
-export function saveSettings(settings) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings))
-  } catch (error) {
-    console.error('Erro ao salvar configurações:', error)
   }
 }

@@ -15,14 +15,15 @@ import RepositoriesPage from './pages/RepositoriesPage'
 import ProjectsPage from './pages/ProjectsPage'
 import RbacPage from './pages/RbacPage'
 import SettingsPage from './pages/SettingsPage'
-import DashboardPage from './pages/DashboardPage'
+import OverviewPage from './pages/OverviewPage'
 import LoginPage from './pages/LoginPage'
 import LandingPage from './pages/LandingPage'
 
 import { defaultSettings } from './constants/defaultSettings'
 import { useLocalStorage } from './hooks/useLocalStorage'
+import { useTheme } from './hooks/useTheme'
 import { storageKeys } from './constants/storageKeys'
-import { getStoredProjects } from './utils/storageUtils'
+import { getStoredProjects, saveProjects } from './utils/storageUtils'
 import { projects as initialProjects } from './data/mockData'
 
 import { Check } from 'lucide-react'
@@ -54,7 +55,6 @@ function AuthenticatedLayout() {
   const [toastMessage, setToastMessage] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(true)
 
   const [settings, setSettings] = useLocalStorage(
     storageKeys.SETTINGS,
@@ -63,8 +63,14 @@ function AuthenticatedLayout() {
 
   const [projectList, setProjectList] = useState(() => getStoredProjects(initialProjects))
 
+  useTheme(settings.theme)
+
   const activeSection =
     routeSections[location.pathname] || 'Visão geral'
+
+  useEffect(() => {
+    saveProjects(projectList)
+  }, [projectList])
 
   useEffect(() => {
     setSidebarOpen(false)
@@ -88,11 +94,6 @@ function AuthenticatedLayout() {
         ...nextSettings.notifications,
       },
     }))
-
-    if (nextSettings.theme) {
-      document.documentElement.dataset.theme =
-        nextSettings.theme === 'Escuro' ? 'dark' : 'light'
-    }
   }
 
   function handleToast(message) {
@@ -127,14 +128,7 @@ function AuthenticatedLayout() {
         <GlobalSearch />
 
         {activeSection === 'Visão geral' && (
-          <DashboardPage
-            activeSection={activeSection}
-            setActiveSection={handleNavigate}
-            settings={settings}
-            setSettings={setSettings}
-            isAuthenticated={isAuthenticated}
-            setIsAuthenticated={setIsAuthenticated}
-          />
+          <OverviewPage projectList={projectList} />
         )}
 
         {activeSection === 'Auditoria' && <AuditPage />}

@@ -4,41 +4,7 @@ import {
   MoreHorizontal,
   ShieldCheck,
 } from 'lucide-react'
-
-const repositories = [
-  {
-    name: 'govtech-api',
-    language: 'Node.js',
-    branch: 'main',
-    pullRequests: 4,
-    pipeline: 'Aprovada',
-    status: 'success',
-  },
-  {
-    name: 'govtech-dashboard',
-    language: 'React',
-    branch: 'develop',
-    pullRequests: 3,
-    pipeline: 'Em análise',
-    status: 'warning',
-  },
-  {
-    name: 'governance-engine',
-    language: 'Python',
-    branch: 'main',
-    pullRequests: 1,
-    pipeline: 'Aprovada',
-    status: 'success',
-  },
-  {
-    name: 'notification-service',
-    language: 'Java',
-    branch: 'release',
-    pullRequests: 2,
-    pipeline: 'Atenção',
-    status: 'danger',
-  },
-]
+import { repositoryList as repositories } from '../../data/mockData'
 
 export default function RepositoriesList() {
   return (

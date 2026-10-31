@@ -3,45 +3,7 @@ import {
   GitCommitHorizontal,
   ShieldCheck,
 } from 'lucide-react'
-
-const branches = [
-  {
-    name: 'main',
-    repository: 'govtech-api',
-    author: 'Marina Costa',
-    lastCommit: 'a8f42c1',
-    updated: '12 min atrás',
-    protection: 'Protegida',
-    status: 'success',
-  },
-  {
-    name: 'develop',
-    repository: 'govtech-dashboard',
-    author: 'Ana Silva',
-    lastCommit: 'b21d4e9',
-    updated: '28 min atrás',
-    protection: 'Protegida',
-    status: 'success',
-  },
-  {
-    name: 'feature/audit-trail',
-    repository: 'governance-engine',
-    author: 'Carlos Melo',
-    lastCommit: 'c91f7d2',
-    updated: '3h atrás',
-    protection: 'Em revisão',
-    status: 'warning',
-  },
-  {
-    name: 'release/2.4',
-    repository: 'notification-service',
-    author: 'João Santos',
-    lastCommit: 'd65aa10',
-    updated: '1 dia atrás',
-    protection: 'Atenção',
-    status: 'danger',
-  },
-]
+import { branchList as branches } from '../../data/mockData'
 
 export default function BranchesList() {
   return (

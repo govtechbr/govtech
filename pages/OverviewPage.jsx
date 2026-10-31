@@ -1,7 +1,5 @@
 import {
-  AlertTriangle,
   Bell,
-  Check,
   Target,
 } from 'lucide-react'
 

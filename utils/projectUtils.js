@@ -1,4 +1,5 @@
 import { COLORS } from '../constants/colors'
+import { PROJECT_STATUS } from '../constants/projectStatus'
 
 export function formatProjectDate(date) {
   if (!date) return '-'
@@ -37,6 +38,9 @@ export function normalizeProject(project, index = 0) {
     priority: validPriorities.includes(project?.priority)
       ? project.priority
       : 'medium',
+    status: Object.hasOwn(PROJECT_STATUS, project?.status ?? '')
+      ? project.status
+      : 'success',
     progress: Number.isFinite(parsedProgress)
       ? Math.max(0, Math.min(100, parsedProgress))
       : 0,
