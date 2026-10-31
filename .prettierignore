@@ -1,0 +1,6 @@
+dist
+node_modules
+package-lock.json
+# Documentação é escrita à mão; não reformatar tabelas e diagramas
+*.md
+*.mmd
