@@ -1,0 +1,150 @@
+:root {
+  /* Paleta Purple */
+  --color-primary-50: #f3eeff;
+  --color-primary-100: #e8d5ff;
+  --color-primary-200: #d9bfff;
+  --color-primary-300: #c19bf9;
+  --color-primary-400: #a87ee8;
+  --color-primary-500: #9370db;
+  --color-primary-600: #7a58c4;
+  --color-primary-700: #5f429d;
+  --color-primary-900: #2a1852;
+
+  /* Status */
+  --color-success: #28a745;
+  --color-warning: #ffc107;
+  --color-danger: #dc3545;
+  --color-info: #17a2b8;
+
+  /* Superfícies — tema claro */
+  --color-background: #fbfaff;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8f7fc;
+  --color-surface-elevated: #ffffff;
+
+  /* Texto — tema claro */
+  --color-text-primary: #2a1852;
+  --color-text-secondary: #5b5570;
+  --color-text-muted: #938ca7;
+  --color-text-inverse: #ffffff;
+
+  /* Bordas e elementos utilitários */
+  --color-border: #e8d5ff;
+  --color-border-soft: #eeeaf4;
+  --color-border-subtle: #f0edf6;
+  --color-hover: #f3eeff;
+  --color-overlay: rgba(42, 24, 82, 0.28);
+
+  /* Compatibilidade com componentes mais recentes */
+  --bg: var(--color-background);
+  --bg-alt: var(--color-primary-50);
+  --surface: var(--color-surface);
+  --surface-soft: var(--color-surface-muted);
+  --text: var(--color-text-primary);
+  --muted: var(--color-text-muted);
+  --border: var(--color-border);
+  --primary: var(--color-primary-500);
+  --primary-dark: var(--color-primary-600);
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
+
+  /* Tipografia */
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Elevação */
+  --elevation-0: none;
+  --elevation-1: 0 2px 8px rgba(42, 24, 82, 0.08);
+  --elevation-2: 0 6px 16px rgba(42, 24, 82, 0.12);
+  --elevation-3: 0 12px 28px rgba(42, 24, 82, 0.16);
+  --elevation-4: 0 20px 48px rgba(42, 24, 82, 0.22);
+
+  /* Layout */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --sidebar-width: 248px;
+}
+
+:root[data-theme='light'] {
+  --color-background: #fbfaff;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8f7fc;
+  --color-surface-elevated: #ffffff;
+
+  --color-text-primary: #2a1852;
+  --color-text-secondary: #5b5570;
+  --color-text-muted: #938ca7;
+  --color-text-inverse: #ffffff;
+
+  --color-border: #e8d5ff;
+  --color-border-soft: #eeeaf4;
+  --color-border-subtle: #f0edf6;
+  --color-hover: #f3eeff;
+  --color-overlay: rgba(42, 24, 82, 0.28);
+
+  --bg: var(--color-background);
+  --bg-alt: var(--color-primary-50);
+  --surface: var(--color-surface);
+  --surface-soft: var(--color-surface-muted);
+  --text: var(--color-text-primary);
+  --muted: var(--color-text-muted);
+  --border: var(--color-border);
+  --primary: var(--color-primary-500);
+  --primary-dark: var(--color-primary-600);
+
+  --elevation-1: 0 2px 8px rgba(42, 24, 82, 0.08);
+  --elevation-2: 0 6px 16px rgba(42, 24, 82, 0.12);
+  --elevation-3: 0 12px 28px rgba(42, 24, 82, 0.16);
+  --elevation-4: 0 20px 48px rgba(42, 24, 82, 0.22);
+}
+
+:root[data-theme='dark'] {
+  /* Superfícies escuras com tom púrpura */
+  --color-background: #15111d;
+  --color-surface: #211a2b;
+  --color-surface-muted: #2a2236;
+  --color-surface-elevated: #30273e;
+
+  /* Texto no modo escuro */
+  --color-text-primary: #f3eeff;
+  --color-text-secondary: #d0c6dc;
+  --color-text-muted: #aaa0b8;
+  --color-text-inverse: #2a1852;
+
+  /* Bordas */
+  --color-border: #4b3d5c;
+  --color-border-soft: #3a2f49;
+  --color-border-subtle: #332940;
+  --color-hover: #302440;
+  --color-overlay: rgba(9, 6, 13, 0.68);
+
+  /* Compatibilidade com o App.jsx */
+  --bg: var(--color-background);
+  --bg-alt: #2a2236;
+  --surface: var(--color-surface);
+  --surface-soft: var(--color-surface-muted);
+  --text: var(--color-text-primary);
+  --muted: var(--color-text-muted);
+  --border: var(--color-border);
+  --primary: #b48cf1;
+  --primary-dark: #a87ee8;
+
+  /* Roxo um pouco mais claro no escuro */
+  --color-primary-50: #29203a;
+  --color-primary-100: #342747;
+  --color-primary-200: #493362;
+  --color-primary-300: #63458a;
+  --color-primary-400: #8c68c8;
+  --color-primary-500: #b48cf1;
+  --color-primary-600: #c19bf9;
+  --color-primary-700: #d9bfff;
+  --color-primary-900: #f3eeff;
+
+  --elevation-1: 0 2px 8px rgba(0, 0, 0, 0.22);
+  --elevation-2: 0 7px 18px rgba(0, 0, 0, 0.3);
+  --elevation-3: 0 14px 34px rgba(0, 0, 0, 0.38);
+  --elevation-4: 0 22px 52px rgba(0, 0, 0, 0.48);
+}
