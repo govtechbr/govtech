@@ -1,6 +1,6 @@
 # GovTech MS — Plano Técnico (Back-end Supabase, Refatoração, Testes, Responsividade)
 
-> **Status (31/10/2026):** decisões do time registradas (§2). **Limpeza concluída** na branch `chore/limpeza` (§1). **Lint aguardando aprovação** (§13). O resto segue o roadmap da §8 e só avança com aprovação.
+> **Status (31/10/2026):** ✅ Limpeza (branch `chore/limpeza`) · ✅ Qualidade: ESLint, Prettier e Husky (branch `chore/qualidade`) · ✅ Skills instaladas · 📝 **Testes aguardando aprovação** (§14) · Supabase `govtech` criado e vazio.
 >
 > Autor: Tech Lead (IA) · Data: 31/10/2026 · Base: commit `193c764` (branch `main`)
 
@@ -18,7 +18,8 @@
 10. [Baixo consumo de tokens, alta entrega](#10-baixo-consumo-de-tokens-alta-entrega)
 11. [Checklist de aprovação](#11-checklist-de-aprovação)
 12. [Referências](#12-referências)
-13. [Proposta de qualidade: lint e formatação (aguardando aprovação)](#13-proposta-de-qualidade-lint-e-formatação-aguardando-aprovação)
+13. [Qualidade: lint e formatação](#13-qualidade-lint-e-formatação--aprovado-e-aplicado-em-31102026)
+14. [Proposta de testes (aguardando aprovação)](#14-proposta-de-testes-aguardando-aprovação)
 
 ---
 
@@ -62,19 +63,21 @@
 | # | Pergunta | Decisão do time | Consequência no plano |
 |---|---|---|---|
 | Q1 | Data de entrega | **18/11/2026** (18 dias) | Roadmap recortado (§8). GitHub real, Realtime, CSV e chatbot com IA ficam fora |
-| Q2 | Multi-organização? | **Sim**. Projeto Supabase ainda não existe | Criar o projeto Supabase é a 1ª tarefa da fase Supabase |
-| Q3 | Cadastro aberto ou convite? | **Cadastro aberto** | Sign-up por e-mail; ao se cadastrar, o usuário cria uma organização (vira admin) |
+| Q2 | Multi-organização? | **Sim**. Projeto Supabase **`govtech` já criado** (ref `sazvvuyymowzjmowldfh`, região `us-east-1`, vazio) | Fase Supabase começa direto pelas migrations |
+| Q3 | Cadastro aberto ou convite? | **Cadastro aberto** | Sign-up por e-mail; ao se cadastrar, o usuário cria uma organização (vira admin). **Pendente:** como a 2ª pessoa entra numa organização existente (proposta: código da organização) |
 | Q4 | Auth/proteção de rotas | **Ver depois** | Entra junto com o Supabase |
 | Q5 | TypeScript? | **Não** | Fica JavaScript. zod valida dados nas bordas |
 | Q6 | Status do projeto | **Manual** | ✅ Já implementado (`constants/projectStatus.js`). O semáforo de prazo continua como informação separada |
 | Q7 | Auditoria | **Só para revisão** | Log simples por trigger, sem cadeia de hash |
-| Q8 | Dados pessoais | **Nome, e-mail e chave de API do GitHub** | A chave do GitHub é **segredo**: guardada no Supabase Vault (criptografada), nunca devolvida ao front |
+| Q8 | Dados pessoais | **Nome, e-mail e chave de API do GitHub**. A chave **entra no escopo até 18/11**: "sem ela o projeto não avança" | Ver §4.7: chave no Vault + Edge Function `github-sync` que busca repositórios, PRs e branches sob demanda |
 | Q9 | Chatbot com IA | **A definir** | Fora do escopo até 18/11 |
 | Q10 | Landing page | **Fica, em pastas separadas**; o botão de login chama o sistema | `frontend/src/landing/` separado de `frontend/src/app/` |
 | Q11 | Pausa do Supabase Free | **Ok** | Reativar na véspera da defesa |
 | Q12 | Pessoas no projeto | **2** | Branch por tarefa + PR revisado pelo colega |
 | Q13 | Fórmulas dos KPIs | **Pode deixar** | Números fixos ficam até haver dados reais |
 | — | Separar back e front | **Sim, pastas diferentes** | `frontend/` e `backend/` na raiz (§5.1) |
+| — | Repositório remoto | **GitHub**, ainda a criar | Criar repo privado e subir as branches (aguardando confirmação do dono/visibilidade) |
+| — | Lint, Husky, skills, arquitetura, estrutura, testes, roadmap | **Aprovados** | Executados: Qualidade e skills. Próxima: Testes (§14) |
 
 ## 3. Arquitetura alvo
 
@@ -342,6 +345,37 @@ export const useProjects = (orgId) =>
 
 ---
 
+### 4.7 Integração com o GitHub via chave de API (no escopo até 18/11)
+
+Sem webhook nem GitHub App (não cabem no prazo): sincronização **sob demanda**, por um botão "Sincronizar" na tela de Repositórios.
+
+```mermaid
+sequenceDiagram
+  participant U as Usuário (admin)
+  participant F as Front
+  participant DB as Postgres (RLS)
+  participant V as Vault
+  participant EF as Edge Function github-sync
+  participant GH as API do GitHub
+  U->>F: cola a chave (fine-grained, só leitura)
+  F->>DB: rpc save_github_token(org, token)
+  DB->>V: vault.create_secret(token)
+  DB-->>F: ok (devolve só os 4 últimos caracteres)
+  U->>F: clica "Sincronizar"
+  F->>EF: POST com o JWT do usuário
+  EF->>DB: confere se é membro da organização
+  EF->>V: lê o segredo (service role, só no servidor)
+  EF->>GH: lista repos, PRs e branches
+  EF->>DB: upsert em repositories, pull_requests, branches
+  F->>DB: select (RLS por organização)
+```
+
+- **Tipo de chave:** *fine-grained personal access token*, só leitura (Metadata, Contents e Pull requests), restrito aos repositórios necessários.
+- **Onde fica:** `vault.secrets`, criptografada. A tabela `github_credentials(organization_id, secret_id, token_last4, created_by, created_at)` guarda só a referência. Nenhuma policy permite ao front ler o segredo.
+- **Quem pode:** admin da organização cadastra, troca ou remove a chave. Qualquer membro vê os dados sincronizados.
+- **Validação:** ao salvar, a Edge Function chama `GET /user` no GitHub para confirmar que a chave funciona antes de guardar.
+- **Pendente:** confirmar se a chave é **por organização** (recomendado: uma para o time) ou **por usuário**.
+
 ## 5. Refatoração do front-end
 
 ### 5.1 Estrutura alvo: back e front separados
@@ -509,16 +543,17 @@ Ordem definida pelo time: **limpeza → qualidade → testes → nova estrutura 
 | Fase | Datas | Escopo | Pronto quando |
 |---|---|---|---|
 | ✅ **Limpeza** | 31/10 | Itens #1–3 e #8–12 do diagnóstico | Build ok; verificado no navegador |
-| **Qualidade** | 01–02/11 | ESLint + Prettier + `.editorconfig`/`.gitattributes` (§13, **após aprovação**) | `npm run lint` sem erros |
-| **Testes** | 02–05/11 | Vitest + RTL; casos **P0** do `TESTES.mmd` (regras de projeto, storage, CRUD de projetos, navegação) | ~30 testes verdes; CI no GitHub Actions |
-| **Nova estrutura** | 05–10/11 | `frontend/` + `backend/`; `src/` por feature; landing separada; rotas aninhadas; CSS Modules e breakpoints únicos **nas telas críticas** (Login, shell, Visão geral, Projetos) | Testes P0 continuam verdes; sem scroll horizontal em 390px nessas telas |
-| **Supabase** | 10–15/11 | Criar o projeto; migrations (orgs, membros, profiles, projects, audit); Auth com cadastro; RLS; Projetos lendo e gravando no banco; auditoria por trigger; chave do GitHub no Vault | Cadastro → login → CRUD de projeto persistido; usuário de outra org não vê nada |
-| **Folga** | 16–17/11 | Correções, deploy final, roteiro da demo | Demo ensaiada em produção |
+| ✅ **Qualidade** | 31/10 | ESLint 9 + Prettier + Husky/lint-staged + LF; 0 erros (17 avisos de acessibilidade ficam para a nova estrutura) | `npm run lint` sem erros |
+| **Testes** | 01–04/11 | Vitest + RTL (§14); casos **P0** do `TESTES.mmd`; CI no GitHub Actions | ~30 testes verdes no CI |
+| **Nova estrutura** (Dev A) | 04–10/11 | `frontend/` + `backend/`; `src/` por feature; landing separada; rotas aninhadas; CSS Modules e breakpoints únicos nas telas críticas | Testes P0 verdes; sem scroll horizontal em 390px nessas telas |
+| **Supabase: base** (Dev B, em paralelo) | 04–09/11 | Migrations (orgs, membros, profiles, projects, audit), RLS, Auth com cadastro, seed | Testes pgTAP de RLS verdes |
+| **Supabase: integração** | 10–14/11 | Front lendo e gravando no banco; chave do GitHub no Vault; Edge Function `github-sync`; Repositórios com dados reais | Cadastro → login → CRUD de projeto → sincronizar GitHub, em produção |
+| **Folga** | 15–17/11 | Correções, deploy final, roteiro da demo | Demo ensaiada |
 | 🎓 **Defesa** | 18/11 | — | — |
 
 **Divisão sugerida para 2 devs** (a partir de "Nova estrutura"): Dev A no front (estrutura, CSS, telas) e Dev B no back (Supabase, migrations, RLS). Os dois se encontram na camada `features/*/api`.
 
-**Fora do escopo até 18/11:** integração real com o GitHub (webhook/sync), Realtime, export CSV, convites, chatbot com IA, E2E completo com Playwright e responsividade das telas secundárias (Repositórios, Auditoria, RBAC, Configurações).
+**Fora do escopo até 18/11:** webhook e GitHub App (a sincronização é sob demanda, §4.7), Realtime, export CSV, convites, chatbot com IA, E2E completo com Playwright e responsividade das telas secundárias (Repositórios, Auditoria, RBAC, Configurações).
 
 ## 9. Skills e ferramentas de IA recomendadas
 
@@ -589,13 +624,14 @@ Pronto quando: <teste/comando>   Formato: <tamanho/estilo da resposta>
 
 - [x] **A.** Respostas Q1–Q13 (§2)
 - [x] **Limpeza**: itens 1, 2, 3, 8, 9, 10, 11 e 12 aplicados
-- [ ] **Qualidade**: proposta de lint/formatação (§13)
-- [ ] **B/C.** Arquitetura e modelo de dados ajustados às decisões (§3–§4)
-- [ ] **E.** Estrutura `frontend/` + `backend/` (§5.1)
-- [ ] **G.** Stack e metas de testes (§6 + `TESTES.mmd`)
-- [ ] **H.** Responsividade recortada às telas críticas (§7 e §8)
-- [ ] **I.** Roadmap com prazo de 18/11 (§8)
-- [ ] **J.** Skills a instalar (§9)
+- [x] **Qualidade**: lint, formatação e Husky (§13), aplicados
+- [ ] **Testes**: dependências e configuração (§14)
+- [x] **B/C.** Arquitetura e modelo de dados ajustados às decisões (§3–§4)
+- [x] **E.** Estrutura `frontend/` + `backend/` (§5.1)
+- [x] **G.** Stack e metas de testes (§6 + `TESTES.mmd`)
+- [x] **H.** Responsividade recortada às telas críticas (§7 e §8)
+- [x] **I.** Roadmap com prazo de 18/11 (§8)
+- [x] **J.** Skills instaladas no projeto: `supabase`, `supabase-postgres-best-practices`, `vitest`
 - [x] **K.** `AGENTS.md` / `CLAUDE.md`: aprovados e movidos para a raiz
 
 ## 12. Referências
@@ -617,9 +653,9 @@ Pronto quando: <teste/comando>   Formato: <tamanho/estilo da resposta>
 
 ---
 
-## 13. Proposta de qualidade: lint e formatação (aguardando aprovação)
+## 13. Qualidade: lint e formatação (✅ aprovado e aplicado em 31/10/2026)
 
-**Nada disto foi criado ainda.** Abaixo está exatamente o que será instalado e criado se você aprovar.
+Aplicado como proposto, com dois ajustes: `.prettierignore` (não reformatar `.md`/`.mmd`) e a ordem dos commits (correções antes da formatação, porque o hook do Husky barra commits com erro de lint).
 
 ### 13.1 Dependências (dev), versões conferidas no npm em 31/10/2026
 
@@ -699,3 +735,70 @@ Scripts no `package.json`:
 1. `chore: add eslint and prettier`: só configuração e dependências.
 2. `style: format codebase with prettier`: formatação automática do repositório inteiro, **sem nenhuma mudança de lógica**, para não misturar com o resto.
 3. `fix: resolve lint errors`: correções apontadas pelo lint, revisadas uma a uma. Problemas de acessibilidade em massa (ex.: `div` clicável) ficam como aviso e vão para a fase de nova estrutura.
+
+---
+
+## 14. Proposta de testes (aguardando aprovação)
+
+**Nada disto foi criado ainda.** Versões conferidas no npm em 31/10/2026.
+
+### 14.1 Dependências (dev)
+
+| Pacote | Versão | Para quê |
+|---|---|---|
+| `vitest` | 5.0.5 | Executor de testes (usa a config do Vite; aceita o Vite 6.4 do projeto) |
+| `@vitest/coverage-v8` | 5.0.5 | Relatório de cobertura |
+| `jsdom` | 30.1.3 | "Navegador falso" para renderizar componentes |
+| `@testing-library/react` | 16.3.3 | Renderizar e consultar componentes como o usuário vê |
+| `@testing-library/dom` | 10.4.2 | Dependência obrigatória do anterior |
+| `@testing-library/user-event` | 14.6.8 | Simular digitação e cliques reais |
+| `@testing-library/jest-dom` | 7.0.1 | Asserções como `toBeInTheDocument()` |
+
+**MSW** (mock de rede) fica para a fase Supabase, quando houver chamadas HTTP; hoje não existe nenhuma.
+
+Requisito novo: **Node 22.12 ou superior** (exigência do Vitest 5). Será registrado em `"engines"` no `package.json`, para o outro dev ser avisado.
+
+### 14.2 Arquivos
+
+`vite.config.js` ganha o bloco `test`:
+```js
+test: {
+  environment: 'jsdom',
+  setupFiles: ['./test/setup.js'],
+  coverage: { provider: 'v8', include: ['utils/**', 'hooks/**', 'components/**', 'pages/**'] },
+},
+```
+
+`test/setup.js`:
+```js
+import '@testing-library/jest-dom/vitest'
+import { cleanup } from '@testing-library/react'
+import { afterEach } from 'vitest'
+
+afterEach(() => {
+  cleanup()
+  localStorage.clear()
+})
+```
+
+`test/renderWithRouter.jsx`: helper que renderiza um componente dentro de `MemoryRouter`, para testar navegação.
+
+Scripts: `"test": "vitest"`, `"test:run": "vitest run"`, `"test:coverage": "vitest run --coverage"`. O `lint-staged` **não** roda testes (deixaria o commit lento); quem barra é o CI.
+
+`.github/workflows/ci.yml`: em todo push e PR roda `npm ci` → `lint` → `test:run` → `build`, com Node 22.
+
+### 14.3 Testes que serão escritos (P0 do `TESTES.mmd`)
+
+| Arquivo | Casos |
+|---|---|
+| `utils/__tests__/projectUtils.test.js` | `getProjectStatus`: sem prazo, prazo inválido, atrasado, vence hoje, 7 e 8 dias (com `vi.setSystemTime`). `normalizeProject`: nome vazio, prioridade e status inválidos, progresso fora da faixa, repositórios. `formatProjectDate` |
+| `utils/__tests__/storageUtils.test.js` | Vazio → mock; JSON corrompido; não-array; **regressão: grava em `govtech:projects`, nunca em `undefined`** |
+| `pages/__tests__/ProjectsPage.test.jsx` | Lista e contadores; criar (com status); editar; excluir e cancelar exclusão |
+| `__tests__/App.test.jsx` | Uma única sidebar na Visão geral (regressão do bug #1); a sidebar navega para a rota certa; projeto criado persiste após remontar |
+
+Os testes são escritos **sobre o código atual, antes da nova estrutura**. São eles que garantem que mover arquivos não quebrou nada.
+
+### 14.4 Commits
+1. `chore: add vitest and testing library`: dependências, configuração e CI.
+2. `test: add P0 tests for project rules and storage`.
+3. `test: add P0 tests for projects page and navigation`.
