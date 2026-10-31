@@ -1,5 +1,5 @@
 import { CalendarClock, CircleAlert, FolderKanban, Plus, Users } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 import DeleteProjectModal from '../components/projects/DeleteProjectModal'
 import ProjectDetailModal from '../components/projects/ProjectDetailModal'
@@ -7,28 +7,13 @@ import ProjectFormModal from '../components/projects/ProjectFormModal'
 import { PROJECT_STATUS } from '../constants/projectStatus'
 import { normalizeProject } from '../utils/projectUtils'
 
-export default function ProjectsPage({
-  projectList = [],
-  setProjectList,
-  onToast,
-  externalSelectedProject,
-  onClearExternalSelectedProject,
-}) {
+export default function ProjectsPage({ projectList = [], setProjectList, onToast }) {
   const [showForm, setShowForm] = useState(false)
   const [selectedProject, setSelectedProject] = useState(null)
   const [editingProject, setEditingProject] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const safeProjects = Array.isArray(projectList) && projectList.length > 0
-    ? projectList
-    : []
-
-  useEffect(() => {
-    if (externalSelectedProject) {
-      setSelectedProject(externalSelectedProject)
-      onClearExternalSelectedProject()
-    }
-  }, [externalSelectedProject, onClearExternalSelectedProject])
+  const safeProjects = Array.isArray(projectList) && projectList.length > 0 ? projectList : []
 
   const openCreateForm = () => {
     setEditingProject(null)
@@ -47,11 +32,11 @@ export default function ProjectsPage({
         current.map((project) =>
           project.id === editingProject.id
             ? normalizeProject({
-              ...project,
-              ...formData,
-            })
-            : project
-        )
+                ...project,
+                ...formData,
+              })
+            : project,
+        ),
       )
 
       onToast('Projeto atualizado com sucesso.')
@@ -74,9 +59,7 @@ export default function ProjectsPage({
   const deleteProject = () => {
     if (!selectedProject) return
 
-    setProjectList((current) =>
-      current.filter((project) => project.id !== selectedProject.id)
-    )
+    setProjectList((current) => current.filter((project) => project.id !== selectedProject.id))
 
     setSelectedProject(null)
     setShowDeleteConfirm(false)
@@ -94,8 +77,8 @@ export default function ProjectsPage({
           <span className="page-eyebrow">PORTFÓLIO E ACOMPANHAMENTO</span>
 
           <p>
-            Acompanhe prazos, responsáveis, progresso e sinais de risco dos
-            projetos monitorados pela plataforma.
+            Acompanhe prazos, responsáveis, progresso e sinais de risco dos projetos monitorados
+            pela plataforma.
           </p>
         </div>
 

@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react'
-import {
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-} from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 
 import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
@@ -56,26 +50,26 @@ function AuthenticatedLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
-  const [settings, setSettings] = useLocalStorage(
-    storageKeys.SETTINGS,
-    defaultSettings,
-  )
+  const [settings, setSettings] = useLocalStorage(storageKeys.SETTINGS, defaultSettings)
 
   const [projectList, setProjectList] = useState(() => getStoredProjects(initialProjects))
 
   useTheme(settings.theme)
 
-  const activeSection =
-    routeSections[location.pathname] || 'Visão geral'
+  const activeSection = routeSections[location.pathname] || 'Visão geral'
 
   useEffect(() => {
     saveProjects(projectList)
   }, [projectList])
 
-  useEffect(() => {
+  // Fecha os menus ao trocar de rota (ajuste de estado na renderização, sem useEffect)
+  const [lastPathname, setLastPathname] = useState(location.pathname)
+
+  if (location.pathname !== lastPathname) {
+    setLastPathname(location.pathname)
     setSidebarOpen(false)
     setAccountMenuOpen(false)
-  }, [location.pathname])
+  }
 
   function handleNavigate(section) {
     const route = sectionRoutes[section]
@@ -119,7 +113,7 @@ function AuthenticatedLayout() {
         <Topbar
           active={activeSection}
           setOpen={setSidebarOpen}
-          onOpenSearch={() => { }}
+          onOpenSearch={() => {}}
           accountMenuOpen={accountMenuOpen}
           setAccountMenuOpen={setAccountMenuOpen}
           onNavigate={handleNavigate}
@@ -127,9 +121,7 @@ function AuthenticatedLayout() {
 
         <GlobalSearch />
 
-        {activeSection === 'Visão geral' && (
-          <OverviewPage projectList={projectList} />
-        )}
+        {activeSection === 'Visão geral' && <OverviewPage projectList={projectList} />}
 
         {activeSection === 'Auditoria' && <AuditPage />}
 

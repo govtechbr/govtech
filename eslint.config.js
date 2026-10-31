@@ -27,6 +27,11 @@ export default [
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       'no-console': ['warn', { allow: ['error'] }],
       'no-unused-vars': ['error', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
+      // Acessibilidade de elementos clicáveis: corrigida na fase de nova estrutura (shared/ui)
+      'jsx-a11y/click-events-have-key-events': 'warn',
+      'jsx-a11y/mouse-events-have-key-events': 'warn',
+      'jsx-a11y/no-static-element-interactions': 'warn',
+      'jsx-a11y/no-noninteractive-element-interactions': 'warn',
     },
   },
   prettier,

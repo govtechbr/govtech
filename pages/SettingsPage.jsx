@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Bell,
   BriefcaseBusiness,
@@ -16,32 +16,28 @@ import {
 
 import StatusBadge from '../components/common/StatusBadge'
 
-export default function SettingsPage({
-  settings,
-  onSaveSettings,
-  onToast,
-}) {
-  const [tab, setTab] = useState('geral')
-
-  const [draft, setDraft] = useState({
+function toDraft(settings) {
+  return {
     organizationName: settings.organizationName,
     timezone: settings.timezone,
     theme: settings.theme,
     notifications: {
       ...settings.notifications,
     },
-  })
+  }
+}
 
-  useEffect(() => {
-    setDraft({
-      organizationName: settings.organizationName,
-      timezone: settings.timezone,
-      theme: settings.theme,
-      notifications: {
-        ...settings.notifications,
-      },
-    })
-  }, [settings])
+export default function SettingsPage({ settings, onSaveSettings, onToast }) {
+  const [tab, setTab] = useState('geral')
+
+  const [draft, setDraft] = useState(() => toDraft(settings))
+  const [syncedSettings, setSyncedSettings] = useState(settings)
+
+  // Reinicia o rascunho quando as configurações salvas mudam
+  if (settings !== syncedSettings) {
+    setSyncedSettings(settings)
+    setDraft(toDraft(settings))
+  }
 
   function save() {
     onSaveSettings(draft)
@@ -141,10 +137,7 @@ export default function SettingsPage({
       <div className="dashboard-intro">
         <div>
           <span className="eyebrow">ADMINISTRAÇÃO DO SISTEMA</span>
-          <p>
-            Personalize a plataforma, integre ferramentas e gerencie
-            preferências.
-          </p>
+          <p>Personalize a plataforma, integre ferramentas e gerencie preferências.</p>
         </div>
       </div>
 
@@ -244,17 +237,11 @@ export default function SettingsPage({
                     background: 'transparent',
                   }}
                 >
-                  <option value="America/Sao_Paulo">
-                    Brasília (UTC-3)
-                  </option>
+                  <option value="America/Sao_Paulo">Brasília (UTC-3)</option>
 
-                  <option value="America/New_York">
-                    New York (UTC-5)
-                  </option>
+                  <option value="America/New_York">New York (UTC-5)</option>
 
-                  <option value="Europe/London">
-                    London (UTC+0)
-                  </option>
+                  <option value="Europe/London">London (UTC+0)</option>
                 </select>
               </div>
             </label>
@@ -280,9 +267,7 @@ export default function SettingsPage({
                     key={theme}
                     type="button"
                     className={
-                      draft.theme === theme
-                        ? 'primary-button small'
-                        : 'secondary-button small'
+                      draft.theme === theme ? 'primary-button small' : 'secondary-button small'
                     }
                     onClick={() =>
                       setDraft((current) => ({
@@ -298,11 +283,7 @@ export default function SettingsPage({
               </div>
             </div>
 
-            <button
-              type="button"
-              className="primary-button"
-              onClick={save}
-            >
+            <button type="button" className="primary-button" onClick={save}>
               <Check size={16} />
               Salvar alterações
             </button>
@@ -348,22 +329,14 @@ export default function SettingsPage({
                     </small>
                   </div>
 
-                  <StatusBadge
-                    status={integration.connected ? 'success' : 'warning'}
-                  >
-                    {integration.connected
-                      ? 'Conectado'
-                      : 'Desconectado'}
+                  <StatusBadge status={integration.connected ? 'success' : 'warning'}>
+                    {integration.connected ? 'Conectado' : 'Desconectado'}
                   </StatusBadge>
 
                   <button
                     type="button"
                     className="secondary-button small"
-                    onClick={() =>
-                      onToast(
-                        `${integration.name}: ação demonstrativa.`,
-                      )
-                    }
+                    onClick={() => onToast(`${integration.name}: ação demonstrativa.`)}
                   >
                     {integration.connected ? 'Configurar' : 'Conectar'}
                   </button>
@@ -382,9 +355,7 @@ export default function SettingsPage({
 
           <div style={{ display: 'grid', gap: '10px' }}>
             {notifications.map((notification) => {
-              const enabled = Boolean(
-                draft.notifications?.[notification.key],
-              )
+              const enabled = Boolean(draft.notifications?.[notification.key])
 
               return (
                 <article
@@ -407,18 +378,14 @@ export default function SettingsPage({
                       {notification.label}
                     </h3>
 
-                    <small style={{ color: 'var(--muted)' }}>
-                      {notification.description}
-                    </small>
+                    <small style={{ color: 'var(--muted)' }}>{notification.description}</small>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => toggleNotification(notification.key)}
                     aria-label={
-                      enabled
-                        ? `Desativar ${notification.label}`
-                        : `Ativar ${notification.label}`
+                      enabled ? `Desativar ${notification.label}` : `Ativar ${notification.label}`
                     }
                     style={{
                       display: 'flex',
@@ -429,9 +396,7 @@ export default function SettingsPage({
                       padding: '3px',
                       border: 0,
                       borderRadius: '20px',
-                      background: enabled
-                        ? 'var(--color-primary-500)'
-                        : 'var(--border)',
+                      background: enabled ? 'var(--color-primary-500)' : 'var(--border)',
                       cursor: 'pointer',
                       transition: 'background 0.2s ease',
                     }}
@@ -505,9 +470,7 @@ export default function SettingsPage({
                   <button
                     type="button"
                     className="secondary-button small"
-                    onClick={() =>
-                      onToast(`${item.action}: ação demonstrativa.`)
-                    }
+                    onClick={() => onToast(`${item.action}: ação demonstrativa.`)}
                   >
                     {item.action}
                   </button>

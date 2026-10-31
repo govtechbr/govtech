@@ -1,7 +1,4 @@
-import {
-  Bell,
-  Target,
-} from 'lucide-react'
+import { Target } from 'lucide-react'
 
 import { COLORS } from '../constants/colors'
 import { pullRequests } from '../data/mockData'
@@ -22,9 +19,7 @@ export default function OverviewPage({ projectList }) {
     total: pullRequests.length,
   }
 
-  const approvalRate = Math.round(
-    ((prSummary.approved + prSummary.merged) / prSummary.total) * 100
-  )
+  const approvalRate = Math.round(((prSummary.approved + prSummary.merged) / prSummary.total) * 100)
 
   const projectsWithStatus = projectList
     .map((project) => ({
@@ -38,10 +33,7 @@ export default function OverviewPage({ projectList }) {
         on_track: 3,
       }
 
-      return (
-        order[a.calculatedStatus.semanticKey] -
-        order[b.calculatedStatus.semanticKey]
-      )
+      return order[a.calculatedStatus.semanticKey] - order[b.calculatedStatus.semanticKey]
     })
 
   return (
@@ -143,13 +135,10 @@ export default function OverviewPage({ projectList }) {
                 <span style={{ fontSize: '20px' }}>{status.icon}</span>
 
                 <div style={{ flex: 1 }}>
-                  <strong style={{ display: 'block', fontSize: '14px' }}>
-                    {project.name}
-                  </strong>
+                  <strong style={{ display: 'block', fontSize: '14px' }}>{project.name}</strong>
 
                   <small style={{ color: 'var(--muted)' }}>
-                    Deadline: {formatProjectDate(project.deadline)} ·{' '}
-                    {project.owner}
+                    Deadline: {formatProjectDate(project.deadline)} · {project.owner}
                   </small>
                 </div>
 
@@ -164,9 +153,7 @@ export default function OverviewPage({ projectList }) {
                     {status.label}
                   </strong>
 
-                  <small style={{ color: 'var(--muted)' }}>
-                    {status.message}
-                  </small>
+                  <small style={{ color: 'var(--muted)' }}>{status.message}</small>
                 </div>
 
                 <div style={{ width: '70px', textAlign: 'right' }}>
