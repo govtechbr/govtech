@@ -1,12 +1,4 @@
-import {
-  Bell,
-  ChevronRight,
-  LogOut,
-  Menu,
-  Search,
-  Settings2,
-  UserRound,
-} from 'lucide-react'
+import { Bell, ChevronRight, LogOut, Menu, Search, Settings2, UserRound } from 'lucide-react'
 
 import { profile } from '../../data/mockData'
 
@@ -39,11 +31,7 @@ export default function Topbar({
       </div>
 
       <div className="topbar-actions" style={{ position: 'relative' }}>
-        <button
-          className="icon-button search-button"
-          onClick={onOpenSearch}
-          aria-label="Buscar"
-        >
+        <button className="icon-button search-button" onClick={onOpenSearch} aria-label="Buscar">
           <Search size={18} />
         </button>
 
@@ -87,13 +75,9 @@ export default function Topbar({
                 borderBottom: '1px solid var(--border)',
               }}
             >
-              <strong style={{ display: 'block', fontSize: '13px' }}>
-                {profile.name}
-              </strong>
+              <strong style={{ display: 'block', fontSize: '13px' }}>{profile.name}</strong>
 
-              <small style={{ color: 'var(--muted)' }}>
-                {profile.role}
-              </small>
+              <small style={{ color: 'var(--muted)' }}>{profile.role}</small>
             </div>
 
             <button

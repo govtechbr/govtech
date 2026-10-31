@@ -1,8 +1,4 @@
-import {
-  GitBranch,
-  GitCommitHorizontal,
-  ShieldCheck,
-} from 'lucide-react'
+import { GitBranch, GitCommitHorizontal, ShieldCheck } from 'lucide-react'
 import { branchList as branches } from '../../data/mockData'
 
 export default function BranchesList() {
@@ -49,16 +45,11 @@ export default function BranchesList() {
       <section className="panel elevation-1">
         <div className="panel-heading">
           <div>
-            <span className="section-kicker">
-              FLUXO DE DESENVOLVIMENTO
-            </span>
+            <span className="section-kicker">FLUXO DE DESENVOLVIMENTO</span>
 
             <h2>Branches acompanhadas</h2>
 
-            <p>
-              Acompanhe branches ativas, proteção de fluxo e atualizações dos
-              repositórios.
-            </p>
+            <p>Acompanhe branches ativas, proteção de fluxo e atualizações dos repositórios.</p>
           </div>
         </div>
 
@@ -90,17 +81,13 @@ export default function BranchesList() {
                   <td>{branch.author}</td>
 
                   <td>
-                    <span className="mono">
-                      {branch.lastCommit}
-                    </span>
+                    <span className="mono">{branch.lastCommit}</span>
                   </td>
 
                   <td>{branch.updated}</td>
 
                   <td>
-                    <span className={`status-badge ${branch.status}`}>
-                      {branch.protection}
-                    </span>
+                    <span className={`status-badge ${branch.status}`}>{branch.protection}</span>
                   </td>
                 </tr>
               ))}

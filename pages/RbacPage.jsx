@@ -1,10 +1,5 @@
 import { useState } from 'react'
-import {
-  Search,
-  Shield,
-  UserRound,
-  Users,
-} from 'lucide-react'
+import { Search, Shield, UserRound, Users } from 'lucide-react'
 
 import RoleDetailModal from '../components/rbac/RoleDetailModal'
 import { accessRoles, rbacUsers as users } from '../data/mockData'
@@ -137,21 +132,13 @@ export default function RbacPage() {
                   <td className="mono">{user.email}</td>
 
                   <td>
-                    <StatusBadge status="success">
-                      {user.role}
-                    </StatusBadge>
+                    <StatusBadge status="success">{user.role}</StatusBadge>
                   </td>
 
                   <td>{user.team}</td>
 
                   <td>
-                    <StatusBadge
-                      status={
-                        user.status === 'Ativo'
-                          ? 'success'
-                          : 'warning'
-                      }
-                    >
+                    <StatusBadge status={user.status === 'Ativo' ? 'success' : 'warning'}>
                       {user.status}
                     </StatusBadge>
                   </td>
@@ -165,10 +152,7 @@ export default function RbacPage() {
       </section>
 
       {selectedRole && (
-        <RoleDetailModal
-          role={selectedRole}
-          onClose={() => setSelectedRole(null)}
-        />
+        <RoleDetailModal role={selectedRole} onClose={() => setSelectedRole(null)} />
       )}
     </main>
   )

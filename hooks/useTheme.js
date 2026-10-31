@@ -14,9 +14,7 @@ export function useTheme(theme) {
       return
     }
 
-    const prefersDark = window.matchMedia(
-      '(prefers-color-scheme: dark)'
-    ).matches
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
 
     root.dataset.theme = prefersDark ? 'dark' : 'light'
   }, [theme])

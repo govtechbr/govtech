@@ -50,8 +50,7 @@ export const projects = [
   {
     id: 1,
     name: 'Plataforma de Pagamentos',
-    description:
-      'Implementação de um novo gateway de pagamentos para e-commerce.',
+    description: 'Implementação de um novo gateway de pagamentos para e-commerce.',
     deadline: '2026-10-25',
     owner: 'Marina Costa',
     priority: 'high',
@@ -62,8 +61,7 @@ export const projects = [
   {
     id: 2,
     name: 'Sistema de Notificações',
-    description:
-      'Central de notificações push e e-mail para usuários da plataforma.',
+    description: 'Central de notificações push e e-mail para usuários da plataforma.',
     deadline: '2026-10-04',
     owner: 'Carlos Melo',
     priority: 'medium',
@@ -74,8 +72,7 @@ export const projects = [
   {
     id: 3,
     name: 'Dashboard Analítico',
-    description:
-      'Painel de métricas operacionais, indicadores de negócio e KPIs.',
+    description: 'Painel de métricas operacionais, indicadores de negócio e KPIs.',
     deadline: '2026-11-15',
     owner: 'Ana Silva',
     priority: 'medium',
@@ -86,8 +83,7 @@ export const projects = [
   {
     id: 4,
     name: 'Refatoração User Service',
-    description:
-      'Melhoria de performance, segurança e escalabilidade do serviço.',
+    description: 'Melhoria de performance, segurança e escalabilidade do serviço.',
     deadline: '2026-09-10',
     owner: 'João Santos',
     priority: 'low',
@@ -108,8 +104,7 @@ export const pullRequests = [
     commits: 3,
     reviewers: ['carlos.melo', 'marina.costa'],
     labels: ['feature', 'backend'],
-    description:
-      'Implementa integração inicial para o gateway externo de pagamentos.',
+    description: 'Implementa integração inicial para o gateway externo de pagamentos.',
   },
   {
     id: 842,
@@ -121,8 +116,7 @@ export const pullRequests = [
     commits: 5,
     reviewers: ['marina.costa'],
     labels: ['bugfix', 'billing'],
-    description:
-      'Corrige inconsistências identificadas no cálculo de faturamento.',
+    description: 'Corrige inconsistências identificadas no cálculo de faturamento.',
   },
   {
     id: 838,
@@ -134,8 +128,7 @@ export const pullRequests = [
     commits: 4,
     reviewers: ['carlos.melo'],
     labels: ['feature', 'notifications'],
-    description:
-      'Cria preferências de notificação para usuários da plataforma.',
+    description: 'Cria preferências de notificação para usuários da plataforma.',
   },
   {
     id: 830,
@@ -147,8 +140,7 @@ export const pullRequests = [
     commits: 2,
     reviewers: ['ana.silva'],
     labels: ['refactor', 'observability'],
-    description:
-      'Refatora endpoints responsáveis pela consulta de métricas operacionais.',
+    description: 'Refatora endpoints responsáveis pela consulta de métricas operacionais.',
   },
 ]
 

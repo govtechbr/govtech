@@ -1,17 +1,9 @@
 import { Edit3, Server, Trash2, X } from 'lucide-react'
 
 import StatusBadge from '../common/StatusBadge'
-import {
-  formatProjectDate,
-  getProjectStatus,
-} from '../../utils/projectUtils'
+import { formatProjectDate, getProjectStatus } from '../../utils/projectUtils'
 
-export default function ProjectDetailModal({
-  project,
-  onClose,
-  onEdit,
-  onDelete,
-}) {
+export default function ProjectDetailModal({ project, onClose, onEdit, onDelete }) {
   const status = getProjectStatus(project)
 
   return (
@@ -72,16 +64,12 @@ export default function ProjectDetailModal({
 
         <div>
           <small style={{ color: 'var(--muted)' }}>Responsável</small>
-          <strong style={{ display: 'block', marginTop: '4px' }}>
-            {project.owner}
-          </strong>
+          <strong style={{ display: 'block', marginTop: '4px' }}>{project.owner}</strong>
         </div>
 
         <div>
           <small style={{ color: 'var(--muted)' }}>Progresso</small>
-          <strong style={{ display: 'block', marginTop: '4px' }}>
-            {project.progress}%
-          </strong>
+          <strong style={{ display: 'block', marginTop: '4px' }}>{project.progress}%</strong>
         </div>
       </div>
 
@@ -115,9 +103,7 @@ export default function ProjectDetailModal({
               </span>
             ))
           ) : (
-            <small style={{ color: 'var(--muted)' }}>
-              Nenhum repositório vinculado.
-            </small>
+            <small style={{ color: 'var(--muted)' }}>Nenhum repositório vinculado.</small>
           )}
         </div>
       </div>

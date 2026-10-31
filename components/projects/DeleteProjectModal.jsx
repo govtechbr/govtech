@@ -1,10 +1,6 @@
 import { Trash2 } from 'lucide-react'
 
-export default function DeleteProjectModal({
-  project,
-  onClose,
-  onConfirm,
-}) {
+export default function DeleteProjectModal({ project, onClose, onConfirm }) {
   return (
     <div className="detail-popover" style={{ maxWidth: '440px' }}>
       <span className="section-kicker">EXCLUIR PROJETO</span>
@@ -18,8 +14,8 @@ export default function DeleteProjectModal({
           lineHeight: 1.6,
         }}
       >
-        Deseja excluir o projeto <strong>{project.name}</strong>? Esta ação
-        remove o item do dashboard e do armazenamento local.
+        Deseja excluir o projeto <strong>{project.name}</strong>? Esta ação remove o item do
+        dashboard e do armazenamento local.
       </p>
 
       <div

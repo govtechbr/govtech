@@ -33,17 +33,10 @@ const rolePermissions = {
 }
 
 export default function RoleDetailModal({ role, onClose }) {
-  const permissions = rolePermissions[role.label] || [
-    'Permissões configuráveis para esta função.',
-  ]
+  const permissions = rolePermissions[role.label] || ['Permissões configuráveis para esta função.']
 
   return (
-    <ModalShell
-      onClose={onClose}
-      title={role.label}
-      subtitle="DETALHES DA FUNÇÃO"
-      maxWidth="520px"
-    >
+    <ModalShell onClose={onClose} title={role.label} subtitle="DETALHES DA FUNÇÃO" maxWidth="520px">
       <div
         style={{
           display: 'flex',
@@ -113,9 +106,7 @@ export default function RoleDetailModal({ role, onClose }) {
           marginTop: '24px',
         }}
       >
-        <button className="primary-button small">
-          Editar permissões
-        </button>
+        <button className="primary-button small">Editar permissões</button>
 
         <button className="secondary-button small" onClick={onClose}>
           Fechar

@@ -3,9 +3,7 @@ import { normalizeProject } from './projectUtils'
 
 export function getStoredProjects(initialProjects = []) {
   const fallbackProjects = Array.isArray(initialProjects)
-    ? initialProjects.map((project, index) =>
-        normalizeProject(project, index)
-      )
+    ? initialProjects.map((project, index) => normalizeProject(project, index))
     : []
 
   try {
@@ -21,9 +19,7 @@ export function getStoredProjects(initialProjects = []) {
       return fallbackProjects
     }
 
-    return parsedProjects.map((project, index) =>
-      normalizeProject(project, index)
-    )
+    return parsedProjects.map((project, index) => normalizeProject(project, index))
   } catch (error) {
     console.error('Erro ao carregar projetos:', error)
     return fallbackProjects

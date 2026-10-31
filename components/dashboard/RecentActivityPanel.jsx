@@ -1,8 +1,4 @@
-import {
-  Check,
-  GitFork,
-  GitPullRequest,
-} from 'lucide-react'
+import { Check, GitFork, GitPullRequest } from 'lucide-react'
 
 import { COLORS } from '../../constants/colors'
 import { repoStats } from '../../data/mockData'
@@ -45,8 +41,7 @@ export default function RecentActivityPanel() {
         <span className="commit-avatar">AS</span>
 
         <span>
-          <b>ana.silva</b> criou PR{' '}
-          <strong>#856 · feature/payment-gateway</strong>
+          <b>ana.silva</b> criou PR <strong>#856 · feature/payment-gateway</strong>
           <small className="mono">identity-gateway · 8 min atrás</small>
         </span>
 
@@ -57,11 +52,8 @@ export default function RecentActivityPanel() {
         <span className="commit-avatar teal">CM</span>
 
         <span>
-          <b>carlos.melo</b> aprovou PR{' '}
-          <strong>#842 · fix/billing-logic</strong>
-          <small className="mono">
-            billing-orchestrator · 21 min atrás
-          </small>
+          <b>carlos.melo</b> aprovou PR <strong>#842 · fix/billing-logic</strong>
+          <small className="mono">billing-orchestrator · 21 min atrás</small>
         </span>
 
         <Check size={15} style={{ color: COLORS.success }} />

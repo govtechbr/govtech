@@ -1,9 +1,5 @@
 import { useState } from 'react'
-import {
-  Folder,
-  GitBranch,
-  GitPullRequest,
-} from 'lucide-react'
+import { Folder, GitBranch, GitPullRequest } from 'lucide-react'
 
 import BranchesList from '../components/repositories/BranchesList'
 import PullRequestsList from '../components/repositories/PullRequestsList'
@@ -34,20 +30,14 @@ export default function RepositoriesPage() {
     <main className="dashboard-content">
       <div className="dashboard-intro">
         <div>
-          <span className="eyebrow">
-            MONITORAMENTO DE DESENVOLVIMENTO
-          </span>
+          <span className="eyebrow">MONITORAMENTO DE DESENVOLVIMENTO</span>
           <p>
-            Acompanhe repositórios, Pull Requests e branches para apoiar a
-            governança dos projetos.
+            Acompanhe repositórios, Pull Requests e branches para apoiar a governança dos projetos.
           </p>
         </div>
       </div>
 
-      <section
-        className="panel elevation-1"
-        style={{ marginBottom: '24px' }}
-      >
+      <section className="panel elevation-1" style={{ marginBottom: '24px' }}>
         <div
           className="section-tabs"
           style={{

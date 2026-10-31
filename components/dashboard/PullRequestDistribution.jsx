@@ -56,9 +56,7 @@ export default function PullRequestDistribution({
       >
         <strong style={{ fontSize: '32px' }}>{total}</strong>
 
-        <span style={{ color: 'var(--muted)', fontSize: '13px' }}>
-          Pull Requests
-        </span>
+        <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Pull Requests</span>
       </div>
 
       <div
@@ -85,8 +83,7 @@ export default function PullRequestDistribution({
 
       <div style={{ display: 'grid', gap: '12px' }}>
         {values.map((item) => {
-          const percentage =
-            total > 0 ? Math.round((item.value / total) * 100) : 0
+          const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0
 
           return (
             <div
@@ -108,9 +105,7 @@ export default function PullRequestDistribution({
               />
 
               <div>
-                <strong style={{ display: 'block', fontSize: '13px' }}>
-                  {item.label}
-                </strong>
+                <strong style={{ display: 'block', fontSize: '13px' }}>{item.label}</strong>
 
                 <small style={{ color: 'var(--muted)', fontSize: '11px' }}>
                   {item.description}

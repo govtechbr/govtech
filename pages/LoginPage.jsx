@@ -1,12 +1,5 @@
 import { useState } from 'react'
-import {
-  ArrowUpRight,
-  Check,
-  ChevronRight,
-  Eye,
-  LockKeyhole,
-  UserRound,
-} from 'lucide-react'
+import { ArrowUpRight, Check, ChevronRight, Eye, LockKeyhole, UserRound } from 'lucide-react'
 
 import Brand from '../components/common/Brand'
 
@@ -29,7 +22,9 @@ export default function LoginPage() {
         <Brand />
 
         <nav className="public-nav">
-          <a href="landing#capabilities" className="nav-link">Capacidades</a>
+          <a href="landing#capabilities" className="nav-link">
+            Capacidades
+          </a>
 
           <a className="text-link" href="/dashboard">
             Ver demonstração <ArrowUpRight size={15} />
@@ -54,8 +49,8 @@ export default function LoginPage() {
             </h1>
 
             <p className="hero-lead">
-              Monitoramento automatizado de Pull Requests, prazos de projetos,
-              indicadores de processo e alertas de governança.
+              Monitoramento automatizado de Pull Requests, prazos de projetos, indicadores de
+              processo e alertas de governança.
             </p>
           </div>
 
@@ -78,12 +73,7 @@ export default function LoginPage() {
               <div className="input-wrap">
                 <UserRound size={17} />
 
-                <input
-                  id="email"
-                  type="email"
-                  defaultValue="marina.costa@govtech.ms"
-                  required
-                />
+                <input id="email" type="email" defaultValue="marina.costa@govtech.ms" required />
               </div>
 
               <label htmlFor="password">Senha</label>

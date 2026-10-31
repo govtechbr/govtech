@@ -1,9 +1,4 @@
-import {
-  GitBranch,
-  GitPullRequest,
-  MoreHorizontal,
-  ShieldCheck,
-} from 'lucide-react'
+import { GitBranch, GitPullRequest, MoreHorizontal, ShieldCheck } from 'lucide-react'
 import { repositoryList as repositories } from '../../data/mockData'
 
 export default function RepositoriesList() {
@@ -50,9 +45,7 @@ export default function RepositoriesList() {
       <section className="panel elevation-1">
         <div className="panel-heading">
           <div>
-            <span className="section-kicker">
-              VISÃO CONSOLIDADA
-            </span>
+            <span className="section-kicker">VISÃO CONSOLIDADA</span>
 
             <h2>Repositórios monitorados</h2>
 
@@ -102,9 +95,7 @@ export default function RepositoriesList() {
                   <td>{repository.language}</td>
 
                   <td>
-                    <span className="mono">
-                      {repository.branch}
-                    </span>
+                    <span className="mono">{repository.branch}</span>
                   </td>
 
                   <td>

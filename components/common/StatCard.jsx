@@ -1,13 +1,6 @@
 import Icon from './Icon'
 
-export default function StatCard({
-  title,
-  value,
-  subtext,
-  icon,
-  trend,
-  color = '#9370DB',
-}) {
+export default function StatCard({ title, value, subtext, icon, trend, color = '#9370DB' }) {
   return (
     <article className="metric-card elevation-1">
       <div className="metric-icon" style={{ background: `${color}20` }}>
@@ -18,9 +11,7 @@ export default function StatCard({
         <span>{title}</span>
         <div className="metric-value">{value}</div>
 
-        {subtext && (
-          <small style={{ color: 'var(--muted)' }}>{subtext}</small>
-        )}
+        {subtext && <small style={{ color: 'var(--muted)' }}>{subtext}</small>}
 
         {typeof trend === 'number' && (
           <div className="metric-foot">

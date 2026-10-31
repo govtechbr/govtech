@@ -1,9 +1,4 @@
-import {
-  Clock3,
-  GitPullRequest,
-  MessageSquareText,
-  UserRound,
-} from 'lucide-react'
+import { Clock3, GitPullRequest, MessageSquareText, UserRound } from 'lucide-react'
 import { pullRequestList as pullRequests } from '../../data/mockData'
 
 export default function PullRequestsList() {
@@ -50,15 +45,12 @@ export default function PullRequestsList() {
       <section className="panel elevation-1">
         <div className="panel-heading">
           <div>
-            <span className="section-kicker">
-              MONITORAMENTO DE ENTREGAS
-            </span>
+            <span className="section-kicker">MONITORAMENTO DE ENTREGAS</span>
 
             <h2>Pull Requests</h2>
 
             <p>
-              Solicitações de integração que exigem revisão, aprovação ou
-              acompanhamento da gestão.
+              Solicitações de integração que exigem revisão, aprovação ou acompanhamento da gestão.
             </p>
           </div>
         </div>
@@ -93,9 +85,7 @@ export default function PullRequestsList() {
                     </div>
                   </td>
 
-                  <td className="mono">
-                    {pullRequest.repository}
-                  </td>
+                  <td className="mono">{pullRequest.repository}</td>
 
                   <td>{pullRequest.author}</td>
 
@@ -109,9 +99,7 @@ export default function PullRequestsList() {
                   <td>{pullRequest.age}</td>
 
                   <td>
-                    <span
-                      className={`status-badge ${pullRequest.variant}`}
-                    >
+                    <span className={`status-badge ${pullRequest.variant}`}>
                       {pullRequest.status}
                     </span>
                   </td>

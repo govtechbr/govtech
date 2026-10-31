@@ -20,34 +20,17 @@ export function normalizeProject(project, index = 0) {
   return {
     id: project?.id ?? Date.now() + index,
     name:
-      typeof project?.name === 'string' && project.name.trim()
-        ? project.name
-        : 'Projeto sem nome',
+      typeof project?.name === 'string' && project.name.trim() ? project.name : 'Projeto sem nome',
     description:
-      typeof project?.description === 'string'
-        ? project.description
-        : 'Sem descrição cadastrada.',
-    deadline:
-      typeof project?.deadline === 'string'
-        ? project.deadline
-        : '',
+      typeof project?.description === 'string' ? project.description : 'Sem descrição cadastrada.',
+    deadline: typeof project?.deadline === 'string' ? project.deadline : '',
     owner:
-      typeof project?.owner === 'string' && project.owner.trim()
-        ? project.owner
-        : 'Não definido',
-    priority: validPriorities.includes(project?.priority)
-      ? project.priority
-      : 'medium',
-    status: Object.hasOwn(PROJECT_STATUS, project?.status ?? '')
-      ? project.status
-      : 'success',
-    progress: Number.isFinite(parsedProgress)
-      ? Math.max(0, Math.min(100, parsedProgress))
-      : 0,
+      typeof project?.owner === 'string' && project.owner.trim() ? project.owner : 'Não definido',
+    priority: validPriorities.includes(project?.priority) ? project.priority : 'medium',
+    status: Object.hasOwn(PROJECT_STATUS, project?.status ?? '') ? project.status : 'success',
+    progress: Number.isFinite(parsedProgress) ? Math.max(0, Math.min(100, parsedProgress)) : 0,
     repositories: Array.isArray(project?.repositories)
-      ? project.repositories.filter(
-          (repository) => typeof repository === 'string'
-        )
+      ? project.repositories.filter((repository) => typeof repository === 'string')
       : [],
   }
 }
@@ -107,10 +90,7 @@ export function getProjectStatus(project) {
       color: COLORS.warning,
       icon: '🟡',
       daysRemaining,
-      message:
-        daysRemaining === 0
-          ? 'Deadline vence hoje'
-          : `${daysRemaining} dia(s) restante(s)`,
+      message: daysRemaining === 0 ? 'Deadline vence hoje' : `${daysRemaining} dia(s) restante(s)`,
     }
   }
 

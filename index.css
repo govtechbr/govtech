@@ -1,6 +1,4 @@
 :root {
-
-
   font-family: var(--font-body);
   color: var(--color-text-primary);
   background: var(--color-background);
@@ -724,11 +722,7 @@ button {
 .metric-bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--color-primary-500),
-    var(--color-primary-600)
-  );
+  background: linear-gradient(90deg, var(--color-primary-500), var(--color-primary-600));
   border-radius: inherit;
   transition: width 0.45s ease;
 }

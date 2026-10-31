@@ -67,9 +67,7 @@ export default function ModalShell({
             }}
           >
             <div>
-              {subtitle && (
-                <span className="section-kicker">{subtitle}</span>
-              )}
+              {subtitle && <span className="section-kicker">{subtitle}</span>}
 
               {title && (
                 <h3
