@@ -1059,9 +1059,9 @@ Cadastro → login → criar ou entrar numa organização → **CRUD de projetos
 
 ---
 
-## 17. Proposta: tela de membros (RBAC real) — aguardando aprovação
+## 17. Tela de membros (RBAC real) (✅ aprovada e aplicada em 02/11/2026)
 
-Segunda entrega da fase Supabase (item 3 da §16.6). **Nada disto foi executado.**
+Segunda entrega da fase Supabase (item 3 da §16.6). Registro de execução em §17.7.
 
 ### 17.1 Problema
 - O visualizador vê os botões de criar, editar e excluir projeto, mas o banco recusa a ação. A tela promete o que não entrega.
@@ -1100,3 +1100,15 @@ Segunda entrega da fase Supabase (item 3 da §16.6). **Nada disto foi executado.
 
 ### 17.6 Estimativa
 1 a 2 dias: migration + pgTAP (meio dia), tela de membros (1 dia), botões por papel nos projetos (meio dia).
+
+### 17.7 Registro de execução
+
+| Passo | Resultado |
+|---|---|
+| Migration `members` | `20261102120000_members.sql` aplicada no `govtech-br` pelo MCP, com aprovação. Os 2 perfis existentes ganharam o e-mail. Security Advisor: só o aviso de configuração "Leaked Password Protection" do Auth, que não tem relação com a migration |
+| pgTAP | `members.test.sql` **8/8 ok** e `core_rls.test.sql` **25/25 ok** (regressão), rodados no SQL Editor. Banco conferido limpo depois |
+| Front | Tela de membros, convite, botões de projeto por papel. **74 testes** (+10), lint e build verdes. Mocks `accessRoles` e `rbacUsers` removidos |
+
+**Ajuste antes de aplicar:** o trigger `keep_one_admin` devolvia `coalesce(new, old)`; virou um retorno explícito por operação (`old` no DELETE, `new` no UPDATE), mais claro de ler.
+
+**Ocorrência (registro para o TCC):** entre a criação da Porto e a aplicação da migration, a conta de visualizador saiu da organização. Os logs da API não mostram nenhuma exclusão feita pelo app. Os logs do Postgres mostram a tabela `organization_members` aberta no Table Editor do painel, então a hipótese mais provável é uma remoção manual por engano (as duas contas aparecem com o mesmo nome). Não houve perda de dados: a conta entra de novo com o código. Isso reforça duas coisas: a regra de **não editar o banco pelo painel** (AGENTS.md) e a próxima entrega, **auditoria**, que registraria quem removeu e quando.
