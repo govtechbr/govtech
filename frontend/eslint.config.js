@@ -21,18 +21,34 @@ const restrictImports = (...group) => ({
   ],
 })
 
+// O client do Supabase só pode ser importado pelos arquivos de features/*/api/
+const supabaseClient = '@/shared/lib/supabase'
+
+const featureImports = (feature) => [
+  '@/app/**',
+  '@/landing/**',
+  '@/features/**',
+  `!@/features/${feature}`,
+  `!@/features/${feature}/**`,
+]
+
 const boundaries = [
-  { files: ['src/shared/**'], rules: restrictImports('@/app/**', '@/landing/**', '@/features/**') },
-  { files: ['src/landing/**'], rules: restrictImports('@/app/**', '@/features/**') },
+  { files: ['src/app/**'], rules: restrictImports(supabaseClient) },
+  {
+    files: ['src/shared/**'],
+    rules: restrictImports('@/app/**', '@/landing/**', '@/features/**', supabaseClient),
+  },
+  {
+    files: ['src/landing/**'],
+    rules: restrictImports('@/app/**', '@/features/**', supabaseClient),
+  },
   ...features.map((feature) => ({
     files: [`src/features/${feature}/**`],
-    rules: restrictImports(
-      '@/app/**',
-      '@/landing/**',
-      '@/features/**',
-      `!@/features/${feature}`,
-      `!@/features/${feature}/**`,
-    ),
+    rules: restrictImports(...featureImports(feature), supabaseClient),
+  })),
+  ...features.map((feature) => ({
+    files: [`src/features/${feature}/api/**`],
+    rules: restrictImports(...featureImports(feature)),
   })),
 ]
 
