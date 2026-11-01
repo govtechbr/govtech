@@ -1,6 +1,6 @@
 # GovTech MS — Plano Técnico (Back-end Supabase, Refatoração, Testes, Responsividade)
 
-> **Status (01/11/2026):** ✅ Limpeza (branch `chore/limpeza`) · ✅ Qualidade: ESLint, Prettier e Husky (branch `chore/qualidade`) · ✅ Skills instaladas · ✅ Testes P0 (branch `test/setup`, §14) · Supabase `govtech-br` em São Paulo, vazio.
+> **Status (01/11/2026):** ✅ Limpeza (branch `chore/limpeza`) · ✅ Qualidade: ESLint, Prettier e Husky (branch `chore/qualidade`) · ✅ Skills instaladas · ✅ Testes P0 (branch `test/setup`, §14) · Supabase `govtech-br` em São Paulo, vazio · 🚧 **Nova estrutura em execução** (§15).
 >
 > Autor: Tech Lead (IA) · Data: 31/10/2026 · Base: commit `193c764` (branch `main`)
 
@@ -20,6 +20,7 @@
 12. [Referências](#12-referências)
 13. [Qualidade: lint e formatação](#13-qualidade-lint-e-formatação--aprovado-e-aplicado-em-31102026)
 14. [Testes](#14-testes--aprovado-e-aplicado-em-01112026)
+15. [Nova estrutura](#15-nova-estrutura--aprovada-em-01112026-em-execução)
 
 ---
 
@@ -823,3 +824,98 @@ Os testes são escritos **sobre o código atual, antes da nova estrutura**. São
 | daqui a 7 dias | 8 dias, "No prazo" | 7 dias, "Atenção" |
 
 Os 4 casos estão em `utils/__tests__/projectUtils.test.js` marcados com `it.fails`. **Correção proposta:** comparar as duas datas à meia-noite (prazo com `T00:00:00` em vez de `T23:59:59`) e usar `Math.round`; depois tirar o `.fails` dos 4 testes. Mudança de 2 linhas.
+
+---
+
+## 15. Nova estrutura (✅ aprovada em 01/11/2026, em execução)
+
+**Aprovada integralmente em 01/11**, com as recomendações da 15.7. O andamento fica registrado na 15.9. Detalha os passos 3 a 6 da §5.4 para a janela de 04 a 10/11 (Dev A). Como a fase Testes terminou antes, dá para começar já em 02/11.
+
+### 15.1 Princípios
+- **Mover não muda lógica.** Commits de movimentação só trocam caminhos (`git mv` + ajuste de `import`). Assim o Git mantém o histórico de cada arquivo e a revisão fica trivial.
+- **Os 32 testes são a rede de segurança.** Cada commit precisa de `lint`, `test:run` e `build` verdes (o CI barra o PR se não estiverem). Os testes mudam de pasta junto com o código, mas o conteúdo deles não muda nos commits de movimentação.
+- **Um PR por etapa**, revisado pelo Dev B, para os dois saberem onde cada coisa ficou.
+
+### 15.2 Etapa 1: separar `frontend/` (PR `refactor/frontend-folder`)
+
+Tudo o que é do app vai para `frontend/`, inclusive o `package.json`. Na raiz ficam só `docs/`, `AGENTS.md`, `CLAUDE.md`, `.github/`, `.gitattributes`, `.editorconfig`, `.claude/` e um `README.md` novo. O `backend/` é criado na fase Supabase pelo `supabase init` (Dev B).
+
+| Ajuste obrigatório no mesmo commit | Por quê |
+|---|---|
+| `prepare: "cd .. && husky frontend/.husky"` e hook com `cd frontend && npx lint-staged` | O Husky precisa achar a pasta `.git`, que fica na raiz |
+| CI com `working-directory: frontend` e cache do `frontend/package-lock.json` | Os comandos `npm` passam a rodar dentro de `frontend/` |
+| **Vercel: Root Directory = `frontend`** (painel do projeto ou MCP da Vercel) | Senão o próximo deploy não acha o `package.json` |
+
+Commits: (1) `git mv` + os ajustes acima (sem eles nem o hook do commit roda); (2) `README.md` na raiz explicando a estrutura e os comandos.
+
+### 15.3 Etapa 2: `src/` organizado por feature (PR `refactor/src-features`)
+
+| Hoje | Vai para `frontend/src/` |
+|---|---|
+| `main.jsx` | `main.jsx` |
+| `App.jsx` | `app/App.jsx` |
+| `pages/LandingPage.jsx` | `landing/LandingPage.jsx` |
+| `pages/LoginPage.jsx` | `features/auth/LoginPage.jsx` |
+| `pages/OverviewPage.jsx`, `components/dashboard/*` | `features/dashboard/` (página + `components/`) |
+| `pages/ProjectsPage.jsx`, `components/projects/*`, `utils/storageUtils.js` | `features/projects/` (página, `components/`, `utils/`) |
+| `pages/RepositoriesPage.jsx`, `components/repositories/*` | `features/repositories/` |
+| `pages/AuditPage.jsx` | `features/audit/` |
+| `pages/RbacPage.jsx`, `components/rbac/*` | `features/rbac/` |
+| `pages/SettingsPage.jsx` | `features/settings/` |
+| `components/layout/*` (Sidebar, Topbar, GlobalSearch) + `components/common/ChatbotModal.jsx` | `shared/layout/` |
+| `components/common/*` (Brand, Icon, ModalShell, StatCard, StatusBadge, Toast) | `shared/ui/` |
+| `hooks/*` | `shared/hooks/` |
+| `utils/projectUtils.js`, `constants/*` | `shared/lib/` e `shared/constants/` (ver 15.7 item 3) |
+| `data/mockData.js` | `mocks/mockData.js` |
+| `tokens.css`, `index.css`, `app.css` | `styles/` |
+| `test/*` | `test/` |
+| `__tests__` de cada pasta | `__tests__` ao lado do código que testam |
+
+Commits: (1) `git mv` + correção dos caminhos relativos; (2) alias `@/` → `src/` no `vite.config.js` e troca dos `../../` por `@/`; (3) regra `no-restricted-imports` do ESLint para as regras de dependência da §5.1 (feature não importa outra feature; `shared/` não importa `features/`). Nenhuma dependência nova.
+
+### 15.4 Etapa 3: navegação e providers (PR `refactor/app-shell`)
+- **Rotas aninhadas:** um `AppLayout` com `<Outlet>` no lugar das 6 rotas que repetem o layout e do `if` por seção no `App.jsx`. A Landing com `lazy()`, para não pesar no carregamento do sistema.
+- **`ToastProvider` + `useToast()`** no lugar da prop `onToast` e do toast com `style={{}}` dentro do `App.jsx` (reaproveita o `Toast.jsx`).
+- **Bug pendente: a busca global nunca abre** (o App renderiza `GlobalSearch` sem props e o botão da Topbar chama uma função vazia). Começa por um teste que falha, como manda o AGENTS.md.
+
+### 15.5 Etapa 4: `shared/ui`, CSS Modules e responsividade (1 PR por tela)
+- Componentes de `shared/ui`: `Button`, `Modal` (foco preso, `Esc`, `aria-modal`, vira *sheet* no mobile), `Badge`, `Card`, `Field`, `ProgressBar`. O `Modal` e o `Button` resolvem a maior parte dos 17 avisos de acessibilidade.
+- **Telas críticas até 18/11** (as da demo): layout (Sidebar/Topbar), Login, Visão geral e Projetos. Cada uma sai do `style={{}}` para CSS Module e fica sem rolagem horizontal em 390 px.
+- **Depois de 18/11, se sobrar tempo:** Configurações, RBAC, Auditoria, Repositórios e Landing. Elas continuam funcionando com o CSS global atual.
+
+### 15.6 Etapa 5: camada de dados de Projetos (PR `refactor/projects-api`)
+- `features/projects/api/projectsApi.js`: hoje lê e grava no localStorage; na fase Supabase só o conteúdo deste arquivo muda.
+- Hooks `useProjects`, `useCreateProject`, `useUpdateProject`, `useDeleteProject` com **TanStack Query** (dependência nova, ver 15.7 item 4). Acaba o `projectList` passado de mão em mão pelo `App.jsx`.
+- Os testes de Projetos passam a mockar o `projectsApi`, não o localStorage.
+
+### 15.7 Decisões para aprovar
+
+| # | Decisão | Recomendação | Motivo |
+|---|---|---|---|
+| 1 | `package.json` dentro de `frontend/` | **Sim** | Front e back independentes, como você pediu; o Husky continua funcionando com o ajuste da 15.2 |
+| 2 | Quem troca o Root Directory da Vercel | **Eu, pelo MCP da Vercel, no dia do merge** (ou você no painel) | Se trocar antes do merge, o deploy da `main` quebra; depois, o próximo deploy quebra |
+| 3 | `projectUtils` (status e prazo) em `shared/lib/` | **Sim** | É usado por Visão geral, Projetos e busca global; em `features/projects` quebraria a regra "feature não importa feature" |
+| 4 | **TanStack Query** entra agora (etapa 5) | **Sim** | A fase Supabase só troca o conteúdo do `projectsApi`; telas e testes ficam iguais |
+| 5 | **react-hook-form + zod** | **Ficam para a fase Supabase** (formulário de cadastro) | O formulário de projeto funciona; trocar agora não muda nada na demo |
+| 6 | CSS Modules só nas 4 telas críticas até 18/11 | **Sim** | Cabe em 7 dias; o resto continua funcionando |
+| 7 | `public/favicon.svg` | **Sim** | Corrige o 404 do favicon que aparece em todo carregamento |
+
+### 15.8 Cronograma (Dev A)
+
+| Data | Etapa | Pronto quando |
+|---|---|---|
+| 02–03/11 | 1 e 2 (mover) | CI verde; deploy da Vercel ok depois do merge |
+| 04/11 | 3 (rotas, toast, busca global) | Teste da busca global verde |
+| 05–08/11 | 4 (shared/ui + 4 telas) | Sem rolagem horizontal em 390 px; 0 avisos de acessibilidade nessas telas |
+| 09/11 | 5 (TanStack Query) | Testes de Projetos verdes com o `projectsApi` mockado |
+| 10/11 | Folga da etapa | — |
+
+### 15.9 Registro de execução
+
+| Data | Etapa | O que foi feito | Verificação |
+|---|---|---|---|
+| 01/11 | 1 | `git mv` de todo o app para `frontend/` (61 arquivos, histórico preservado). Husky: `prepare` = `cd .. && husky frontend/.husky` e hook `cd frontend && npx lint-staged`. CI com `working-directory: frontend`. `README.md` na raiz. AGENTS.md: comandos rodam em `frontend/` | lint 0 erros, 32 testes, build ok, hook rodou no próprio commit |
+| 01/11 | 2 | (1) `git mv` de 50 arquivos para `frontend/src/` conforme a tabela 15.3, com script que recalcula os imports (diff só de caminhos). (2) Alias `@/` → `src/` (`vite.config.js` + `jsconfig.json` para o editor); 65 imports trocados. (3) ESLint `no-restricted-imports`: proíbe `../`, feature importando outra feature, `shared/` importando `features/`/`app/`/`landing/` e `landing/` importando o sistema. DOCUMENTACAO.md §4, §5, §6, §11.2 e §13 atualizadas | lint 0 erros, 32 testes, build ok; a regra foi testada com arquivo de prova que viola as fronteiras (3 erros esperados) |
+| 01/11 | 3 | `AppLayout` com `<Outlet>` no lugar das 6 rotas repetidas e do `if` por seção; adaptadores em `src/app/routes.jsx` passam o estado do layout às páginas (saem na etapa 5). Landing com `lazy()` (pacote próprio de 20,8 kB). `ToastProvider` + `useToast()` no lugar da prop `onToast` e do toast inline; área com `role="status"`. **Bug corrigido (teste primeiro): busca global nunca abria**; agora abre pela Topbar, fecha com `Esc`/X/clique fora e, ao escolher um projeto, abre o detalhe dele em `/projects`. Favicon em `public/favicon.svg` (fim do 404) | 37 testes (2 da busca falharam antes da correção), lint 0 erros, build ok. Navegador (Edge, build de produção): 1 sidebar em 390 e 1440 px, busca → projeto aberto, landing ok, **0 erros no console**. Rolagem horizontal em 390 px continua (já existia; é a etapa 4) |
+
+**Vercel (incidente de 01/11, resolvido):** o projeto `govtech` (time `guilherme-kenzo-zanardi-onos-projects`, id `prj_Pk1wHhjaTUqhuLiQA61q5zZv3WBJ`) foi criado com Root Directory na raiz do repositório. O preview do PR #2 falhou com `sh: vite: command not found` (`exit 127`): sem `package.json` na raiz, nada foi instalado. **Correção:** Root Directory = `frontend`, aplicado pelo MCP da Vercel depois que o dono autorizou o acesso do Claude ao time. O redeploy do mesmo commit (`4a0daf2`) ficou `READY`. Atenção: até o merge do PR #2, a `main` ainda não tem `frontend/`, então um push direto na `main` falharia na Vercel.
