@@ -1,3 +1,8 @@
+.feedback {
+  margin: var(--space-4) 0;
+  color: var(--muted);
+}
+
 .card {
   position: relative;
 }

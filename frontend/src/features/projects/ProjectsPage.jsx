@@ -4,21 +4,30 @@ import { useState } from 'react'
 import DeleteProjectModal from './components/DeleteProjectModal'
 import ProjectDetailModal from './components/ProjectDetailModal'
 import ProjectFormModal from './components/ProjectFormModal'
+import {
+  useCreateProject,
+  useDeleteProject,
+  useProjects,
+  useUpdateProject,
+} from '@/features/projects/hooks/useProjects'
 import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
 import { useToast } from '@/shared/hooks/useToast'
-import { normalizeProject } from '@/shared/lib/projectUtils'
 import styles from './ProjectsPage.module.css'
 
-export default function ProjectsPage({ projectList = [], setProjectList, initialProjectId }) {
-  const { showToast: onToast } = useToast()
+export default function ProjectsPage({ initialProjectId }) {
+  const { showToast } = useToast()
+  const { data: projectList = [], isPending, isError } = useProjects()
+  const createProject = useCreateProject()
+  const updateProject = useUpdateProject()
+  const deleteProject = useDeleteProject()
+
   const [showForm, setShowForm] = useState(false)
-  const [selectedProject, setSelectedProject] = useState(
-    () => projectList.find((project) => project.id === initialProjectId) ?? null,
-  )
+  // Guarda o id (não o objeto) para o detalhe sempre mostrar o dado atual da query
+  const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId ?? null)
   const [editingProject, setEditingProject] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const safeProjects = Array.isArray(projectList) && projectList.length > 0 ? projectList : []
+  const selectedProject = projectList.find((project) => project.id === selectedProjectId) ?? null
 
   const openCreateForm = () => {
     setEditingProject(null)
@@ -26,53 +35,47 @@ export default function ProjectsPage({ projectList = [], setProjectList, initial
   }
 
   const openEditForm = (project) => {
-    setSelectedProject(null)
+    setSelectedProjectId(null)
     setEditingProject(project)
     setShowForm(true)
   }
 
-  const saveProject = (formData) => {
-    if (editingProject) {
-      setProjectList((current) =>
-        current.map((project) =>
-          project.id === editingProject.id
-            ? normalizeProject({
-                ...project,
-                ...formData,
-              })
-            : project,
-        ),
-      )
-
-      onToast('Projeto atualizado com sucesso.')
-    } else {
-      setProjectList((current) => [
-        ...current,
-        normalizeProject({
-          id: Date.now(),
-          ...formData,
-        }),
-      ])
-
-      onToast('Projeto criado com sucesso.')
-    }
-
+  const closeForm = () => {
     setShowForm(false)
     setEditingProject(null)
   }
 
-  const deleteProject = () => {
+  const saveProject = async (formData) => {
+    try {
+      if (editingProject) {
+        await updateProject.mutateAsync({ id: editingProject.id, data: formData })
+        showToast('Projeto atualizado com sucesso.')
+      } else {
+        await createProject.mutateAsync(formData)
+        showToast('Projeto criado com sucesso.')
+      }
+
+      closeForm()
+    } catch {
+      showToast('Não foi possível salvar o projeto.', 'danger')
+    }
+  }
+
+  const confirmDelete = async () => {
     if (!selectedProject) return
 
-    setProjectList((current) => current.filter((project) => project.id !== selectedProject.id))
-
-    setSelectedProject(null)
-    setShowDeleteConfirm(false)
-    onToast('Projeto excluído com sucesso.', 'warning')
+    try {
+      await deleteProject.mutateAsync(selectedProject.id)
+      setSelectedProjectId(null)
+      setShowDeleteConfirm(false)
+      showToast('Projeto excluído com sucesso.', 'warning')
+    } catch {
+      showToast('Não foi possível excluir o projeto.', 'danger')
+    }
   }
 
   const handleProjectClick = (project) => {
-    setSelectedProject(project)
+    setSelectedProjectId(project.id)
   }
 
   return (
@@ -96,25 +99,33 @@ export default function ProjectsPage({ projectList = [], setProjectList, initial
       <div className="dashboard-grid three-columns">
         <article className="metric-card elevation-1">
           <span>Projetos ativos</span>
-          <strong>{safeProjects.length}</strong>
+          <strong>{projectList.length}</strong>
           <small>Em acompanhamento</small>
         </article>
 
         <article className="metric-card elevation-1">
           <span>Em atenção</span>
-          <strong>{safeProjects.filter((p) => p.status === 'warning').length}</strong>
+          <strong>{projectList.filter((p) => p.status === 'warning').length}</strong>
           <small>Exigem acompanhamento</small>
         </article>
 
         <article className="metric-card elevation-1">
           <span>Riscos críticos</span>
-          <strong>{safeProjects.filter((p) => p.status === 'danger').length}</strong>
+          <strong>{projectList.filter((p) => p.status === 'danger').length}</strong>
           <small>Impacto potencial em prazo</small>
         </article>
       </div>
 
-      <div className="project-grid">
-        {safeProjects.map((project) => (
+      {isPending && <p className={styles.feedback}>Carregando projetos…</p>}
+
+      {isError && (
+        <p className={styles.feedback} role="alert">
+          Não foi possível carregar os projetos. Tente recarregar a página.
+        </p>
+      )}
+
+      <div className="project-grid" aria-busy={isPending}>
+        {projectList.map((project) => (
           <article className={`project-card elevation-1 ${styles.card}`} key={project.id}>
             <div className="project-card-top">
               <div className="project-icon">
@@ -171,20 +182,13 @@ export default function ProjectsPage({ projectList = [], setProjectList, initial
       </div>
 
       {showForm && (
-        <ProjectFormModal
-          project={editingProject}
-          onClose={() => {
-            setEditingProject(null)
-            setShowForm(false)
-          }}
-          onSave={saveProject}
-        />
+        <ProjectFormModal project={editingProject} onClose={closeForm} onSave={saveProject} />
       )}
 
       {selectedProject && !showDeleteConfirm && (
         <ProjectDetailModal
           project={selectedProject}
-          onClose={() => setSelectedProject(null)}
+          onClose={() => setSelectedProjectId(null)}
           onEdit={() => openEditForm(selectedProject)}
           onDelete={() => setShowDeleteConfirm(true)}
         />
@@ -194,7 +198,7 @@ export default function ProjectsPage({ projectList = [], setProjectList, initial
         <DeleteProjectModal
           project={selectedProject}
           onClose={() => setShowDeleteConfirm(false)}
-          onConfirm={deleteProject}
+          onConfirm={confirmDelete}
         />
       )}
     </section>
