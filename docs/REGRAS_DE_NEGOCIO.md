@@ -47,9 +47,9 @@ Esconder um botão na tela é só conveniência: quem bloqueia de verdade é o b
 | G3 | Um projeto pode ter **vários repositórios**, e um repositório pode estar em **vários projetos** (API compartilhada, monorepo) | ✅ E1 |
 | G4 | **Sem duplicidade:** na visão da empresa, cada repositório, PR, commit e contribuidor conta **uma vez só**. Na visão de um projeto aparecem todos os PRs dos repositórios dele. Num repositório compartilhado, o PR aparece nos dois projetos (o sistema não sabe de qual projeto ele é) | ✅ E1 (repositórios e PRs; commits e contribuidores chegam na E3) |
 | G5 | Desconectar a chave de um projeto desfaz as ligações; os dados de um repositório só somem quando nenhum projeto o usa mais | ✅ E1 |
-| G6 | **Sincronização automática a cada hora**, e o botão "Sincronizar" continua para quem não quer esperar | 🔜 E3 (hoje só o botão) |
-| G7 | Dados buscados: repositórios, PRs (com **revisões/aprovações**), branches (com proteção), **commits da branch principal** e **contribuidores** | 🔜 E3 (hoje sem revisões, commits e contribuidores) |
-| G8 | **LGPD:** de pessoas de fora (autores, contribuidores), guardar só o **login** e o **avatar público** do GitHub. Nada de e-mail | ✅ / 🔜 E3 |
+| G6 | **Sincronização automática a cada hora**, e o botão "Sincronizar" continua para quem não quer esperar | ✅ E3 (minuto 7 de cada hora) |
+| G7 | Dados buscados: repositórios, PRs (com **revisões/aprovações**), branches (com proteção), **commits da branch principal** e **contribuidores** | ✅ E3 (aprovações dos PRs, commits dos últimos 90 dias; contribuidores = logins distintos de commits e PRs) |
+| G8 | **LGPD:** de pessoas de fora (autores, contribuidores), guardar só o **login** e o **avatar público** do GitHub. Nada de e-mail | ✅ (commits sem nome, e-mail nem mensagem) |
 
 ## 5. Métricas de governança (Visão geral)
 

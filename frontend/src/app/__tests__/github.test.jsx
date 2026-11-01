@@ -148,6 +148,24 @@ describe('GitHub connection (project detail)', () => {
     ])
   })
 
+  it('shows why the hourly sync failed until a sync works again', async () => {
+    connect()
+    linkRepository(privateRepo, 0)
+    db.githubCredentials[0].last_sync_error = 'Chave do GitHub inválida ou expirada.'
+    const { user } = await renderAs(testUser)
+    const dialog = await openProject(user)
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      'A última sincronização automática falhou: Chave do GitHub inválida ou expirada.',
+    )
+    expect(within(dialog).getByText(/atualiza sozinho a cada hora/)).toBeInTheDocument()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Sincronizar' }))
+
+    expect(await screen.findByText(/1 commit/)).toBeInTheDocument()
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument()
+  })
+
   it('removes the connection after confirmation', async () => {
     connect()
     linkRepository(privateRepo, 0)
@@ -224,9 +242,10 @@ describe('Repositories page', () => {
     expect(within(table).getByText('Plataforma de Pagamentos')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Pull Requests' }))
-    expect(
-      await screen.findByRole('link', { name: '#12 — Integração com o GitHub (govtech)' }),
-    ).toBeInTheDocument()
+    const pullRequest = await screen.findByRole('link', {
+      name: '#12 — Integração com o GitHub (govtech)',
+    })
+    expect(within(pullRequest.closest('tr')).getByRole('cell', { name: '1' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Branches' }))
     expect(await screen.findByText('main (padrão)')).toBeInTheDocument()
