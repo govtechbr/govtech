@@ -35,7 +35,7 @@ export default function Topbar({
           <Search size={18} />
         </button>
 
-        <button className="icon-button notification-button">
+        <button type="button" className="icon-button notification-button" aria-label="Notificações">
           <Bell size={18} />
           <i />
         </button>
@@ -43,10 +43,9 @@ export default function Topbar({
         <button
           type="button"
           className="top-avatar"
-          onClick={(event) => {
-            event.stopPropagation()
-            setAccountMenuOpen(!accountMenuOpen)
-          }}
+          onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+          aria-label={`Menu da conta de ${profile.name}`}
+          aria-expanded={accountMenuOpen}
           style={{ border: 0 }}
         >
           {profile.initials}
@@ -66,7 +65,6 @@ export default function Topbar({
               borderRadius: '10px',
               background: 'var(--surface)',
             }}
-            onClick={(event) => event.stopPropagation()}
           >
             <div
               style={{

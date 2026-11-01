@@ -60,6 +60,30 @@ describe('App', () => {
     expect(loginLinks[0]).toHaveAttribute('href', '/login')
   })
 
+  it('opens the account menu and goes to settings', async () => {
+    const { user } = renderWithRouter(<App />, { route: '/dashboard' })
+    const avatar = screen.getByRole('button', { name: /menu da conta/i })
+
+    await user.click(avatar)
+    expect(avatar).toHaveAttribute('aria-expanded', 'true')
+
+    await user.click(
+      within(screen.getByRole('banner')).getByRole('button', { name: 'Configurações' }),
+    )
+    expect(screen.getByRole('heading', { level: 1, name: 'Configurações' })).toBeInTheDocument()
+  })
+
+  it('switches the workspace from the sidebar', async () => {
+    const { user } = renderWithRouter(<App />, { route: '/dashboard' })
+
+    await user.click(within(sidebar()).getByRole('button', { name: /trocar workspace/i }))
+    await user.click(within(sidebar()).getByRole('button', { name: /govtech-ti/i }))
+
+    expect(
+      within(sidebar()).getByRole('button', { name: 'Trocar workspace (atual: govtech-ti)' }),
+    ).toBeInTheDocument()
+  })
+
   describe('global search', () => {
     it('opens from the topbar and closes', async () => {
       const { user } = renderWithRouter(<App />, { route: '/dashboard' })

@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X, Send, Bot, ChevronDown } from 'lucide-react'
+
+import styles from './ChatbotModal.module.css'
 
 const faqs = [
   {
@@ -136,6 +138,13 @@ export default function ChatbotModal({ onClose }) {
     }
   }
 
+  // Esc fecha o assistente, como nos outros diálogos
+  useEffect(() => {
+    const handleEscape = (event) => event.key === 'Escape' && onClose()
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [onClose])
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -146,7 +155,6 @@ export default function ChatbotModal({ onClose }) {
   return (
     <div
       className="modal-overlay"
-      onClick={onClose}
       style={{
         position: 'fixed',
         top: 0,
@@ -161,9 +169,19 @@ export default function ChatbotModal({ onClose }) {
         zIndex: 1000,
       }}
     >
+      <button
+        type="button"
+        className={styles.backdrop}
+        onClick={onClose}
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+
       <div
-        className="chatbot-container"
-        onClick={(e) => e.stopPropagation()}
+        className={`chatbot-container ${styles.panel}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Assistente GovTech"
         style={{
           width: '400px',
           maxWidth: '90vw',
@@ -198,7 +216,9 @@ export default function ChatbotModal({ onClose }) {
           </div>
 
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Fechar assistente"
             style={{
               background: 'transparent',
               border: 'none',
@@ -297,12 +317,13 @@ export default function ChatbotModal({ onClose }) {
           {faqs.map((faq, index) => (
             <div key={index} style={{ marginBottom: '8px' }}>
               <button
+                type="button"
+                className={styles.faqButton}
+                aria-expanded={expandedFaq === index}
                 onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  backgroundColor: 'var(--bg-secondary, #f8f9fa)',
-                  border: '1px solid var(--border, #e5e7eb)',
                   borderRadius: '8px',
                   textAlign: 'left',
                   cursor: 'pointer',
@@ -314,14 +335,6 @@ export default function ChatbotModal({ onClose }) {
                   fontWeight: '500',
                   color: 'var(--text-secondary, #374151)',
                   transition: 'all 0.2s',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary, #f3f4f6)'
-                  e.currentTarget.style.borderColor = 'var(--border-hover, #d1d5db)'
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-secondary, #f8f9fa)'
-                  e.currentTarget.style.borderColor = 'var(--border, #e5e7eb)'
                 }}
               >
                 <span style={{ flex: 1 }}>{faq.question}</span>

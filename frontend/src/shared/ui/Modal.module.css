@@ -1,0 +1,71 @@
+.overlay {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: var(--color-overlay);
+  cursor: default;
+}
+
+/* Mobile-first: folha presa na parte de baixo, largura total */
+.dialog {
+  position: relative;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  box-shadow: var(--elevation-4);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 640px) {
+  .overlay {
+    align-items: center;
+    padding: var(--space-5);
+  }
+
+  .dialog {
+    max-height: calc(100vh - 2 * var(--space-5));
+    border-radius: var(--radius-md);
+  }
+
+  .sm {
+    max-width: 440px;
+  }
+
+  .md {
+    max-width: 580px;
+  }
+
+  .lg {
+    max-width: 720px;
+  }
+}

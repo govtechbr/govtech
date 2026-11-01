@@ -14,6 +14,7 @@ import {
 import Brand from '@/shared/ui/Brand'
 import Icon from '@/shared/ui/Icon'
 import ChatbotModal from './ChatbotModal'
+import styles from './Sidebar.module.css'
 import { auditEvents, profile } from '@/mocks/mockData'
 
 const menuItems = [
@@ -108,206 +109,57 @@ export default function Sidebar({ open, setOpen, settings, setSettings }) {
           {!showWorkspaceMenu && (
             <button
               type="button"
+              className={styles.trigger}
               onClick={() => setShowWorkspaceMenu(true)}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '6px 10px',
-                background: 'transparent',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'background-color 0.2s',
-              }}
-              onMouseOver={(event) => {
-                event.currentTarget.style.backgroundColor = 'var(--bg-secondary, #f5f5f5)'
-              }}
-              onMouseOut={(event) => {
-                event.currentTarget.style.backgroundColor = 'transparent'
-              }}
+              aria-expanded="false"
+              aria-label={`Trocar workspace (atual: ${selectedWorkspace.name})`}
             >
-              <span
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '5px',
-                  backgroundColor: 'var(--color-primary-600, #7A58C4)',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  flexShrink: 0,
-                }}
-              >
-                {selectedWorkspace.logo}
+              <span className={styles.logo}>{selectedWorkspace.logo}</span>
+
+              <span className={styles.label}>
+                <small className={styles.kicker}>Workspace</small>
+                <b className={styles.name}>{selectedWorkspace.name}</b>
               </span>
 
-              <span style={{ flex: 1 }}>
-                <small
-                  style={{
-                    display: 'block',
-                    fontSize: '9px',
-                    fontWeight: '700',
-                    color: 'var(--text-primary)',
-                    marginBottom: '1px',
-                    letterSpacing: '0.3px',
-                  }}
-                >
-                  WORKSPACE
-                </small>
-
-                <b
-                  style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {selectedWorkspace.name}
-                </b>
-              </span>
-
-              <ChevronDown size={14} style={{ color: 'var(--muted)' }} />
+              <ChevronDown size={14} className={styles.chevron} />
             </button>
           )}
 
           {showWorkspaceMenu && (
             <div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '12px',
-                  paddingBottom: '10px',
-                  paddingRight: '4px',
-                  borderBottom: '1px solid var(--border, #e5e7eb)',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: '9px',
-                    fontWeight: '700',
-                    color: 'var(--text-primary)',
-                    letterSpacing: '0.5px',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Selecione o workspace
-                </span>
+              <div className={styles.menuHeader}>
+                <span className={styles.kicker}>Selecione o workspace</span>
 
                 <button
                   type="button"
+                  className={styles.closeMenu}
                   onClick={() => setShowWorkspaceMenu(false)}
                   aria-label="Fechar seleção de workspace"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginLeft: '35px',
-                    padding: '5px',
-                    color: 'white',
-                    background: 'var(--color-primary-600, #7A58C4)',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseOver={(event) => {
-                    event.currentTarget.style.backgroundColor = 'var(--color-primary-700, #5F429D)'
-                    event.currentTarget.style.transform = 'scale(1.05)'
-                  }}
-                  onMouseOut={(event) => {
-                    event.currentTarget.style.backgroundColor = 'var(--color-primary-600, #7A58C4)'
-                    event.currentTarget.style.transform = 'scale(1)'
-                  }}
                 >
                   <X size={14} strokeWidth={2.5} />
                 </button>
               </div>
 
-              {workspaces.map((workspace) => {
-                const selected = selectedWorkspace.name === workspace.name
+              <ul className={styles.options}>
+                {workspaces.map((workspace) => {
+                  const selected = selectedWorkspace.name === workspace.name
 
-                return (
-                  <button
-                    key={workspace.id}
-                    type="button"
-                    onClick={() => handleWorkspaceSelect(workspace)}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      marginBottom: '4px',
-                      padding: '8px 10px',
-                      backgroundColor: selected ? 'var(--surface, white)' : 'transparent',
-                      border: '1px solid transparent',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseOver={(event) => {
-                      if (!selected) {
-                        event.currentTarget.style.backgroundColor = 'var(--surface, white)'
-                        event.currentTarget.style.borderColor = 'var(--border, #e5e7eb)'
-                      }
-                    }}
-                    onMouseOut={(event) => {
-                      if (!selected) {
-                        event.currentTarget.style.backgroundColor = 'transparent'
-                        event.currentTarget.style.borderColor = 'transparent'
-                      }
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: '26px',
-                        height: '26px',
-                        borderRadius: '5px',
-                        backgroundColor: selected
-                          ? 'var(--color-primary-600, #7A58C4)'
-                          : 'var(--bg-tertiary, #e5e7eb)',
-                        color: selected ? 'white' : 'var(--text-secondary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {workspace.logo}
-                    </span>
-
-                    <span
-                      style={{
-                        flex: 1,
-                        color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
-                        fontSize: '12px',
-                        fontWeight: selected ? '600' : '500',
-                      }}
-                    >
-                      {workspace.name}
-                    </span>
-
-                    {selected && (
-                      <Check
-                        size={15}
-                        strokeWidth={2.5}
-                        color="var(--color-primary-600, #7A58C4)"
-                      />
-                    )}
-                  </button>
-                )
-              })}
+                  return (
+                    <li key={workspace.id}>
+                      <button
+                        type="button"
+                        className={`${styles.option} ${selected ? styles.selected : ''}`}
+                        onClick={() => handleWorkspaceSelect(workspace)}
+                        aria-pressed={selected}
+                      >
+                        <span className={styles.logo}>{workspace.logo}</span>
+                        <span className={styles.label}>{workspace.name}</span>
+                        {selected && <Check size={15} strokeWidth={2.5} className={styles.check} />}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
           )}
         </div>

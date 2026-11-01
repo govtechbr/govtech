@@ -1,8 +1,10 @@
+import { Check } from 'lucide-react'
 import { useState } from 'react'
-import { Check, X } from 'lucide-react'
 
-import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
 import { services } from '@/mocks/mockData'
+import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
+import Modal from '@/shared/ui/Modal'
+import styles from './ProjectModals.module.css'
 
 export default function ProjectFormModal({ project, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -15,6 +17,10 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
     progress: project?.progress ?? 0,
     repositories: Array.isArray(project?.repositories) ? project.repositories : [],
   })
+
+  const updateField = (field) => (event) => {
+    setForm((current) => ({ ...current, [field]: event.target.value }))
+  }
 
   const toggleRepository = (repositoryName) => {
     setForm((current) => ({
@@ -31,108 +37,51 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
   }
 
   return (
-    <div className="detail-popover" style={{ maxWidth: '580px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-        }}
-      >
-        <div>
-          <span className="section-kicker">
-            {project ? 'EDIÇÃO DE PROJETO' : 'CADASTRO DE PROJETO'}
-          </span>
-
-          <h3>{project ? 'Editar Projeto' : 'Novo Projeto'}</h3>
-        </div>
-
-        <button className="icon-button" onClick={onClose}>
-          <X size={17} />
-        </button>
-      </div>
-
-      <form
-        onSubmit={submit}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '14px',
-        }}
-      >
-        <label>
-          <strong style={{ display: 'block', marginBottom: '6px' }}>Nome do Projeto</strong>
-
+    <Modal
+      title={project ? 'Editar Projeto' : 'Novo Projeto'}
+      kicker={project ? 'EDIÇÃO DE PROJETO' : 'CADASTRO DE PROJETO'}
+      onClose={onClose}
+    >
+      <form className={styles.form} onSubmit={submit}>
+        <label className={styles.field}>
+          Nome do Projeto
           <input
+            className={styles.input}
             required
             value={form.name}
-            onChange={(event) =>
-              setForm({
-                ...form,
-                name: event.target.value,
-              })
-            }
-            style={inputStyle}
+            onChange={updateField('name')}
           />
         </label>
 
-        <label>
-          <strong style={{ display: 'block', marginBottom: '6px' }}>Objetivo do Projeto</strong>
-
+        <label className={styles.field}>
+          Objetivo do Projeto
           <textarea
+            className={`${styles.input} ${styles.textarea}`}
             required
             rows={3}
             value={form.description}
-            onChange={(event) =>
-              setForm({
-                ...form,
-                description: event.target.value,
-              })
-            }
-            style={{
-              ...inputStyle,
-              resize: 'vertical',
-            }}
+            onChange={updateField('description')}
           />
         </label>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '12px',
-          }}
-        >
-          <label>
-            <strong style={{ display: 'block', marginBottom: '6px' }}>Deadline</strong>
-
+        <div className={styles.row}>
+          <label className={styles.field}>
+            Deadline
             <input
+              className={styles.input}
               required
               type="date"
               value={form.deadline}
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  deadline: event.target.value,
-                })
-              }
-              style={inputStyle}
+              onChange={updateField('deadline')}
             />
           </label>
 
-          <label>
-            <strong style={{ display: 'block', marginBottom: '6px' }}>Prioridade</strong>
-
+          <label className={styles.field}>
+            Prioridade
             <select
+              className={styles.input}
               value={form.priority}
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  priority: event.target.value,
-                })
-              }
-              style={inputStyle}
+              onChange={updateField('priority')}
             >
               <option value="high">Alta</option>
               <option value="medium">Média</option>
@@ -141,19 +90,9 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
           </label>
         </div>
 
-        <label>
-          <strong style={{ display: 'block', marginBottom: '6px' }}>Status</strong>
-
-          <select
-            value={form.status}
-            onChange={(event) =>
-              setForm({
-                ...form,
-                status: event.target.value,
-              })
-            }
-            style={inputStyle}
-          >
+        <label className={styles.field}>
+          Status
+          <select className={styles.input} value={form.status} onChange={updateField('status')}>
             {Object.entries(PROJECT_STATUS).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -162,95 +101,49 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
           </select>
         </label>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '12px',
-          }}
-        >
-          <label>
-            <strong style={{ display: 'block', marginBottom: '6px' }}>Responsável</strong>
-
+        <div className={styles.row}>
+          <label className={styles.field}>
+            Responsável
             <input
+              className={styles.input}
               required
               value={form.owner}
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  owner: event.target.value,
-                })
-              }
-              style={inputStyle}
+              onChange={updateField('owner')}
             />
           </label>
 
-          <label>
-            <strong style={{ display: 'block', marginBottom: '6px' }}>Progresso (%)</strong>
-
+          <label className={styles.field}>
+            Progresso (%)
             <input
+              className={styles.input}
               required
               type="number"
               min="0"
               max="100"
               value={form.progress}
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  progress: event.target.value,
-                })
-              }
-              style={inputStyle}
+              onChange={updateField('progress')}
             />
           </label>
         </div>
 
-        <div>
-          <strong
-            style={{
-              display: 'block',
-              marginBottom: '8px',
-            }}
-          >
-            Repositórios Vinculados
-          </strong>
+        <fieldset className={styles.fieldset}>
+          <legend className={styles.legend}>Repositórios Vinculados</legend>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '8px',
-            }}
-          >
+          <div className={styles.checkGrid}>
             {services.map((service) => (
-              <label
-                key={service.name}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '7px',
-                  fontSize: '12px',
-                }}
-              >
+              <label key={service.name} className={styles.check}>
                 <input
                   type="checkbox"
                   checked={form.repositories.includes(service.name)}
                   onChange={() => toggleRepository(service.name)}
                 />
-
                 {service.name}
               </label>
             ))}
           </div>
-        </div>
+        </fieldset>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '10px',
-            marginTop: '6px',
-          }}
-        >
+        <div className={styles.actions}>
           <button className="primary-button" type="submit">
             <Check size={16} />
             {project ? 'Salvar Projeto' : 'Criar Projeto'}
@@ -261,15 +154,6 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
           </button>
         </div>
       </form>
-    </div>
+    </Modal>
   )
-}
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px',
-  border: '1px solid var(--border)',
-  borderRadius: '7px',
-  background: 'var(--surface)',
-  color: 'var(--text)',
 }

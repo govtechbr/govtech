@@ -86,7 +86,7 @@ describe('ProjectsPage', () => {
   it('edits an existing project', async () => {
     const { user } = renderPage()
 
-    await user.click(screen.getByRole('heading', { name: 'Sistema de Notificações' }))
+    await user.click(screen.getByRole('button', { name: 'Sistema de Notificações' }))
     await user.click(screen.getByRole('button', { name: /editar/i }))
 
     const nameInput = screen.getByLabelText('Nome do Projeto')
@@ -106,7 +106,7 @@ describe('ProjectsPage', () => {
   it('deletes a project after confirmation', async () => {
     const { user } = renderPage()
 
-    await user.click(screen.getByRole('heading', { name: 'Plataforma de Pagamentos' }))
+    await user.click(screen.getByRole('button', { name: 'Plataforma de Pagamentos' }))
     await user.click(screen.getByRole('button', { name: 'Excluir' }))
     await user.click(screen.getByRole('button', { name: /excluir projeto/i }))
 
@@ -114,6 +114,17 @@ describe('ProjectsPage', () => {
       screen.queryByRole('heading', { name: 'Plataforma de Pagamentos' }),
     ).not.toBeInTheDocument()
     expect(metric('Projetos ativos')).toHaveTextContent('1')
+  })
+
+  it('opens a project card with the keyboard and closes it with Escape', async () => {
+    const { user } = renderPage()
+
+    screen.getByRole('button', { name: 'Sistema de Notificações' }).focus()
+    await user.keyboard('{Enter}')
+    expect(screen.getByRole('dialog', { name: 'Sistema de Notificações' })).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('opens the project given by initialProjectId', () => {
@@ -126,7 +137,7 @@ describe('ProjectsPage', () => {
   it('keeps the project when deletion is cancelled', async () => {
     const { user } = renderPage()
 
-    await user.click(screen.getByRole('heading', { name: 'Plataforma de Pagamentos' }))
+    await user.click(screen.getByRole('button', { name: 'Plataforma de Pagamentos' }))
     await user.click(screen.getByRole('button', { name: 'Excluir' }))
     await user.click(screen.getByRole('button', { name: 'Cancelar' }))
 

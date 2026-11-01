@@ -1,0 +1,29 @@
+.card {
+  position: relative;
+}
+
+.cardButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cardButton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.cardButton:focus-visible {
+  outline: none;
+}
+
+.cardButton:focus-visible::after {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
