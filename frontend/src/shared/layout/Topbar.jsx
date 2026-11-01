@@ -1,7 +1,5 @@
 import { Bell, ChevronRight, LogOut, Menu, Search, Settings2, UserRound } from 'lucide-react'
 
-import { profile } from '@/mocks/mockData'
-
 export default function Topbar({
   active,
   setOpen,
@@ -9,6 +7,8 @@ export default function Topbar({
   accountMenuOpen,
   setAccountMenuOpen,
   onNavigate,
+  account,
+  onSignOut,
 }) {
   return (
     <header className="topbar">
@@ -44,11 +44,11 @@ export default function Topbar({
           type="button"
           className="top-avatar"
           onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-          aria-label={`Menu da conta de ${profile.name}`}
+          aria-label={`Menu da conta de ${account.name}`}
           aria-expanded={accountMenuOpen}
           style={{ border: 0 }}
         >
-          {profile.initials}
+          {account.initials}
         </button>
 
         {accountMenuOpen && (
@@ -73,9 +73,9 @@ export default function Topbar({
                 borderBottom: '1px solid var(--border)',
               }}
             >
-              <strong style={{ display: 'block', fontSize: '13px' }}>{profile.name}</strong>
+              <strong style={{ display: 'block', fontSize: '13px' }}>{account.name}</strong>
 
-              <small style={{ color: 'var(--muted)' }}>{profile.role}</small>
+              <small style={{ color: 'var(--muted)' }}>{account.role}</small>
             </div>
 
             <button
@@ -110,12 +110,10 @@ export default function Topbar({
                 width: '100%',
                 justifyContent: 'flex-start',
               }}
-              onClick={() => {
-                window.location.href = '/'
-              }}
+              onClick={onSignOut}
             >
               <LogOut size={16} />
-              Sair da demonstração
+              Sair
             </button>
           </div>
         )}

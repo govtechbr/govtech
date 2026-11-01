@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
+import { signOut } from '@/features/auth/api/authApi'
+import { useMyOrganizations, useSession } from '@/features/auth/hooks/useAuth'
 import { useProjects } from '@/features/projects/hooks/useProjects'
 import { defaultSettings } from '@/shared/constants/defaultSettings'
 import { storageKeys } from '@/shared/constants/storageKeys'
 import { useLocalStorage } from '@/shared/hooks/useLocalStorage'
 import { useTheme } from '@/shared/hooks/useTheme'
+import { useToast } from '@/shared/hooks/useToast'
 import GlobalSearch from '@/shared/layout/GlobalSearch'
 import Sidebar from '@/shared/layout/Sidebar'
 import Topbar from '@/shared/layout/Topbar'
@@ -17,6 +20,33 @@ const routeSections = {
   '/projects': 'Projetos',
   '/access': 'Acessos e RBAC',
   '/settings': 'Configurações',
+}
+
+const roleLabels = {
+  admin: 'Administrador',
+  developer: 'Desenvolvedor',
+  stakeholder: 'Stakeholder',
+  viewer: 'Visualizador',
+}
+
+// Nome, iniciais e papel de quem está logado, para a barra lateral e o menu da conta
+function useAccount() {
+  const user = useSession()?.user
+  const { data: organizations = [] } = useMyOrganizations()
+  const name = user?.user_metadata?.full_name || user?.email || ''
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0].toUpperCase())
+    .join('')
+  const [organization] = organizations
+
+  return {
+    name,
+    initials,
+    role: organization ? `${roleLabels[organization.role]} · ${organization.name}` : '',
+  }
 }
 
 const sectionRoutes = Object.fromEntries(
@@ -33,6 +63,8 @@ export default function AppLayout() {
   const [settings, setSettings] = useLocalStorage(storageKeys.SETTINGS, defaultSettings)
 
   const { data: projectList = [] } = useProjects()
+  const account = useAccount()
+  const { showToast } = useToast()
 
   useTheme(settings.theme)
 
@@ -59,6 +91,14 @@ export default function AppLayout() {
     navigate('/projects', { state: { projectId: project.id } })
   }
 
+  async function handleSignOut() {
+    try {
+      await signOut()
+    } catch (error) {
+      showToast(error.message, 'danger')
+    }
+  }
+
   function handleSaveSettings(nextSettings) {
     setSettings((currentSettings) => ({
       ...currentSettings,
@@ -79,6 +119,7 @@ export default function AppLayout() {
         setOpen={setSidebarOpen}
         settings={settings}
         setSettings={setSettings}
+        account={account}
       />
 
       <div className="main-content">
@@ -89,6 +130,8 @@ export default function AppLayout() {
           accountMenuOpen={accountMenuOpen}
           setAccountMenuOpen={setAccountMenuOpen}
           onNavigate={handleNavigate}
+          account={account}
+          onSignOut={handleSignOut}
         />
 
         <GlobalSearch
