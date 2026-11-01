@@ -1,6 +1,6 @@
 # GovTech MS — Plano Técnico (Back-end Supabase, Refatoração, Testes, Responsividade)
 
-> **Status (31/10/2026):** ✅ Limpeza (branch `chore/limpeza`) · ✅ Qualidade: ESLint, Prettier e Husky (branch `chore/qualidade`) · ✅ Skills instaladas · 📝 **Testes aguardando aprovação** (§14) · Supabase `govtech` criado e vazio.
+> **Status (01/11/2026):** ✅ Limpeza (branch `chore/limpeza`) · ✅ Qualidade: ESLint, Prettier e Husky (branch `chore/qualidade`) · ✅ Skills instaladas · ✅ Testes P0 (branch `test/setup`, §14) · Supabase `govtech-br` em São Paulo, vazio.
 >
 > Autor: Tech Lead (IA) · Data: 31/10/2026 · Base: commit `193c764` (branch `main`)
 
@@ -19,7 +19,7 @@
 11. [Checklist de aprovação](#11-checklist-de-aprovação)
 12. [Referências](#12-referências)
 13. [Qualidade: lint e formatação](#13-qualidade-lint-e-formatação--aprovado-e-aplicado-em-31102026)
-14. [Proposta de testes (aguardando aprovação)](#14-proposta-de-testes-aguardando-aprovação)
+14. [Testes](#14-testes--aprovado-e-aplicado-em-01112026)
 
 ---
 
@@ -63,8 +63,8 @@
 | # | Pergunta | Decisão do time | Consequência no plano |
 |---|---|---|---|
 | Q1 | Data de entrega | **18/11/2026** (18 dias) | Roadmap recortado (§8). GitHub real, Realtime, CSV e chatbot com IA ficam fora |
-| Q2 | Multi-organização? | **Sim**. Projeto Supabase **`govtech` já criado** (ref `sazvvuyymowzjmowldfh`, região `us-east-1`, vazio) | Fase Supabase começa direto pelas migrations |
-| Q3 | Cadastro aberto ou convite? | **Cadastro aberto** | Sign-up por e-mail; ao se cadastrar, o usuário cria uma organização (vira admin). **Pendente:** como a 2ª pessoa entra numa organização existente (proposta: código da organização) |
+| Q2 | Multi-organização? | **Sim**. Projeto Supabase **`govtech-br`** (ref `dulcrbaxzcmfgoikvocl`, região `sa-east-1` São Paulo, por LGPD e latência). O antigo `govtech` (`us-east-1`) deve ser apagado | Fase Supabase começa direto pelas migrations |
+| Q3 | Cadastro aberto ou convite? | **Cadastro aberto** | No cadastro o usuário escolhe: **criar organização** (informa o nome da empresa e vira admin) ou **entrar com o código da organização** (entra como `viewer`; o admin promove). Ver §4.3 |
 | Q4 | Auth/proteção de rotas | **Ver depois** | Entra junto com o Supabase |
 | Q5 | TypeScript? | **Não** | Fica JavaScript. zod valida dados nas bordas |
 | Q6 | Status do projeto | **Manual** | ✅ Já implementado (`constants/projectStatus.js`). O semáforo de prazo continua como informação separada |
@@ -76,7 +76,8 @@
 | Q12 | Pessoas no projeto | **2** | Branch por tarefa + PR revisado pelo colega |
 | Q13 | Fórmulas dos KPIs | **Pode deixar** | Números fixos ficam até haver dados reais |
 | — | Separar back e front | **Sim, pastas diferentes** | `frontend/` e `backend/` na raiz (§5.1) |
-| — | Repositório remoto | **GitHub**, ainda a criar | Criar repo privado e subir as branches (aguardando confirmação do dono/visibilidade) |
+| — | Repositório remoto | **GitHub** `oguilhermekenzo/govtech` (privado), já conectado como `origin` | Subir as branches e abrir PRs para a `main` |
+| — | Chave do GitHub | **Uma por projeto**, cadastrada pelo admin | Ver §4.7 |
 | — | Lint, Husky, skills, arquitetura, estrutura, testes, roadmap | **Aprovados** | Executados: Qualidade e skills. Próxima: Testes (§14) |
 
 ## 3. Arquitetura alvo
@@ -206,6 +207,8 @@ create table public.organizations (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   slug text not null unique,
+  -- código para entrar na organização no cadastro (aleatório, o admin pode gerar outro)
+  join_code text not null unique default upper(substr(md5(gen_random_uuid()::text), 1, 8)),
   created_at timestamptz not null default now()
 );
 
@@ -285,6 +288,11 @@ create policy "só admin exclui projetos" on public.projects
 - RLS sem policy devolve `[]` **sem erro**. Todo "a lista veio vazia" deve começar a investigação pelas policies.
 - Rodar o **Security Advisor** (`get_advisors`) a cada migration.
 
+**Cadastro e entrada na organização (Q3):** a tela de cadastro tem duas opções.
+- **Criar organização:** informa o nome da empresa; a `rpc create_organization(name)` cria a organização e o vínculo como `admin`.
+- **Entrar com código:** informa o `join_code`; a `rpc join_organization(code)` (`security definer` em `private`) cria o vínculo como `viewer`. O admin promove depois na tela de RBAC e pode gerar um código novo se ele vazar.
+- Entrar **só pelo nome** da empresa não é seguro (qualquer pessoa entraria em qualquer organização); o nome serve para criar e para exibir.
+
 ### 4.4 Auditoria (simples, para revisão — Q7)
 
 Trigger genérico `private.audit_row()` em `projects`, `organization_members` e `repositories` grava `action` (`INSERT/UPDATE/DELETE`), `entity`, `entity_id`, `actor_id = auth.uid()`, `diff` (jsonb `old`/`new`) e `created_at`. Sem cadeia de hash. A tela de Auditoria passa a listar esses eventos no lugar do mock.
@@ -358,7 +366,7 @@ sequenceDiagram
   participant EF as Edge Function github-sync
   participant GH as API do GitHub
   U->>F: cola a chave (fine-grained, só leitura)
-  F->>DB: rpc save_github_token(org, token)
+  F->>DB: rpc save_github_token(project, token)
   DB->>V: vault.create_secret(token)
   DB-->>F: ok (devolve só os 4 últimos caracteres)
   U->>F: clica "Sincronizar"
@@ -371,10 +379,10 @@ sequenceDiagram
 ```
 
 - **Tipo de chave:** *fine-grained personal access token*, só leitura (Metadata, Contents e Pull requests), restrito aos repositórios necessários.
-- **Onde fica:** `vault.secrets`, criptografada. A tabela `github_credentials(organization_id, secret_id, token_last4, created_by, created_at)` guarda só a referência. Nenhuma policy permite ao front ler o segredo.
-- **Quem pode:** admin da organização cadastra, troca ou remove a chave. Qualquer membro vê os dados sincronizados.
+- **Uma chave por projeto** (decisão de 01/11): cada projeto aponta para repositórios que podem ser de donos diferentes no GitHub.
+- **Onde fica:** `vault.secrets`, criptografada. A tabela `github_credentials(project_id primary key, organization_id, secret_id, token_last4, created_by, created_at)` guarda só a referência (`organization_id` repetido para a policy de RLS, com índice). Nenhuma policy permite ao front ler o segredo.
+- **Quem pode:** só o admin da organização cadastra, troca ou remove a chave de um projeto (`rpc save_github_token(project_id, token)`). Qualquer membro vê os dados sincronizados. A sincronização (`github-sync`) recebe o `project_id`.
 - **Validação:** ao salvar, a Edge Function chama `GET /user` no GitHub para confirmar que a chave funciona antes de guardar.
-- **Pendente:** confirmar se a chave é **por organização** (recomendado: uma para o time) ou **por usuário**.
 
 ## 5. Refatoração do front-end
 
@@ -625,7 +633,8 @@ Pronto quando: <teste/comando>   Formato: <tamanho/estilo da resposta>
 - [x] **A.** Respostas Q1–Q13 (§2)
 - [x] **Limpeza**: itens 1, 2, 3, 8, 9, 10, 11 e 12 aplicados
 - [x] **Qualidade**: lint, formatação e Husky (§13), aplicados
-- [ ] **Testes**: dependências e configuração (§14)
+- [x] **Testes**: dependências, configuração, CI e testes P0 (§14)
+- [ ] **Bug do prazo** (§14.5): aprovar a correção de `getProjectStatus`
 - [x] **B/C.** Arquitetura e modelo de dados ajustados às decisões (§3–§4)
 - [x] **E.** Estrutura `frontend/` + `backend/` (§5.1)
 - [x] **G.** Stack e metas de testes (§6 + `TESTES.mmd`)
@@ -738,9 +747,9 @@ Scripts no `package.json`:
 
 ---
 
-## 14. Proposta de testes (aguardando aprovação)
+## 14. Testes (✅ aprovado e aplicado em 01/11/2026)
 
-**Nada disto foi criado ainda.** Versões conferidas no npm em 31/10/2026.
+Aplicado como proposto na branch `test/setup`: 28 testes verdes e 4 marcados como falha esperada (§14.5). O CI roda em push na `main` e em todo PR (não em todo push, para não rodar duas vezes no mesmo commit). Versões conferidas no npm em 31/10/2026.
 
 ### 14.1 Dependências (dev)
 
@@ -802,3 +811,15 @@ Os testes são escritos **sobre o código atual, antes da nova estrutura**. São
 1. `chore: add vitest and testing library`: dependências, configuração e CI.
 2. `test: add P0 tests for project rules and storage`.
 3. `test: add P0 tests for projects page and navigation`.
+
+### 14.5 Bug encontrado pelos testes: contagem de dias do prazo (aguardando aprovação)
+
+`getProjectStatus` conta o prazo até 23:59:59 do dia final e arredonda para cima, então **toda contagem sai com um dia a mais**:
+
+| Prazo | Hoje mostra | Deveria mostrar |
+|---|---|---|
+| ontem | "Deadline vence hoje" (Atenção) | "Atrasado há 1 dia(s)" (Risco) |
+| hoje | "1 dia(s) restante(s)" | "Deadline vence hoje" |
+| daqui a 7 dias | 8 dias, "No prazo" | 7 dias, "Atenção" |
+
+Os 4 casos estão em `utils/__tests__/projectUtils.test.js` marcados com `it.fails`. **Correção proposta:** comparar as duas datas à meia-noite (prazo com `T00:00:00` em vez de `T23:59:59`) e usar `Math.round`; depois tirar o `.fails` dos 4 testes. Mudança de 2 linhas.

@@ -16,7 +16,7 @@ Atue como **Tech Lead full-stack sênior**: crítico e construtivo.
 - Plano geral e decisões: `docs/PLANO_TECNICO.md`. Mapa de testes: `docs/TESTES.mmd`. Funcionamento atual: `DOCUMENTACAO.md`.
 
 ## Comandos
-Hoje só existem `dev`, `build` e `preview`. Os demais entram nas fases Qualidade, Testes e Supabase (ver `docs/PLANO_TECNICO.md` §8); se não existirem ainda, avise em vez de criar.
+Hoje existem `dev`, `build`, `preview`, `lint`, `format` e `test`/`test:run`/`test:coverage`. Os de e2e e Supabase entram nas fases seguintes (ver `docs/PLANO_TECNICO.md` §8); se não existirem ainda, avise em vez de criar. Node ≥ 22.12.
 ```bash
 npm run dev            # Vite em http://localhost:5173
 npm run build          # build de produção (deve passar antes de qualquer PR)
