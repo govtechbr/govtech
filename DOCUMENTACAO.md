@@ -2,7 +2,7 @@
 
 Plataforma web de **governança e monitoramento de projetos de TI**: painel com indicadores, lista de projetos com prazo e progresso, visão de repositórios/Pull Requests/branches, auditoria, controle de acesso (RBAC) e configurações.
 
-> **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações, membros, projetos e os dados do GitHub (repositórios, PRs e branches) são reais** e ficam no banco. As outras telas (auditoria, gráficos da Visão geral) ainda mostram dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
+> **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações, membros, projetos e os dados do GitHub (repositórios, PRs e branches) são reais** e ficam no banco. Desde 04/11/2026 a **Visão geral** também usa dados reais (métricas, alertas e status calculado). As outras telas (auditoria, busca global) ainda mostram dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
 
 ---
 
@@ -176,7 +176,7 @@ govtech/
         │   ├── layout/        Sidebar, Topbar, GlobalSearch e ChatbotModal.
         │   ├── ui/            Brand, Icon, Modal, StatCard, StatusBadge, Toast/ToastProvider.
         │   ├── hooks/         useLocalStorage (estado salvo no navegador), useTheme (tema claro/escuro).
-        │   ├── lib/           projectUtils.js (normaliza projetos, datas, semáforo de prazo), supabase.js (único client), zodResolver.js.
+        │   ├── lib/           projectUtils.js (normaliza projetos e datas), governance.js (métricas, alertas e status dos projetos), supabase.js (único client), zodResolver.js.
         │   └── constants/     colors, defaultSettings, projectStatus (Saudável/Atenção/Risco), storageKeys.
         │
         ├── mocks/        ← mockData.js: TODOS os dados de exemplo (ficam até existir dado real no Supabase).
@@ -285,21 +285,18 @@ Página de vendas com seções com âncora (`#capabilities`, `#how-it-works`, `#
 Era uma segunda forma de navegar (estado `active` + `switch`) que duplicava a barra lateral, a lista de projetos e o tema. Foi apagado na limpeza de 31/10/2026; a Visão geral agora é renderizada direto pelo `App.jsx`.
 
 ### 8.4 `OverviewPage.jsx` — Visão geral
-Recebe `projectList` e mostra:
-- **`ProjectStatusSummary`**: resumo dos projetos (contagem por semáforo).
-- **4 cartões (`StatCard`)**:
-  - *PRs integradas*: conta PRs com status `merged` em `mockData`.
-  - *Lead time médio*: **valor fixo** “4.2 dias”.
-  - *Taxa de aprovação*: calculada `(approved + merged) / total × 100`.
-  - *Alertas ativos*: **valor fixo** “3”.
-- **Gráfico de fluxo** (`PullRequestFlowChart`) e **distribuição** de PRs (`PullRequestDistribution`): abertas, em revisão, aprovadas, integradas.
-- **Lista de projetos** ordenada pelo pior status primeiro (atrasado → atenção → no prazo), com borda colorida e ícone 🔴/🟡/🟢.
-- Também importa `AutomatedAlerts` e `RecentActivityPanel`.
+Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir dos dados sincronizados do GitHub (`features/dashboard/api/governanceApi.js`, chave `['governance', empresa]`) e do prazo dos projetos. Regras em `docs/REGRAS_DE_NEGOCIO.md` §5 e §6. Recebe `projectList` e `governance` por prop (adaptador em `app/routes.jsx`) e mostra:
+- **Seletor de período** 7 / 30 / 90 dias (começa em 30).
+- **`ProjectStatusSummary`**: quantos projetos estão Saudáveis, em Atenção e em Risco, e o **cartão que explica a regra do status** (P4).
+- **4 cartões**: Quantidade de PRs (abertos agora + criados no período), Lead time médio (abertura → merge), Taxa de aprovação (mergeados com ao menos 1 aprovação) e PRs em risco (abertos há mais de 3 dias).
+- **Gráfico semanal** (`PullRequestFlowChart`): PRs abertos × mergeados, pelo menos 4 semanas. **Distribuição** (`PullRequestDistribution`): abertos, rascunhos, mergeados e fechados.
+- **Lista de projetos** com o status calculado (pior primeiro) e o primeiro alerta de cada um.
+- **Alertas automatizados** (`AutomatedAlerts`), Risco primeiro, com link para o PR, e **Eventos de desenvolvimento** (`RecentActivityPanel`): repositórios, commits da branch principal, branches e contribuidores no período.
 
 ### 8.5 `ProjectsPage.jsx` — Projetos
 É o módulo mais completo para o usuário final:
 - **Cards** de projeto com nome, responsável, prazo, barra de progresso e alerta se o status for `danger`.
-- **Status manual**: cada projeto tem um campo `status` escolhido no formulário (`success` = Saudável, `warning` = Atenção, `danger` = Risco). É diferente do semáforo de prazo (§11.2), que é calculado pela deadline.
+- **Status calculado** (desde 04/11/2026): Saudável, Atenção ou Risco, a partir dos alertas do projeto (PR parado, PR sem aprovação, branch sem proteção, prazo). O formulário não tem mais o campo Status. O cartão mostra o primeiro alerta e o detalhe do projeto lista todos, com a explicação da regra.
 - **3 indicadores**: total, “em atenção” (`status === 'warning'`), “riscos críticos” (`status === 'danger'`).
 - **Novo projeto**: abre `ProjectFormModal` vazio.
 - **Clique em um card**: abre `ProjectDetailModal` (descrição, prazo formatado, status calculado, botões Editar e Excluir conforme o papel, e a seção **GitHub**).
@@ -366,7 +363,7 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 
 | Componente | O que mostra |
 |---|---|
-| `ProjectStatusSummary` | Resumo “Status dos Projetos” (contagem por semáforo, pelo `getProjectStatus`). |
+| `ProjectStatusSummary` | Resumo “Status dos Projetos” (contagem por status calculado) e o cartão que explica a regra. |
 | `PullRequestFlowChart` | Gráfico de fluxo de PRs criadas × integradas. |
 | `PullRequestDistribution` | Distribuição das PRs por status (abertas, em revisão, aprovadas, integradas). |
 | `AutomatedAlerts` | Painel “Alertas Automatizados”, com a origem indicada como GitHub Actions. |
@@ -452,22 +449,27 @@ Garante que um projeto sempre tenha campos válidos, mesmo que os dados salvos e
 - `progress` → número entre 0 e 100 (valores inválidos viram 0).
 - `repositories` → só strings.
 
-### 11.2 `getProjectStatus(project)` — o semáforo
-Calcula a diferença em dias entre hoje e o prazo (`deadline`), com as duas datas à meia-noite. Fica em `src/shared/lib/projectUtils.js`. Até 01/11/2026 a contagem saía com um dia a mais (o prazo ia até 23:59:59 e era arredondado para cima); os testes acharam e o bug foi corrigido.
+### 11.2 Status do projeto e alertas (`src/shared/lib/governance.js`)
+Desde 04/11/2026 substitui o antigo `getProjectStatus` (semáforo só de prazo). `governanceAlerts` gera os alertas do §6 das regras e `projectHealth` dá a cada projeto o pior nível dos seus alertas.
 
-| Condição | Resultado | Cor | Ícone |
-|---|---|---|---|
-| Sem prazo | Atenção — “Deadline não configurada” | amarelo | 🟡 |
-| Prazo inválido | Atenção — “Deadline inválida” | amarelo | 🟡 |
-| Dias restantes < 0 | Atrasado — “Atrasado há N dia(s)” | vermelho | 🔴 |
-| 0 a 7 dias | Atenção — “N dia(s) restante(s)” ou “vence hoje” | amarelo | 🟡 |
-| Mais de 7 dias | No prazo | verde | 🟢 |
+| Alerta | Atenção | Risco |
+|---|---|---|
+| PR aberto (sem rascunhos) | mais de 1 dia | mais de 3 dias |
+| PR mergeado sem aprovação (últimos 30 dias) | sempre | — |
+| Branch principal sem proteção | sempre | — |
+| Prazo do projeto | vence em até 7 dias | vencido |
+
+A contagem de dias até o prazo usa as duas datas à meia-noite (o arredondamento absorve o horário de verão). Projeto sem prazo não gera alerta de prazo.
 
 ### 11.3 `formatProjectDate(data)`
 Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evitar erro de fuso que “voltaria” o dia.
 
-### 11.4 Taxa de aprovação (Visão geral)
-`(aprovadas + integradas) / total de PRs × 100`, arredondado. Com `mockData`: (1 + 1) / 4 = **50%**.
+### 11.4 Métricas da Visão geral (`governanceMetrics`)
+- **Quantidade de PRs:** abertos agora + criados no período (sem contar duas vezes).
+- **Lead time médio:** média de horas da abertura ao merge dos PRs mergeados no período.
+- **Taxa de aprovação:** % dos mergeados no período com `approval_count` ≥ 1; "—" se nenhum foi mergeado.
+- **PRs em risco:** abertos (sem rascunhos) há mais de 3 dias.
+- **Contribuidores:** logins distintos de commits e de PRs criados no período.
 
 ---
 

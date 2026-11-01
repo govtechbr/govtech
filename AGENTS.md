@@ -36,7 +36,7 @@ Ao rodar testes ou build, mostre só o resumo/erros (`| tail -30`), não o log i
 - **Front e back separados.** `frontend/` = app React (JavaScript, sem TypeScript). `backend/supabase/` = migrations, seed, testes pgTAP e Edge Functions.
 - `frontend/src/landing/` página institucional · `frontend/src/app/` providers e rotas · `frontend/src/features/<dominio>/` (api, hooks, components, utils, `__tests__`) · `frontend/src/shared/` (ui, layout, hooks, lib) · `frontend/src/mocks/` dados de exemplo · `frontend/src/styles/` tokens
 - Os mocks são intencionais: só sair deles quando a feature tiver dado real no Supabase.
-- Status do projeto é **manual** (`success`/`warning`/`danger`); o semáforo de prazo é outra informação, calculada.
+- Status do projeto é **calculado pelos alertas** (`shared/lib/governance.js`, regra P3): `success` = Saudável, `warning` = Atenção, `danger` = Risco. Não existe mais status manual.
 - Uma feature **não importa** de outra; compartilhado vai para `shared/`.
 - Só `features/*/api/` importa o client Supabase. Componentes nunca chamam `supabase` direto.
 - Exemplo pronto: `features/projects/api/projectsApi.js` + `hooks/useProjects.js` (TanStack Query, chave `['projects']`). Novas features seguem o mesmo formato.

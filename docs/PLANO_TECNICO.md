@@ -1234,3 +1234,12 @@ Uma função com três ações. Todas conferem o login (JWT) e o papel do usuár
 
 - **Achado para a E4:** no repositório de demonstração nenhum PR tem aprovação (o dono faz merge sem revisor). Pela regra do §6, **todo PR mergeado vai gerar o alerta "sem aprovação"**. É o comportamento certo, mas vale combinar a demonstração (ex.: pedir revisão a um colega em alguns PRs).
 - **Fine-grained token e GraphQL:** funcionou com a chave atual (só leitura de conteúdo e PRs).
+
+**E4: Visão geral com dados reais, alertas e status automático** (regras P3, P4, §5, §6; 04/11/2026; sem migration)
+
+- **Números em destaque** (escolha do dono): Quantidade de PRs, Lead time médio, Taxa de aprovação e PRs em risco. Período 7/30/90 dias.
+- **Onde está a lógica:** `shared/lib/governance.js` (funções puras: `governanceMetrics`, `weeklyFlow`, `governanceAlerts`, `projectHealth`), usada pela Visão geral e pela página de Projetos. Os dados vêm de `features/dashboard/api/governanceApi.js` (PRs, repositórios, branches e commits da empresa escolhida), e o adaptador `app/routes.jsx` entrega o status calculado à página de Projetos, que não importa a feature dashboard.
+- **Status manual removido da tela:** sai o campo do formulário e o front deixa de ler e gravar `projects.status`. **A coluna continua no banco**, sem uso, para não fazer migration destrutiva agora; apagar fica como sugestão para depois da banca.
+- **Decisões na implementação:** "mergeado sem aprovação" olha os últimos 30 dias fixos (o status não muda com o período da tela); o gráfico mostra pelo menos 4 semanas; projeto sem prazo não gera alerta (o semáforo antigo dava "Atenção").
+- **Mocks que saíram da Visão geral:** cartões com valores fixos, gráfico semanal, distribuição de PRs, alertas e eventos de desenvolvimento. Componentes reescritos sem `style={{}}` (só a altura das barras do gráfico vai por variável CSS, por ser dado).
+- **Testes:** 10 da lógica (`governance.test.js`), 5 da Visão geral, 1 de ponta a ponta (MSW → API → tela) e os de Projetos atualizados. **103 testes**, lint e build verdes.

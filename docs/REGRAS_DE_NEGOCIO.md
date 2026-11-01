@@ -34,8 +34,8 @@ Esconder um botão na tela é só conveniência: quem bloqueia de verdade é o b
 |---|---|---|
 | P1 | O **admin cria o projeto**: é o ponto de partida de tudo | ✅ (developer também cria) |
 | P2 | Campos: nome, objetivo, prazo, responsável, prioridade, progresso | ✅ |
-| P3 | O **status** (Saudável / Atenção / Risco) é **calculado pelos alertas** (§6). O campo manual deixa de existir | 🔜 E4 (hoje é manual) |
-| P4 | Um **cartão na tela explica** como o status é calculado | 🔜 E4 |
+| P3 | O **status** (Saudável / Atenção / Risco) é **calculado pelos alertas** (§6). O campo manual deixa de existir | ✅ E4 (o formulário não tem mais o campo; a coluna antiga fica sem uso no banco) |
+| P4 | Um **cartão na tela explica** como o status é calculado | ✅ E4 (Visão geral e detalhe do projeto) |
 | P5 | Só o admin exclui projeto | ✅ |
 
 ## 4. GitHub
@@ -64,7 +64,7 @@ Calculadas dos dados sincronizados, nunca valores fixos. **Período:** seletor 7
 | Eventos de desenvolvimento | Repositórios, commits (branch principal), branches e contribuidores no período |
 | Alertas | Lista dos alertas ativos (§6) |
 
-Quais 3 ou 4 números aparecem em destaque na primeira tela: **a definir** pelo dono do projeto.
+**Números em destaque na primeira tela** (decisão de 04/11/2026): Quantidade de PRs, Lead time médio, Taxa de aprovação e **PRs em risco** (abertos há mais de 3 dias, sem rascunhos). O gráfico semanal mostra pelo menos 4 semanas, mesmo no período de 7 dias.
 
 ## 6. Alertas automáticos
 
@@ -76,6 +76,8 @@ Quais 3 ou 4 números aparecem em destaque na primeira tela: **a definir** pelo 
 | Prazo do projeto | vence em até **7 dias** | **vencido** |
 
 **Status do projeto (P3):** Risco se houver algum alerta de Risco; senão Atenção se houver algum alerta de Atenção; senão Saudável.
+
+**Detalhes decididos na implementação (E4):** o alerta "mergeado sem aprovação" olha os PRs mergeados nos **últimos 30 dias**, fixo, para o status do projeto não mudar quando se troca o período da tela. Os alertas de PR e de branch valem para todos os projetos ligados ao repositório. Projeto sem prazo não gera alerta de prazo.
 
 ## 7. Auditoria
 
