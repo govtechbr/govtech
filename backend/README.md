@@ -53,7 +53,7 @@ python scripts/to_sql_editor.py tests/*.test.sql todos.editor.sql   # ou só um 
 | `members.test.sql` | 8 | 8/8 ok (03/11/2026) |
 | `github.test.sql` | 15 | 15/15 ok (03/11/2026) |
 | `repository_selection.test.sql` | 11 | 11/11 ok (03/11/2026) |
-| `github_sync.test.sql` | 9 | a rodar (04/11/2026) |
+| `github_sync.test.sql` | 9 | 9/9 ok (04/11/2026; os 5 arquivos juntos: 68/68 ok) |
 
 Depois de cada execução, o banco é conferido pelo MCP: nenhum usuário `@test.local` nem a extensão `pgtap` ficam para trás.
 
