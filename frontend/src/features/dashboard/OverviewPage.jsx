@@ -9,6 +9,7 @@ import PullRequestDistribution from './components/PullRequestDistribution'
 import AutomatedAlerts from './components/AutomatedAlerts'
 import RecentActivityPanel from './components/RecentActivityPanel'
 import { formatProjectDate, getProjectStatus } from '@/shared/lib/projectUtils'
+import styles from './OverviewPage.module.css'
 
 export default function OverviewPage({ projectList }) {
   const prSummary = {
@@ -78,7 +79,7 @@ export default function OverviewPage({ projectList }) {
         />
       </div>
 
-      <section className="panel elevation-1" style={{ marginTop: '24px' }}>
+      <section className={`panel elevation-1 ${styles.section}`}>
         <div className="panel-heading">
           <div>
             <span className="section-kicker">FLUXO DE ENTREGAS</span>
@@ -86,14 +87,7 @@ export default function OverviewPage({ projectList }) {
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.65fr) minmax(260px, 0.75fr)',
-            gap: '28px',
-            padding: '16px 0 4px',
-          }}
-        >
+        <div className={styles.flowGrid}>
           <PullRequestFlowChart />
 
           <PullRequestDistribution
@@ -105,7 +99,7 @@ export default function OverviewPage({ projectList }) {
         </div>
       </section>
 
-      <section className="panel elevation-1" style={{ marginTop: '24px' }}>
+      <section className={`panel elevation-1 ${styles.section}`}>
         <div className="panel-heading">
           <div>
             <span className="section-kicker">PORTFÓLIO DE PROJETOS</span>
@@ -115,57 +109,36 @@ export default function OverviewPage({ projectList }) {
           <Target size={21} />
         </div>
 
-        <div style={{ display: 'grid', gap: '12px' }}>
+        <div className={styles.projectList}>
           {projectsWithStatus.map((project) => {
             const status = project.calculatedStatus
 
             return (
               <article
                 key={project.id}
-                className="metric-card elevation-1"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '16px',
-                  padding: '15px 16px',
-                  borderTop: 'none',
-                  borderLeft: `4px solid ${status.color}`,
-                }}
+                className={`elevation-1 ${styles.projectRow} ${styles[status.key]}`}
               >
-                <span style={{ fontSize: '20px' }}>{status.icon}</span>
+                <span className={styles.statusIcon} aria-hidden="true">
+                  {status.icon}
+                </span>
 
-                <div style={{ flex: 1 }}>
-                  <strong style={{ display: 'block', fontSize: '14px' }}>{project.name}</strong>
+                <div>
+                  <strong className={styles.projectName}>{project.name}</strong>
 
-                  <small style={{ color: 'var(--muted)' }}>
+                  <small className={styles.muted}>
                     Deadline: {formatProjectDate(project.deadline)} · {project.owner}
                   </small>
                 </div>
 
-                <div style={{ minWidth: '130px', textAlign: 'right' }}>
-                  <strong
-                    style={{
-                      display: 'block',
-                      color: status.color,
-                      fontSize: '13px',
-                    }}
-                  >
-                    {status.label}
-                  </strong>
+                <div className={styles.deadline}>
+                  <strong className={styles.deadlineLabel}>{status.label}</strong>
 
-                  <small style={{ color: 'var(--muted)' }}>{status.message}</small>
+                  <small className={styles.muted}>{status.message}</small>
                 </div>
 
-                <div style={{ width: '70px', textAlign: 'right' }}>
+                <div className={styles.progress}>
                   <strong>{project.progress}%</strong>
-                  <small
-                    style={{
-                      display: 'block',
-                      color: 'var(--muted)',
-                    }}
-                  >
-                    progresso
-                  </small>
+                  <small className={styles.muted}>progresso</small>
                 </div>
               </article>
             )
@@ -173,14 +146,7 @@ export default function OverviewPage({ projectList }) {
         </div>
       </section>
 
-      <section
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-          gap: '24px',
-          marginTop: '24px',
-        }}
-      >
+      <section className={styles.bottomGrid}>
         <AutomatedAlerts />
         <RecentActivityPanel />
       </section>

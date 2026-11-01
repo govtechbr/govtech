@@ -1,0 +1,108 @@
+/* Mobile-first: uma coluna; colunas lado a lado só a partir de 1024 px */
+
+.section {
+  margin-top: var(--space-6);
+}
+
+.flowGrid {
+  display: grid;
+  gap: var(--space-7);
+  padding: var(--space-4) 0 var(--space-1);
+}
+
+.projectList {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.projectRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-soft);
+  border-left: 4px solid var(--status-color);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: var(--font-size-md);
+  transition: 0.2s ease;
+}
+
+.projectRow:hover {
+  background: var(--color-hover);
+  box-shadow: var(--elevation-2);
+}
+
+.projectRow small {
+  font-size: var(--font-size-xs);
+}
+
+.success {
+  --status-color: var(--color-success);
+}
+
+.warning {
+  --status-color: var(--color-warning);
+}
+
+.danger {
+  --status-color: var(--color-danger);
+}
+
+.statusIcon {
+  font-size: var(--font-size-lg);
+}
+
+.projectName {
+  display: block;
+  font-size: var(--font-size-md);
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  display: block;
+  color: var(--muted);
+}
+
+.deadline {
+  grid-column: 2;
+}
+
+.deadlineLabel {
+  display: block;
+  color: var(--status-color);
+  font-size: var(--font-size-sm);
+}
+
+.progress {
+  grid-column: 2;
+}
+
+.bottomGrid {
+  display: grid;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .projectRow {
+    grid-template-columns: auto minmax(0, 1fr) minmax(130px, auto) 70px;
+  }
+
+  .deadline,
+  .progress {
+    grid-column: auto;
+    text-align: right;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flowGrid {
+    grid-template-columns: minmax(0, 1.65fr) minmax(260px, 0.75fr);
+  }
+
+  .bottomGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
