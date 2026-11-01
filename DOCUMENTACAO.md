@@ -2,7 +2,7 @@
 
 Plataforma web de **governança e monitoramento de projetos de TI**: painel com indicadores, lista de projetos com prazo e progresso, visão de repositórios/Pull Requests/branches, auditoria, controle de acesso (RBAC) e configurações.
 
-> **Resumo para quem não é da área de front-end:** este projeto é uma **aplicação 100% front-end**. Ele roda inteiramente no navegador. **Não existe servidor, banco de dados ou API neste repositório.** Os dados exibidos vêm de arquivos JavaScript de exemplo (“mock”) e são salvos no `localStorage` do navegador. Detalhes na seção [Tem resquícios de back-end?](#14-tem-resquícios-de-back-end).
+> **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações e projetos são reais** e ficam no banco. As outras telas (repositórios, auditoria, RBAC, indicadores) ainda mostram dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
 
 ---
 
@@ -38,10 +38,10 @@ Estado atual do projeto (verificado no código, base `193c764` + limpeza da bran
 |---|---|
 | Build de produção (`npm run build`) | Passa sem erros |
 | Histórico git | Reiniciado: 1 commit (`193c764`). O histórico anterior (6 commits) não existe mais |
-| Chamadas de rede (`fetch`, `axios`, etc.) | Nenhuma |
-| Login | Simulado: qualquer senha redireciona para o painel |
-| Autenticação real / proteção de rotas | Não existe |
-| Dados | Arquivos de exemplo + `localStorage` |
+| Chamadas de rede | Só para o Supabase, pelo `@supabase/supabase-js` (arquivos `features/*/api/`) |
+| Login | Real (Supabase Auth): e-mail e senha, com cadastro |
+| Proteção de rotas | `ProtectedRoute`: sem login vai para `/login`; sem organização vai para `/organizacao` |
+| Dados | Projetos e organizações no banco (com RLS); demais telas com arquivos de exemplo |
 
 ---
 
@@ -99,6 +99,8 @@ npm install
 ```
 
 Isso lê o `package.json` e baixa as bibliotecas para a pasta `node_modules/` (que não vai para o git, conforme o `.gitignore`). Também instala o hook de pre-commit (Husky), que roda ESLint e Prettier nos arquivos alterados a cada commit.
+
+**Variáveis do Supabase:** copie `frontend/.env.example` para `frontend/.env.local` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` (Dashboard do Supabase > Project Settings > API). São valores públicos; o acesso aos dados é controlado pelo RLS. A secret key nunca entra no front. Sem elas, o app mostra um erro ao abrir. Na Vercel as duas já estão configuradas.
 
 ### Passo 3 — Subir o servidor de desenvolvimento
 
@@ -162,9 +164,9 @@ govtech/
         ├── landing/      ← LandingPage.jsx: página de apresentação, separada do sistema.
         │
         ├── features/     ← Uma pasta por área do sistema. Uma feature não importa outra.
-        │   ├── auth/          LoginPage.jsx (login simulado).
+        │   ├── auth/          Login, cadastro e escolha de organização; AuthProvider, ProtectedRoute, api/authApi.js.
         │   ├── dashboard/     OverviewPage.jsx + components/ (gráficos e painéis da Visão geral).
-        │   ├── projects/      ProjectsPage.jsx + components/ (modais) + utils/storageUtils.js.
+        │   ├── projects/      ProjectsPage.jsx + components/ (modais) + api/projectsApi.js (Supabase).
         │   ├── repositories/  RepositoriesPage.jsx + components/ (repositórios, PRs, branches).
         │   ├── audit/         AuditPage.jsx (eventos de auditoria).
         │   ├── rbac/          RbacPage.jsx + components/ (detalhes de um papel).
@@ -174,7 +176,7 @@ govtech/
         │   ├── layout/        Sidebar, Topbar, GlobalSearch e ChatbotModal.
         │   ├── ui/            Brand, Icon, Modal, StatCard, StatusBadge, Toast/ToastProvider.
         │   ├── hooks/         useLocalStorage (estado salvo no navegador), useTheme (tema claro/escuro).
-        │   ├── lib/           projectUtils.js: normaliza projetos, formata datas e calcula o semáforo de prazo.
+        │   ├── lib/           projectUtils.js (normaliza projetos, datas, semáforo de prazo), supabase.js (único client), zodResolver.js.
         │   └── constants/     colors, defaultSettings, projectStatus (Saudável/Atenção/Risco), storageKeys.
         │
         ├── mocks/        ← mockData.js: TODOS os dados de exemplo (ficam até existir dado real no Supabase).
@@ -214,10 +216,11 @@ createRoot(document.getElementById('root')).render(
 Ele usa `<Routes>` para comparar o endereço atual com a lista de rotas (ver §7).
 
 **Passo 4 — Telas públicas ou autenticadas.**
-- `/`, `/login` → `LoginPage`.
+- `AuthProvider` (em volta de tudo) acompanha a sessão do Supabase: carregando, sem login ou logado. Ao sair, limpa o cache de dados para o próximo usuário não ver nada do anterior.
+- `/` → redireciona para `/login`. `/login` → `LoginPage`, `/cadastro` → `SignupPage`, `/organizacao` → `OrganizationPage`.
 - `/landing` → `LandingPage`.
 - `/landing` é carregada sob demanda (`lazy()`): o código dela só baixa quando alguém abre a página.
-- `/dashboard`, `/audit`, `/repositories`, `/projects`, `/access`, `/settings` → rotas filhas de `AppLayout` (rotas aninhadas).
+- `/dashboard`, `/audit`, `/repositories`, `/projects`, `/access`, `/settings` → rotas filhas de `ProtectedRoute` e `AppLayout` (rotas aninhadas). `ProtectedRoute` manda quem não tem login para `/login` e quem não tem organização para `/organizacao`.
 
 **Passo 5 — `AppLayout` monta a casca do sistema.**
 O `App.jsx` envolve tudo em `ToastProvider` (avisos) e declara as rotas. O `src/app/AppLayout.jsx`:
@@ -229,10 +232,10 @@ O `App.jsx` envolve tudo em `ToastProvider` (avisos) e declara as rotas. O `src/
 6. Repassa as configurações às páginas pelo `context` do `<Outlet>`. Os adaptadores em `src/app/routes.jsx` ligam rota e página: a Visão geral recebe os projetos por prop porque uma feature (dashboard) não importa de outra (projects).
 
 **Passo 6 — Ações do usuário mudam o estado.**
-Exemplo: ao criar um projeto, `ProjectsPage` chama `useCreateProject().mutateAsync(dados)`. Isso executa `createProject` em `features/projects/api/projectsApi.js` (que grava no localStorage) e invalida a query `['projects']`; o TanStack Query busca a lista de novo e todas as telas que usam `useProjects()` são redesenhadas.
+Exemplo: ao criar um projeto, `ProjectsPage` chama `useCreateProject().mutateAsync(dados)`. Isso executa `createProject` em `features/projects/api/projectsApi.js` (que grava no Supabase, na organização do usuário) e invalida a query `['projects']`; o TanStack Query busca a lista de novo e todas as telas que usam `useProjects()` são redesenhadas.
 
 **Passo 7 — Redirecionamentos.**
-Qualquer endereço desconhecido cai em `<Navigate to="/" />`, ou seja, volta para o login.
+Qualquer endereço desconhecido cai em `<Navigate to="/login" />`.
 
 ---
 
@@ -242,8 +245,10 @@ Definidas em `src/app/App.jsx`:
 
 | Endereço | Componente | Layout | Observação |
 |---|---|---|---|
-| `/` | `LoginPage` | Público | Tela inicial. |
-| `/login` | `LoginPage` | Público | Mesma tela. |
+| `/` | redireciona para `/login` | Público | — |
+| `/login` | `LoginPage` | Público | Login com e-mail e senha. Quem já está logado vai para `/dashboard`. |
+| `/cadastro` | `SignupPage` | Público | Cria a conta (nome, e-mail, senha). |
+| `/organizacao` | `OrganizationPage` | Logado | Criar organização (vira admin) ou entrar com código (vira viewer). |
 | `/landing` | `LandingPage` | Público | Página institucional. |
 | `/dashboard` | `AppLayout` → `OverviewPage` | Autenticado | Visão geral. |
 | `/audit` | `AppLayout` → `AuditPage` | Autenticado | Auditoria. |
@@ -251,19 +256,20 @@ Definidas em `src/app/App.jsx`:
 | `/projects` | `AppLayout` → `ProjectsPage` | Autenticado | Projetos. |
 | `/access` | `AppLayout` → `RbacPage` | Autenticado | Acessos e RBAC. |
 | `/settings` | `AppLayout` → `SettingsPage` | Autenticado | Configurações. |
-| qualquer outro | redireciona para `/` | — | — |
+| qualquer outro | redireciona para `/login` | — | — |
 
-> “Autenticado” aqui é só nome: não há verificação de login. Qualquer pessoa digitando `/dashboard` entra.
+> “Autenticado” = passa pelo `ProtectedRoute`. A proteção na tela é só conveniência: quem garante o acesso aos dados é o RLS do banco (`backend/supabase/`).
 
 ---
 
 ## 8. Páginas
 
-### 8.1 `LoginPage.jsx` — Login (simulado)
-- Mostra cabeçalho com logo, link “Capacidades” (vai para a landing) e “Ver demonstração” (vai para `/dashboard`).
-- Formulário com campo de senha que pode ser mostrado/ocultado.
-- Ao enviar: `submit` mostra um aviso e, após **700 ms**, faz `window.location.href = '/dashboard'`.
-- **Não valida** usuário nem senha. Nada é enviado a lugar nenhum.
+### 8.1 Login, cadastro e organização (`features/auth/`)
+- As três telas usam a mesma moldura (`AuthLayout`) e formulários com **react-hook-form + zod** (`utils/schemas.js`). Erros aparecem embaixo de cada campo, ligados por `aria-describedby`.
+- **Login** (`LoginPage`): `signInWithPassword`. Mensagens em pt-BR para senha errada, e-mail não confirmado e excesso de tentativas.
+- **Cadastro** (`SignupPage`): cria a conta com o nome em `user_metadata.full_name`; um trigger do banco cria o perfil. Se o Supabase exigir confirmação de e-mail, a tela avisa para abrir o link.
+- **Organização** (`OrganizationPage`): duas opções, **criar** (`create_organization`, vira admin) ou **entrar com código** (`join_organization`, vira viewer; o código não diferencia maiúsculas). Código errado mostra “Código de organização inválido.” sem dizer se a organização existe.
+- **Sair**: no menu da conta (Topbar). A barra lateral e o menu mostram o nome, o papel e a organização de quem está logado.
 
 ### 8.2 `LandingPage.jsx` — Apresentação (marketing)
 Página de vendas com seções com âncora (`#capabilities`, `#how-it-works`, `#standards`, `#demo`):
@@ -415,10 +421,10 @@ Chaves declaradas em `constants/storageKeys.js`:
 
 | Constante | Valor real da chave | Onde é usada |
 |---|---|---|
-| `storageKeys.SETTINGS` | `govtech:settings` | `App.jsx`, via `useLocalStorage`. |
-| `storageKeys.PROJECTS` | `govtech:projects` | `features/projects/utils/storageUtils.js`, chamado **só** por `features/projects/api/projectsApi.js`. |
+| `storageKeys.SETTINGS` | `govtech:settings` | `AppLayout.jsx`, via `useLocalStorage`. |
+| (Supabase) | `govtech-auth` | Sessão do login, gravada pelo `supabase-js` (`shared/lib/supabase.js`). |
 
-> Até 31/10/2026 os projetos eram gravados por engano na chave `"undefined"` (nome de constante errado). Quem tinha dados salvos nessa chave volta a ver os projetos de exemplo; a chave antiga pode ser apagada pelo DevTools.
+> Desde 01/11/2026 os projetos ficam no banco. A antiga chave `govtech:projects` não é mais lida e pode ser apagada pelo DevTools.
 
 ### 10.4 Como o `useLocalStorage` funciona
 
@@ -488,9 +494,11 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 
 ## 14. Tem resquícios de back-end?
 
-**Resposta curta: não há back-end em funcionamento. Há alguns vestígios que parecem de back-end, mas são só texto, configuração ou código não usado.**
+> **Atualização de 01/11/2026:** agora há back-end real. O banco, as regras de acesso e os testes ficam em `backend/supabase/` (ver `backend/README.md`); o front fala com ele só pelos arquivos `features/*/api/` (regra do ESLint). Variáveis: `frontend/.env.example` (copiar para `.env.local`). O texto abaixo descreve o estado de 31/10/2026 e fica como registro.
 
-### Evidências de que NÃO há back-end
+**Resposta curta (31/10/2026): não havia back-end em funcionamento. Havia alguns vestígios que pareciam de back-end, mas eram só texto, configuração ou código não usado.**
+
+### Evidências de que NÃO havia back-end (31/10/2026)
 - `package.json`: nenhuma dependência de servidor (sem Express, Fastify, Prisma, Mongoose, Supabase, Firebase, etc.). Só React, Router, Lucide e Vite.
 - Nenhuma chamada de rede: não há `fetch`, `axios`, `XMLHttpRequest` nem URLs de API no código.
 - Não há pasta `server/`, `api/`, `backend/`, nem arquivos `.env` versionados, nem migrations, nem modelos de banco.
@@ -511,12 +519,10 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 | Usuários com e-mail `@govtech.ms` | `RbacPage.jsx` | Dados fixos no código. |
 | Hashes `a82f91c0…7d2e` | `mockData.js` (auditoria) | Strings inventadas, sem cálculo real. |
 
-### Como seria a transição para back-end (se você quiser no futuro)
-Os pontos onde os dados seriam trocados por chamadas HTTP já estão bem claros:
-1. `features/projects/api/projectsApi.js` → `listProjects`, `createProject`, `updateProject` e `deleteProject` passam a chamar o Supabase. Telas, hooks e testes de tela não mudam (os testes de tela já trocam essa API por uma versão em memória; `__tests__/projectsApi.test.js` é o contrato que a versão Supabase precisa cumprir).
-2. `pages/LoginPage.jsx` → `submit` viraria `POST /auth/login`, com a sessão gerenciada pelo Supabase Auth.
-3. `data/mockData.js` → cada array viraria uma resposta de API.
-4. `App.jsx` → `isAuthenticated` deixaria de ser `true` fixo e viraria uma verificação real de token.
+### Transição para o back-end
+1. ✅ `features/projects/api/projectsApi.js` chama o Supabase (01/11/2026). Telas e hooks não mudaram; o contrato `__tests__/projectsApi.test.js` roda contra o Supabase simulado pelo MSW.
+2. ✅ Login, cadastro e organizações reais (`features/auth/`), com `ProtectedRoute`.
+3. ⏳ `mocks/mockData.js` → cada array vira tabela quando a feature correspondente ganhar dados reais (auditoria, GitHub, RBAC; ver PLANO_TECNICO §16.6).
 
 ---
 
@@ -531,14 +537,14 @@ Organizados por gravidade. ✅ = resolvido na limpeza de 31/10/2026 (branch `cho
 3. ✅ **Chaves de storage erradas.** Agora os projetos vão para `govtech:projects` e as configurações para `govtech:settings`. Os aliases duplicados (`STORAGE_KEYS`, `DEFAULT_SETTINGS`) foram removidos.
 4. ✅ **Projetos sem status.** Criado o status manual (`constants/projectStatus.js`), com campo no formulário; os contadores “Em atenção” e “Riscos críticos” passaram a funcionar.
 5. ✅ **Projetos não eram salvos.** O `App.jsx` não gravava a lista de projetos (só o `DashboardPage` gravava). Agora grava a cada mudança; verificado com reload.
-6. ⏳ **Nenhuma proteção de rota.** Adiado por decisão do time; entra com o Supabase Auth.
+6. ✅ **Nenhuma proteção de rota.** Resolvido em 01/11/2026 com o Supabase Auth (`ProtectedRoute`) e RLS no banco.
 
 ### 15.2 Média (comportamento enganoso)
 
 7. ⏳ **Botões sem função:** “Exportar CSV” e “Filtrar” (Auditoria e RBAC), “Convidar usuário”, “Nova função”, “Adicionar” (RBAC).
 8. ⏳ **Respostas do chatbot descrevem funções que não existem** (`ChatbotModal.jsx`: “Exportar Dados”, “seção Riscos”, campo “branch”).
 9. ⏳ **Valores fixos** (“4.2 dias”, “3” alertas, “34”, “92%”). Mantidos por decisão do time até haver dados reais.
-10. ⏳ **Login aceita qualquer coisa** (`LoginPage.jsx`). Entra com o Supabase Auth.
+10. ✅ **Login aceita qualquer coisa.** Resolvido em 01/11/2026: login real com o Supabase Auth.
 11. ⏳ **Integrações e 2FA são demonstrativas.**
 12. ✅ **Busca global nunca abre:** corrigido em 01/11/2026 (o `AppLayout` controla `open` e a Topbar abre a busca); coberto por testes.
 
