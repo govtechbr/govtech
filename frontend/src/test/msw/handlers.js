@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw/http'
 
-import { db, otherOrganization, sessionFor, testPassword } from '@/test/msw/db'
+import { db, otherOrganization, sessionFor, testPassword, validGitHubToken } from '@/test/msw/db'
 
 // Imita as respostas do Supabase (PostgREST e Auth) só no que o app usa.
 
@@ -62,7 +62,121 @@ function authError(status, errorCode, msg) {
   return HttpResponse.json({ code: status, error_code: errorCode, msg }, { status })
 }
 
+// Filtro do tipo ?repository.project_id=eq.<valor> (join com repositories)
+function withRepository(request, rowsList) {
+  const projectId = eqParam(request, 'repository.project_id')
+
+  return rowsList
+    .map((row) => {
+      const repository = db.repositories.find(({ id }) => id === row.repository_id)
+
+      return {
+        ...row,
+        repository: {
+          name: repository.name,
+          project_id: repository.project_id,
+          default_branch: repository.default_branch,
+        },
+      }
+    })
+    .filter((row) => !projectId || row.repository.project_id === projectId)
+}
+
+function byProjectParam(request, list) {
+  const projectId = eqParam(request, 'project_id')
+
+  return projectId ? list.filter((row) => row.project_id === projectId) : list
+}
+
+// Edge Function `github` simulada: aceita só validGitHubToken
+function githubFunction({ action, projectId, token }) {
+  if (action === 'connect') {
+    if (token !== validGitHubToken) {
+      return HttpResponse.json(
+        { error: 'Chave do GitHub inválida ou expirada. Gere uma nova e conecte de novo.' },
+        { status: 400 },
+      )
+    }
+
+    db.githubCredentials = [
+      ...db.githubCredentials.filter((row) => row.project_id !== projectId),
+      {
+        project_id: projectId,
+        token_last4: token.slice(-4),
+        github_login: 'dono-gh',
+        last_synced_at: null,
+      },
+    ]
+    return HttpResponse.json({ login: 'dono-gh', repositoryCount: 1 })
+  }
+
+  if (action === 'sync') {
+    const repository = {
+      id: `repo-${projectId}`,
+      project_id: projectId,
+      full_name: 'dono-gh/govtech',
+      name: 'govtech',
+      description: 'TCC',
+      language: 'JavaScript',
+      default_branch: 'main',
+      html_url: 'https://github.com/dono-gh/govtech',
+      private: true,
+      pushed_at: new Date().toISOString(),
+    }
+
+    db.repositories = [...db.repositories.filter((row) => row.id !== repository.id), repository]
+    db.pullRequests = [
+      {
+        id: `pr-${projectId}`,
+        repository_id: repository.id,
+        number: 12,
+        title: 'Integração com o GitHub',
+        state: 'open',
+        draft: false,
+        author_login: 'dono-gh',
+        html_url: 'https://github.com/dono-gh/govtech/pull/12',
+        created_at_github: new Date().toISOString(),
+        merged_at: null,
+      },
+    ]
+    db.branches = [
+      {
+        id: `branch-${projectId}`,
+        repository_id: repository.id,
+        name: 'main',
+        last_commit_sha: 'abc1234def',
+        protected: true,
+      },
+    ]
+    db.githubCredentials.find((row) => row.project_id === projectId).last_synced_at =
+      new Date().toISOString()
+    return HttpResponse.json({ repositoryCount: 1, pullRequestCount: 1, branchCount: 1 })
+  }
+
+  db.githubCredentials = db.githubCredentials.filter((row) => row.project_id !== projectId)
+  db.repositories = db.repositories.filter((row) => row.project_id !== projectId)
+  return HttpResponse.json({ disconnected: true })
+}
+
 export const handlers = [
+  http.post(`${url}/functions/v1/github`, async ({ request }) =>
+    githubFunction(await request.json()),
+  ),
+
+  http.get(rest('github_credentials'), ({ request }) =>
+    rows(request, byProjectParam(request, db.githubCredentials)),
+  ),
+
+  http.get(rest('repositories'), ({ request }) =>
+    rows(request, byProjectParam(request, db.repositories)),
+  ),
+
+  http.get(rest('pull_requests'), ({ request }) =>
+    rows(request, withRepository(request, db.pullRequests)),
+  ),
+
+  http.get(rest('branches'), ({ request }) => rows(request, withRepository(request, db.branches))),
+
   http.post(`${url}/auth/v1/token`, async ({ request }) => {
     const { email, password } = await request.json()
     const user = db.users.find((candidate) => candidate.email === email)

@@ -29,9 +29,6 @@ export function normalizeProject(project, index = 0) {
     priority: validPriorities.includes(project?.priority) ? project.priority : 'medium',
     status: Object.hasOwn(PROJECT_STATUS, project?.status ?? '') ? project.status : 'success',
     progress: Number.isFinite(parsedProgress) ? Math.max(0, Math.min(100, parsedProgress)) : 0,
-    repositories: Array.isArray(project?.repositories)
-      ? project.repositories.filter((repository) => typeof repository === 'string')
-      : [],
   }
 }
 

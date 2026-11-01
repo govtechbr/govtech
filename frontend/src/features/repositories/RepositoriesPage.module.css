@@ -1,0 +1,61 @@
+.filter {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.filter select {
+  min-width: 200px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+}
+
+.tabsPanel {
+  margin-bottom: var(--space-6);
+}
+
+.tabs {
+  padding: 0 var(--space-4);
+  border-bottom: none;
+}
+
+.state {
+  padding: var(--space-4) 0;
+  color: var(--muted);
+  font-size: var(--font-size-md);
+}
+
+.empty h2 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-lg);
+}
+
+.empty p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+}
+
+.link {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.sub {
+  display: block;
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+}

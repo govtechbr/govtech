@@ -1,0 +1,92 @@
+.muted {
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+}
+
+.status {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.repoList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.repoList a {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+  color: var(--text);
+  font: var(--font-size-xs) var(--font-mono);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.form label {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: var(--font-size-sm) var(--font-mono);
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--font-size-xs);
+}
+
+.help {
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+}
+
+.help summary {
+  cursor: pointer;
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.help ol {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+  line-height: 1.7;
+}
+
+.help a {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.confirm p {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.danger {
+  background: var(--danger);
+}

@@ -13,7 +13,7 @@ const db = vi.hoisted(() => ({ projects: [] }))
 vi.mock('@/features/projects/api/projectsApi', () => ({
   listProjects: async () => db.projects,
   createProject: async (data) => {
-    const project = { repositories: [], ...data, id: db.projects.length + 100 }
+    const project = { ...data, id: db.projects.length + 100 }
     db.projects = [...db.projects, project]
     return project
   },
@@ -37,7 +37,6 @@ const initialProjects = [
     priority: 'high',
     status: 'danger',
     progress: 40,
-    repositories: [],
   },
   {
     id: 2,
@@ -48,7 +47,6 @@ const initialProjects = [
     priority: 'medium',
     status: 'warning',
     progress: 70,
-    repositories: [],
   },
 ]
 

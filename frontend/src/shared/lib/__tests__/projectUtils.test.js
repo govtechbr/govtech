@@ -78,7 +78,6 @@ describe('normalizeProject', () => {
       priority: 'medium',
       status: 'success',
       progress: 0,
-      repositories: [],
     })
   })
 
@@ -103,12 +102,6 @@ describe('normalizeProject', () => {
     expect(normalizeProject({ progress: -5 }).progress).toBe(0)
     expect(normalizeProject({ progress: '42' }).progress).toBe(42)
     expect(normalizeProject({ progress: 'abc' }).progress).toBe(0)
-  })
-
-  it('keeps only string repositories', () => {
-    const project = normalizeProject({ repositories: ['api', 3, null, 'web'] })
-
-    expect(project.repositories).toEqual(['api', 'web'])
   })
 })
 

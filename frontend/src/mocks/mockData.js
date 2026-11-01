@@ -56,7 +56,6 @@ export const projects = [
     priority: 'high',
     status: 'danger',
     progress: 68,
-    repositories: ['identity-gateway', 'billing-orchestrator'],
   },
   {
     id: 2,
@@ -67,7 +66,6 @@ export const projects = [
     priority: 'medium',
     status: 'warning',
     progress: 45,
-    repositories: ['notification-hub'],
   },
   {
     id: 3,
@@ -78,7 +76,6 @@ export const projects = [
     priority: 'medium',
     status: 'success',
     progress: 82,
-    repositories: ['observability-api'],
   },
   {
     id: 4,
@@ -89,7 +86,6 @@ export const projects = [
     priority: 'low',
     status: 'danger',
     progress: 35,
-    repositories: ['identity-gateway'],
   },
 ]
 
@@ -235,122 +231,5 @@ export const auditEvents = [
     hash: 'b11caa4d…0ef1',
     time: '08:44:21',
     status: 'warning',
-  },
-]
-
-export const repositoryList = [
-  {
-    name: 'govtech-api',
-    language: 'Node.js',
-    branch: 'main',
-    pullRequests: 4,
-    pipeline: 'Aprovada',
-    status: 'success',
-  },
-  {
-    name: 'govtech-dashboard',
-    language: 'React',
-    branch: 'develop',
-    pullRequests: 3,
-    pipeline: 'Em análise',
-    status: 'warning',
-  },
-  {
-    name: 'governance-engine',
-    language: 'Python',
-    branch: 'main',
-    pullRequests: 1,
-    pipeline: 'Aprovada',
-    status: 'success',
-  },
-  {
-    name: 'notification-service',
-    language: 'Java',
-    branch: 'release',
-    pullRequests: 2,
-    pipeline: 'Atenção',
-    status: 'danger',
-  },
-]
-
-export const pullRequestList = [
-  {
-    id: '#482',
-    title: 'Implementa indicadores de governança',
-    repository: 'govtech-dashboard',
-    author: 'Ana Silva',
-    reviewers: 2,
-    age: '2h',
-    status: 'Em revisão',
-    variant: 'warning',
-  },
-  {
-    id: '#479',
-    title: 'Adiciona trilha de auditoria',
-    repository: 'govtech-api',
-    author: 'Carlos Melo',
-    reviewers: 3,
-    age: '5h',
-    status: 'Aprovada',
-    variant: 'success',
-  },
-  {
-    id: '#476',
-    title: 'Ajusta alerta de pipeline',
-    repository: 'notification-service',
-    author: 'João Santos',
-    reviewers: 1,
-    age: '2 dias',
-    status: 'Atenção',
-    variant: 'danger',
-  },
-  {
-    id: '#471',
-    title: 'Refatora integração com GitHub',
-    repository: 'governance-engine',
-    author: 'Marina Costa',
-    reviewers: 2,
-    age: '1 dia',
-    status: 'Em revisão',
-    variant: 'warning',
-  },
-]
-
-export const branchList = [
-  {
-    name: 'main',
-    repository: 'govtech-api',
-    author: 'Marina Costa',
-    lastCommit: 'a8f42c1',
-    updated: '12 min atrás',
-    protection: 'Protegida',
-    status: 'success',
-  },
-  {
-    name: 'develop',
-    repository: 'govtech-dashboard',
-    author: 'Ana Silva',
-    lastCommit: 'b21d4e9',
-    updated: '28 min atrás',
-    protection: 'Protegida',
-    status: 'success',
-  },
-  {
-    name: 'feature/audit-trail',
-    repository: 'governance-engine',
-    author: 'Carlos Melo',
-    lastCommit: 'c91f7d2',
-    updated: '3h atrás',
-    protection: 'Em revisão',
-    status: 'warning',
-  },
-  {
-    name: 'release/2.4',
-    repository: 'notification-service',
-    author: 'João Santos',
-    lastCommit: 'd65aa10',
-    updated: '1 dia atrás',
-    protection: 'Atenção',
-    status: 'danger',
   },
 ]

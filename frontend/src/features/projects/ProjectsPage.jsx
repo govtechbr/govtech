@@ -16,7 +16,7 @@ import styles from './ProjectsPage.module.css'
 
 // permissions vem do papel do usuário (adaptador em app/routes.jsx). Esconder o
 // botão é só conveniência: quem bloqueia de verdade é o RLS do banco.
-const allowAll = { create: true, edit: true, delete: true }
+const allowAll = { create: true, edit: true, delete: true, manageGitHub: true, syncGitHub: true }
 
 export default function ProjectsPage({ initialProjectId, permissions = allowAll }) {
   const { showToast } = useToast()
@@ -196,6 +196,7 @@ export default function ProjectsPage({ initialProjectId, permissions = allowAll 
         <ProjectDetailModal
           project={selectedProject}
           onClose={() => setSelectedProjectId(null)}
+          github={{ canManage: permissions.manageGitHub, canSync: permissions.syncGitHub }}
           onEdit={permissions.edit ? () => openEditForm(selectedProject) : null}
           onDelete={permissions.delete ? () => setShowDeleteConfirm(true) : null}
         />

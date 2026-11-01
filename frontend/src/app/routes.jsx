@@ -5,6 +5,7 @@ import OverviewPage from '@/features/dashboard/OverviewPage'
 import { useProjects } from '@/features/projects/hooks/useProjects'
 import ProjectsPage from '@/features/projects/ProjectsPage'
 import RbacPage from '@/features/rbac/RbacPage'
+import RepositoriesPage from '@/features/repositories/RepositoriesPage'
 import SettingsPage from '@/features/settings/SettingsPage'
 
 // Adaptadores entre rotas e páginas. Uma feature não importa de outra, então o
@@ -19,10 +20,16 @@ function useCurrentOrganization() {
 
 // Espelha as regras do banco (core_schema): esconder o botão é conveniência; o RLS bloqueia
 const projectPermissions = {
-  admin: { create: true, edit: true, delete: true },
-  developer: { create: true, edit: true, delete: false },
-  stakeholder: { create: false, edit: false, delete: false },
-  viewer: { create: false, edit: false, delete: false },
+  admin: { create: true, edit: true, delete: true, manageGitHub: true, syncGitHub: true },
+  developer: { create: true, edit: true, delete: false, manageGitHub: false, syncGitHub: true },
+  stakeholder: {
+    create: false,
+    edit: false,
+    delete: false,
+    manageGitHub: false,
+    syncGitHub: false,
+  },
+  viewer: { create: false, edit: false, delete: false, manageGitHub: false, syncGitHub: false },
 }
 
 export function OverviewRoute() {
@@ -43,6 +50,12 @@ export function ProjectsRoute() {
       permissions={projectPermissions[organization.role]}
     />
   )
+}
+
+export function RepositoriesRoute() {
+  const { data: projects = [] } = useProjects()
+
+  return <RepositoriesPage projects={projects} />
 }
 
 export function AccessRoute() {

@@ -1,61 +1,47 @@
-import { GitBranch, GitPullRequest, MoreHorizontal, ShieldCheck } from 'lucide-react'
-import { repositoryList as repositories } from '@/mocks/mockData'
+import { Folder, GitBranch, GitPullRequest, Lock } from 'lucide-react'
 
-export default function RepositoriesList() {
+import styles from '@/features/repositories/RepositoriesPage.module.css'
+import { timeAgo } from '@/shared/lib/date'
+import MetricCard from '@/features/repositories/components/MetricCard'
+
+export default function RepositoriesList({ repositories, pullRequests, branches, projectNames }) {
+  const openByRepository = {}
+
+  for (const pr of pullRequests) {
+    if (pr.state === 'open') {
+      openByRepository[pr.repository_id] = (openByRepository[pr.repository_id] ?? 0) + 1
+    }
+  }
+
   return (
     <>
       <section className="metrics-grid">
-        <article className="metric-card elevation-1">
-          <div className="metric-icon">
-            <GitBranch size={19} />
-          </div>
-
-          <div className="metric-content">
-            <span>Repositórios ativos</span>
-            <strong>12</strong>
-            <small>Projetos monitorados</small>
-          </div>
-        </article>
-
-        <article className="metric-card elevation-1">
-          <div className="metric-icon">
-            <GitBranch size={19} />
-          </div>
-
-          <div className="metric-content">
-            <span>Branches acompanhadas</span>
-            <strong>31</strong>
-            <small>Ativas no período</small>
-          </div>
-        </article>
-
-        <article className="metric-card elevation-1">
-          <div className="metric-icon">
-            <GitPullRequest size={19} />
-          </div>
-
-          <div className="metric-content">
-            <span>Pull Requests abertas</span>
-            <strong>10</strong>
-            <small>Demandam revisão</small>
-          </div>
-        </article>
+        <MetricCard
+          icon={Folder}
+          label="Repositórios"
+          value={repositories.length}
+          hint="Sincronizados"
+        />
+        <MetricCard
+          icon={GitPullRequest}
+          label="PRs abertos"
+          value={pullRequests.filter((pr) => pr.state === 'open').length}
+          hint="Em todos os repositórios"
+        />
+        <MetricCard
+          icon={GitBranch}
+          label="Branches"
+          value={branches.length}
+          hint="Ativas no GitHub"
+        />
       </section>
 
       <section className="panel elevation-1">
         <div className="panel-heading">
           <div>
-            <span className="section-kicker">VISÃO CONSOLIDADA</span>
-
-            <h2>Repositórios monitorados</h2>
-
-            <p>Atividade consolidada dos repositórios sincronizados.</p>
+            <span className="section-kicker">GITHUB</span>
+            <h2>Repositórios</h2>
           </div>
-
-          <button type="button" className="primary-button small">
-            <GitBranch size={15} />
-            Conectar repositório
-          </button>
         </div>
 
         <div className="table-scroll">
@@ -63,64 +49,42 @@ export default function RepositoriesList() {
             <thead>
               <tr>
                 <th>REPOSITÓRIO</th>
-                <th>STACK</th>
-                <th>BRANCH PRINCIPAL</th>
-                <th>PULL REQUESTS</th>
-                <th>PIPELINE</th>
-                <th aria-label="Ações" />
+                <th>PROJETO</th>
+                <th>LINGUAGEM</th>
+                <th>PRS ABERTOS</th>
+                <th>ÚLTIMO PUSH</th>
               </tr>
             </thead>
 
             <tbody>
               {repositories.map((repository) => (
-                <tr key={repository.name}>
+                <tr key={repository.id}>
                   <td>
                     <div className="service-name">
                       <span className="avatar">
-                        {repository.name
-                          .split('-')
-                          .map((part) => part[0])
-                          .join('')
-                          .slice(0, 2)
-                          .toUpperCase()}
+                        {repository.private ? <Lock size={15} /> : <Folder size={15} />}
                       </span>
 
                       <div>
-                        <b>{repository.name}</b>
-                        <small>Sincronizado com GitHub</small>
+                        <a
+                          className={styles.link}
+                          href={repository.html_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {repository.full_name}
+                        </a>
+                        {repository.description && (
+                          <small className={styles.sub}>{repository.description}</small>
+                        )}
                       </div>
                     </div>
                   </td>
 
-                  <td>{repository.language}</td>
-
-                  <td>
-                    <span className="mono">{repository.branch}</span>
-                  </td>
-
-                  <td>
-                    <span className="inline-icon-text">
-                      <GitPullRequest size={15} />
-                      {repository.pullRequests}
-                    </span>
-                  </td>
-
-                  <td>
-                    <span className={`status-badge ${repository.status}`}>
-                      <ShieldCheck size={13} />
-                      {repository.pipeline}
-                    </span>
-                  </td>
-
-                  <td>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label={`Ações de ${repository.name}`}
-                    >
-                      <MoreHorizontal size={17} />
-                    </button>
-                  </td>
+                  <td>{projectNames[repository.project_id] ?? '—'}</td>
+                  <td>{repository.language ?? '—'}</td>
+                  <td>{openByRepository[repository.id] ?? 0}</td>
+                  <td className="muted-cell">{timeAgo(repository.pushed_at)}</td>
                 </tr>
               ))}
             </tbody>

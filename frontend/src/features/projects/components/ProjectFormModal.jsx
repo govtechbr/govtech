@@ -1,7 +1,6 @@
 import { Check } from 'lucide-react'
 import { useState } from 'react'
 
-import { services } from '@/mocks/mockData'
 import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
 import Modal from '@/shared/ui/Modal'
 import styles from './ProjectModals.module.css'
@@ -15,20 +14,10 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
     priority: project?.priority || 'medium',
     status: project?.status || 'success',
     progress: project?.progress ?? 0,
-    repositories: Array.isArray(project?.repositories) ? project.repositories : [],
   })
 
   const updateField = (field) => (event) => {
     setForm((current) => ({ ...current, [field]: event.target.value }))
-  }
-
-  const toggleRepository = (repositoryName) => {
-    setForm((current) => ({
-      ...current,
-      repositories: current.repositories.includes(repositoryName)
-        ? current.repositories.filter((item) => item !== repositoryName)
-        : [...current.repositories, repositoryName],
-    }))
   }
 
   const submit = (event) => {
@@ -125,23 +114,6 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
             />
           </label>
         </div>
-
-        <fieldset className={styles.fieldset}>
-          <legend className={styles.legend}>Repositórios Vinculados</legend>
-
-          <div className={styles.checkGrid}>
-            {services.map((service) => (
-              <label key={service.name} className={styles.check}>
-                <input
-                  type="checkbox"
-                  checked={form.repositories.includes(service.name)}
-                  onChange={() => toggleRepository(service.name)}
-                />
-                {service.name}
-              </label>
-            ))}
-          </div>
-        </fieldset>
 
         <div className={styles.actions}>
           <button className="primary-button" type="submit">
