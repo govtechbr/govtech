@@ -90,3 +90,54 @@
 .danger {
   background: var(--danger);
 }
+
+/* Escolha de repositórios */
+.picker {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.picker legend {
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.pickerList {
+  display: grid;
+  gap: var(--space-1);
+  max-height: 280px;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+/* caixa na primeira coluna; nome e detalhes empilhados na segunda */
+.pickerList label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.pickerList label:hover {
+  background: var(--bg-alt);
+}
+
+.pickerList input {
+  grid-row: span 2;
+  margin-top: var(--space-1);
+}
+
+.pickerList strong {
+  font: 600 var(--font-size-xs) var(--font-mono);
+}
+
+.pickerList small {
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+}

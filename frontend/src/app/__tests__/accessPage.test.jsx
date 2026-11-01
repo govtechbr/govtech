@@ -40,16 +40,22 @@ describe('Access page (members)', () => {
   it('lets the admin change a member role', async () => {
     const { user } = await renderAs(testUser)
 
-    await user.selectOptions(within(await memberRow('Bruno Lima')).getByRole('combobox'), 'viewer')
+    await user.selectOptions(
+      within(await memberRow('Bruno Lima')).getByRole('combobox'),
+      'stakeholder',
+    )
 
-    expect(await screen.findByText('Bruno Lima agora é Viewer.')).toBeInTheDocument()
-    expect(roleOf(colleague.id)).toBe('viewer')
+    expect(await screen.findByText('Bruno Lima agora é Stakeholder.')).toBeInTheDocument()
+    expect(roleOf(colleague.id)).toBe('stakeholder')
   })
 
   it('keeps the last admin and explains why', async () => {
     const { user } = await renderAs(testUser)
 
-    await user.selectOptions(within(await memberRow('Alice Souza')).getByRole('combobox'), 'viewer')
+    await user.selectOptions(
+      within(await memberRow('Alice Souza')).getByRole('combobox'),
+      'stakeholder',
+    )
 
     expect(
       await screen.findByText('A organização precisa de pelo menos um administrador.'),
@@ -103,8 +109,8 @@ describe('Access page (members)', () => {
 })
 
 describe('Project actions by role', () => {
-  it('hides create, edit and delete from viewers', async () => {
-    db.members.find((member) => member.user_id === colleague.id).role = 'viewer'
+  it('hides create, edit and delete from stakeholders', async () => {
+    db.members.find((member) => member.user_id === colleague.id).role = 'stakeholder'
     const { user } = await renderAs(colleague, '/projects')
 
     await user.click(await screen.findByRole('button', { name: 'Plataforma de Pagamentos' }))

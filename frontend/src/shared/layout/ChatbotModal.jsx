@@ -37,7 +37,7 @@ const faqs = [
   {
     question: 'O que é RBAC?',
     answer:
-      'RBAC (Role-Based Access Control) é o sistema de controle de acesso baseado em funções. Cada usuário recebe um papel (Admin, Developer, Viewer, etc.) com permissões específicas.',
+      'RBAC (Role-Based Access Control) é o sistema de controle de acesso baseado em funções. Cada usuário recebe um papel (Admin, Developer ou Stakeholder) com permissões específicas.',
   },
   {
     question: 'Como exportar dados de auditoria?',
@@ -103,7 +103,7 @@ export default function ChatbotModal({ onClose }) {
       return {
         id: messages.length + 2,
         type: 'bot',
-        text: 'O controle de acesso (RBAC) permite gerenciar papéis como Admin, Developer, Viewer e Stakeholder, cada um com permissões específicas.',
+        text: 'O controle de acesso (RBAC) permite gerenciar papéis como Admin, Developer e Stakeholder, cada um com permissões específicas.',
       }
     }
 

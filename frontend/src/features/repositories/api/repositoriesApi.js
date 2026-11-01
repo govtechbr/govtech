@@ -1,55 +1,64 @@
 import { supabase } from '@/shared/lib/supabase'
 
 // Dados que a Edge Function `github` sincronizou. Só leitura: o RLS mostra
-// apenas o que é da organização do usuário.
+// apenas o que é da empresa do usuário.
+//
+// Cada repositório existe uma vez por empresa e se liga a projetos pela tabela
+// project_repositories. Sem filtro de projeto, nada se repete (regra G4). Com
+// filtro, entram os repositórios do projeto, inclusive os compartilhados.
 
 function fail() {
   throw new Error('Não foi possível carregar os dados do GitHub. Tente de novo.')
 }
 
-function byProject(query, column, projectId) {
-  return projectId ? query.eq(column, projectId) : query
+const repositoryColumns = 'id, full_name, name, description, language, html_url, private, pushed_at'
+const pullRequestColumns =
+  'id, repository_id, number, title, state, draft, author_login, html_url, created_at_github, merged_at'
+const branchColumns = 'id, name, last_commit_sha, protected'
+
+// Com projeto: o join "!inner" deixa só as linhas ligadas a ele
+function inProject(projectId, embed) {
+  return projectId ? `${embed}!inner (project_id)` : `${embed} (project_id)`
 }
 
 export async function listRepositoryData(projectId) {
-  const [repositories, pullRequests, branches] = await Promise.all([
-    byProject(
-      supabase
-        .from('repositories')
-        .select(
-          'id, project_id, full_name, name, description, language, html_url, private, pushed_at',
-        )
-        .order('pushed_at', { ascending: false, nullsFirst: false }),
-      'project_id',
-      projectId,
-    ),
-    byProject(
-      supabase
-        .from('pull_requests')
-        .select(
-          'id, repository_id, number, title, state, draft, author_login, html_url, created_at_github, merged_at, repository:repositories!inner (name, project_id)',
-        )
-        .order('updated_at_github', { ascending: false }),
-      'repository.project_id',
-      projectId,
-    ),
-    byProject(
-      supabase
-        .from('branches')
-        .select(
-          'id, name, last_commit_sha, protected, repository:repositories!inner (name, project_id, default_branch)',
-        )
-        .order('name'),
-      'repository.project_id',
-      projectId,
-    ),
-  ])
+  let repositories = supabase
+    .from('repositories')
+    .select(`${repositoryColumns}, ${inProject(projectId, 'project_repositories')}`)
+    .order('pushed_at', { ascending: false, nullsFirst: false })
 
-  if (repositories.error || pullRequests.error || branches.error) fail()
+  let pullRequests = supabase
+    .from('pull_requests')
+    .select(
+      `${pullRequestColumns}, repository:repositories!inner (name, ${inProject(projectId, 'project_repositories')})`,
+    )
+    .order('updated_at_github', { ascending: false })
+
+  let branches = supabase
+    .from('branches')
+    .select(
+      `${branchColumns}, repository:repositories!inner (name, default_branch, ${inProject(projectId, 'project_repositories')})`,
+    )
+    .order('name')
+
+  if (projectId) {
+    repositories = repositories.eq('project_repositories.project_id', projectId)
+    pullRequests = pullRequests.eq('repository.project_repositories.project_id', projectId)
+    branches = branches.eq('repository.project_repositories.project_id', projectId)
+  }
+
+  const results = await Promise.all([repositories, pullRequests, branches])
+
+  if (results.some((result) => result.error)) fail()
+
+  const [repositoryRows, pullRequestRows, branchRows] = results.map((result) => result.data)
 
   return {
-    repositories: repositories.data,
-    pullRequests: pullRequests.data,
-    branches: branches.data,
+    repositories: repositoryRows.map(({ project_repositories: links, ...repository }) => ({
+      ...repository,
+      projectIds: links.map((link) => link.project_id),
+    })),
+    pullRequests: pullRequestRows,
+    branches: branchRows,
   }
 }

@@ -26,6 +26,18 @@ export function syncGitHub(projectId) {
   return callGitHub({ action: 'sync', projectId })
 }
 
+// O que a chave enxerga, com os repositórios já escolhidos marcados (só admin)
+export async function listAvailableRepositories(projectId) {
+  const { repositories } = await callGitHub({ action: 'list', projectId })
+
+  return repositories
+}
+
+// Salva a seleção e já sincroniza; devolve o resumo da sincronização
+export function selectRepositories({ projectId, githubIds }) {
+  return callGitHub({ action: 'select', projectId, githubIds })
+}
+
 export function disconnectGitHub(projectId) {
   return callGitHub({ action: 'disconnect', projectId })
 }
@@ -39,10 +51,9 @@ export async function getGitHubConnection(projectId) {
       .eq('project_id', projectId)
       .maybeSingle(),
     supabase
-      .from('repositories')
-      .select('id, full_name, html_url')
-      .eq('project_id', projectId)
-      .order('full_name'),
+      .from('project_repositories')
+      .select('repository:repositories (id, full_name, html_url)')
+      .eq('project_id', projectId),
   ])
 
   if (connection.error || repositories.error) {
@@ -55,6 +66,8 @@ export async function getGitHubConnection(projectId) {
     last4: connection.data.token_last4,
     login: connection.data.github_login,
     lastSyncedAt: connection.data.last_synced_at,
-    repositories: repositories.data,
+    repositories: repositories.data
+      .map((row) => row.repository)
+      .sort((a, b) => a.full_name.localeCompare(b.full_name)),
   }
 }

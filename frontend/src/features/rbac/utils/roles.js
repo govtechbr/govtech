@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, Code2, Eye, Shield } from 'lucide-react'
+import { BriefcaseBusiness, Code2, Shield } from 'lucide-react'
 
 // O que cada papel realmente pode fazer hoje (regras do banco, core_schema)
 export const ROLES = {
@@ -22,13 +22,7 @@ export const ROLES = {
   stakeholder: {
     label: 'Stakeholder',
     icon: BriefcaseBusiness,
-    description: 'Acompanha prazos e andamento.',
-    permissions: ['Ver o painel e os projetos (somente leitura)'],
-  },
-  viewer: {
-    label: 'Viewer',
-    icon: Eye,
-    description: 'Papel de quem entra pelo código.',
+    description: 'Acompanha prazos e andamento. Papel de quem entra pelo código.',
     permissions: ['Ver o painel e os projetos (somente leitura)'],
   },
 }

@@ -25,7 +25,7 @@ const modes = {
     label: 'Entrar com código',
     schema: joinOrganizationSchema,
     field: { name: 'code', label: 'Código da organização', icon: KeyRound },
-    hint: 'Peça o código ao administrador. Você entra como visualizador.',
+    hint: 'Peça o código ao administrador. Você entra como stakeholder (só leitura).',
     submit: 'Entrar na organização',
     action: ({ code }) => joinOrganization(code),
   },

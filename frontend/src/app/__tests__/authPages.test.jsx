@@ -99,7 +99,7 @@ describe('OrganizationPage', () => {
 
     expect(await screen.findByRole('complementary')).toBeInTheDocument()
     expect(db.members).toContainEqual(
-      expect.objectContaining({ organization_id: otherOrganization.id, role: 'viewer' }),
+      expect.objectContaining({ organization_id: otherOrganization.id, role: 'stakeholder' }),
     )
   })
 

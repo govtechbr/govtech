@@ -49,7 +49,7 @@ export default function RepositoriesList({ repositories, pullRequests, branches,
             <thead>
               <tr>
                 <th>REPOSITÓRIO</th>
-                <th>PROJETO</th>
+                <th>PROJETOS</th>
                 <th>LINGUAGEM</th>
                 <th>PRS ABERTOS</th>
                 <th>ÚLTIMO PUSH</th>
@@ -81,7 +81,12 @@ export default function RepositoriesList({ repositories, pullRequests, branches,
                     </div>
                   </td>
 
-                  <td>{projectNames[repository.project_id] ?? '—'}</td>
+                  <td>
+                    {repository.projectIds
+                      .map((projectId) => projectNames[projectId])
+                      .filter(Boolean)
+                      .join(', ') || '—'}
+                  </td>
                   <td>{repository.language ?? '—'}</td>
                   <td>{openByRepository[repository.id] ?? 0}</td>
                   <td className="muted-cell">{timeAgo(repository.pushed_at)}</td>

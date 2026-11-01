@@ -145,7 +145,7 @@ describe('App', () => {
     })
 
     it('hides the code from members who are not admins', async () => {
-      db.members[0].role = 'viewer'
+      db.members[0].role = 'stakeholder'
       const { user } = await renderApp('/dashboard')
 
       await user.click(screen.getByRole('button', { name: /menu da conta/i }))
