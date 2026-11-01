@@ -60,6 +60,17 @@ describe('App', () => {
     expect(loginLinks[0]).toHaveAttribute('href', '/login')
   })
 
+  it('switches the workspace from the sidebar', async () => {
+    const { user } = renderWithRouter(<App />, { route: '/dashboard' })
+
+    await user.click(within(sidebar()).getByRole('button', { name: /trocar workspace/i }))
+    await user.click(within(sidebar()).getByRole('button', { name: /govtech-ti/i }))
+
+    expect(
+      within(sidebar()).getByRole('button', { name: 'Trocar workspace (atual: govtech-ti)' }),
+    ).toBeInTheDocument()
+  })
+
   describe('global search', () => {
     it('opens from the topbar and closes', async () => {
       const { user } = renderWithRouter(<App />, { route: '/dashboard' })
