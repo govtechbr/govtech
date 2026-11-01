@@ -7,6 +7,7 @@ supabase/
 ├── migrations/   SQL versionado: a fonte da verdade do banco
 ├── seed.sql      organização de demonstração com os projetos do mock
 ├── tests/        testes pgTAP das regras de acesso
+├── functions/    Edge Functions (Deno, JavaScript): github
 └── scripts/      to_sql_editor.py: prepara um teste para o SQL Editor
 ```
 
@@ -19,6 +20,17 @@ Decisão de 01/11/2026 (`docs/PLANO_TECNICO.md` §16):
 3. Depois de aplicar, roda-se o **Security Advisor** e os **testes pgTAP** (`tests/*.test.sql`). Os testes rodam numa transação que termina em `ROLLBACK`, então não deixam dados no banco.
 
 Migration aplicada não é editada: correção é sempre uma migration nova.
+
+**Quando o MCP recusa a migration:** a ferramenta pede uma confirmação que é recusada automaticamente quando o SQL contém `delete`/`update` (mesmo dentro de funções). Nesse caso, o dono do projeto cola o **arquivo versionado** no SQL Editor (nunca SQL escrito à mão no painel) e a versão é registrada em `supabase_migrations.schema_migrations` pelo MCP. Foi o caso da `github` (02/11/2026).
+
+## Edge Function `github`
+
+Conecta, sincroniza e desconecta a chave do GitHub de um projeto (`docs/PLANO_TECNICO.md` §18).
+
+- `functions/github/index.js`: entrada (Deno). Confere o login e o papel do usuário **no banco** antes de agir; usa a chave de serviço (variável de ambiente do Supabase, nunca no front) só para o Vault e para gravar os dados.
+- `functions/github/github.js`: conversa com a API do GitHub e converte as respostas. Sem dependência do Deno.
+- Testes: `node --test backend/supabase/functions/github/github.test.js` (rodam no CI).
+- Publicação: pelo MCP do Supabase (`deploy_edge_function`), com aprovação. Versão atual: 1 (02/11/2026).
 
 ## Como rodar os testes pgTAP (sem Docker)
 
@@ -37,6 +49,7 @@ python scripts/to_sql_editor.py tests/core_rls.test.sql core_rls.editor.sql
 |---|---|---|
 | `core_rls.test.sql` | 25 | 25/25 ok (02/11/2026, depois da migration `members`) |
 | `members.test.sql` | 8 | 8/8 ok (02/11/2026) |
+| `github.test.sql` | 15 | 15/15 ok (02/11/2026) |
 
 Depois de cada execução, o banco é conferido pelo MCP: nenhum usuário `@test.local` nem a extensão `pgtap` ficam para trás.
 

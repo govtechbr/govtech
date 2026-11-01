@@ -1115,9 +1115,9 @@ Segunda entrega da fase Supabase (item 3 da §16.6). Registro de execução em �
 
 ---
 
-## 18. Proposta: integração com o GitHub — aguardando aprovação
+## 18. Integração com o GitHub (✅ aprovada e aplicada em 02/11/2026)
 
-Terceira entrega da fase Supabase. Detalha a §4.7 e passa na frente da auditoria por decisão de 02/11/2026. **Nada disto foi executado.**
+Terceira entrega da fase Supabase. Detalha a §4.7 e passa na frente da auditoria por decisão de 02/11/2026. Decisões G1–G4 aprovadas como recomendado (G5 segue a regra de não inventar dados). Registro em §18.8.
 
 ### 18.1 Como funciona para o usuário
 1. O **admin** abre um projeto e, na seção **GitHub**, cola uma chave do GitHub (*fine-grained token*, só leitura).
@@ -1180,3 +1180,21 @@ Uma função com três ações. Todas conferem o login (JWT) e o papel do usuár
 3 a 4 dias: migration e pgTAP (1 dia), Edge Function (1 dia), front (1 a 2 dias). Termina por volta de 06/11, deixando folga até 18/11.
 
 **De você:** criar uma chave *fine-grained* no GitHub para o repositório de demonstração (passo a passo na hora) e colar **na tela do sistema**. A chave **nunca** deve ser colada no chat nem no código.
+
+### 18.8 Registro de execução
+
+| Passo | Resultado |
+|---|---|
+| Migration `github` | O MCP **recusou** aplicar (a confirmação de SQL com `delete` é recusada automaticamente). O dono do projeto rodou o arquivo versionado no SQL Editor ("Success"); a versão foi registrada no histórico pelo MCP. Security Advisor: sem alertas novos |
+| Migration `drop_project_repositories` | **Separada de propósito** e ainda **não aplicada**: o site em produção lê `projects.repositories` até o merge do front. Aplicar logo depois do merge |
+| pgTAP | `github.test.sql` **15/15 ok**. Banco conferido depois: Vault vazio, sem usuários de teste, sem `pgtap` |
+| Edge Function | `github` publicada pelo MCP (versão 1, `verify_jwt` ligado). Lógica do GitHub com 9 testes `node --test`, que entraram no CI (job `edge-functions`) |
+| Front | Seção GitHub no detalhe do projeto, página Repositórios com dados reais, filtro por projeto e métricas calculadas. **86 testes** (+12, −1 do campo removido), lint e build verdes |
+
+**Decisões tomadas na execução:**
+- **Ordem do deploy:** a remoção da coluna `projects.repositories` virou uma migration à parte, para não quebrar o site em produção entre a migration e o merge.
+- **Casamento repositório ↔ id:** o upsert não garante a ordem das linhas devolvidas, então a sincronização casa cada repositório pelo `github_id`.
+- **Erro de chave = HTTP 400**, não 401: o front poderia confundir com sessão expirada.
+- **Sem `@supabase/server`:** a Edge Function usa o mesmo `supabase-js` 2.118.0 do front, para não trazer dependência nova.
+- **`shared/lib/date.js`** criado (o AGENTS.md já pedia): `timeAgo`, `formatDuration`.
+- **Ainda com dados de exemplo:** gráficos de PR da Visão geral e a busca global (repositórios e branches), por estarem fora do escopo desta entrega.
