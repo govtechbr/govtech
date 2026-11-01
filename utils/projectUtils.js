@@ -51,7 +51,7 @@ export function getProjectStatus(project) {
   }
 
   const today = new Date()
-  const deadline = new Date(`${safeProject.deadline}T23:59:59`)
+  const deadline = new Date(`${safeProject.deadline}T00:00:00`)
 
   today.setHours(0, 0, 0, 0)
 
@@ -68,7 +68,8 @@ export function getProjectStatus(project) {
   }
 
   const difference = deadline.getTime() - today.getTime()
-  const daysRemaining = Math.ceil(difference / (1000 * 60 * 60 * 24))
+  // Both dates are at midnight; round absorbs the 1h shift of daylight saving time
+  const daysRemaining = Math.round(difference / (1000 * 60 * 60 * 24))
 
   if (daysRemaining < 0) {
     return {

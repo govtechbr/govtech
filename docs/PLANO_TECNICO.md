@@ -63,7 +63,7 @@
 | # | Pergunta | Decisão do time | Consequência no plano |
 |---|---|---|---|
 | Q1 | Data de entrega | **18/11/2026** (18 dias) | Roadmap recortado (§8). GitHub real, Realtime, CSV e chatbot com IA ficam fora |
-| Q2 | Multi-organização? | **Sim**. Projeto Supabase **`govtech-br`** (ref `dulcrbaxzcmfgoikvocl`, região `sa-east-1` São Paulo, por LGPD e latência). O antigo `govtech` (`us-east-1`) deve ser apagado | Fase Supabase começa direto pelas migrations |
+| Q2 | Multi-organização? | **Sim**. Projeto Supabase **`govtech-br`** (ref `dulcrbaxzcmfgoikvocl`, região `sa-east-1` São Paulo, por LGPD e latência). O antigo `govtech` (`us-east-1`) foi apagado | Fase Supabase começa direto pelas migrations |
 | Q3 | Cadastro aberto ou convite? | **Cadastro aberto** | No cadastro o usuário escolhe: **criar organização** (informa o nome da empresa e vira admin) ou **entrar com o código da organização** (entra como `viewer`; o admin promove). Ver §4.3 |
 | Q4 | Auth/proteção de rotas | **Ver depois** | Entra junto com o Supabase |
 | Q5 | TypeScript? | **Não** | Fica JavaScript. zod valida dados nas bordas |
@@ -634,7 +634,7 @@ Pronto quando: <teste/comando>   Formato: <tamanho/estilo da resposta>
 - [x] **Limpeza**: itens 1, 2, 3, 8, 9, 10, 11 e 12 aplicados
 - [x] **Qualidade**: lint, formatação e Husky (§13), aplicados
 - [x] **Testes**: dependências, configuração, CI e testes P0 (§14)
-- [ ] **Bug do prazo** (§14.5): aprovar a correção de `getProjectStatus`
+- [x] **Bug do prazo** (§14.5): `getProjectStatus` corrigido
 - [x] **B/C.** Arquitetura e modelo de dados ajustados às decisões (§3–§4)
 - [x] **E.** Estrutura `frontend/` + `backend/` (§5.1)
 - [x] **G.** Stack e metas de testes (§6 + `TESTES.mmd`)
@@ -749,7 +749,7 @@ Scripts no `package.json`:
 
 ## 14. Testes (✅ aprovado e aplicado em 01/11/2026)
 
-Aplicado como proposto na branch `test/setup`: 28 testes verdes e 4 marcados como falha esperada (§14.5). O CI roda em push na `main` e em todo PR (não em todo push, para não rodar duas vezes no mesmo commit). Versões conferidas no npm em 31/10/2026.
+Aplicado como proposto na branch `test/setup`: 32 testes verdes (4 deles expuseram o bug da §14.5, já corrigido). O CI roda em push na `main` e em todo PR (não em todo push, para não rodar duas vezes no mesmo commit). Versões conferidas no npm em 31/10/2026.
 
 ### 14.1 Dependências (dev)
 
@@ -812,7 +812,7 @@ Os testes são escritos **sobre o código atual, antes da nova estrutura**. São
 2. `test: add P0 tests for project rules and storage`.
 3. `test: add P0 tests for projects page and navigation`.
 
-### 14.5 Bug encontrado pelos testes: contagem de dias do prazo (aguardando aprovação)
+### 14.5 Bug encontrado pelos testes: contagem de dias do prazo (✅ corrigido em 01/11/2026)
 
 `getProjectStatus` conta o prazo até 23:59:59 do dia final e arredonda para cima, então **toda contagem sai com um dia a mais**:
 

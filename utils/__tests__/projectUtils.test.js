@@ -34,31 +34,29 @@ describe('getProjectStatus', () => {
     expect(status.message).toMatch(/^Atrasado há \d+ dia\(s\)$/)
   })
 
-  // Known bug: the deadline is counted until 23:59:59 and rounded up, so every
-  // count is one day ahead. Remove `.fails` once getProjectStatus is fixed.
-  describe('day count (known off-by-one bug)', () => {
-    it.fails('returns danger one day after the deadline', () => {
+  describe('day count', () => {
+    it('returns danger one day after the deadline', () => {
       const status = getProjectStatus({ deadline: '2026-10-31' })
 
       expect(status.key).toBe('danger')
       expect(status.message).toBe('Atrasado há 1 dia(s)')
     })
 
-    it.fails('returns warning when the deadline is today', () => {
+    it('returns warning when the deadline is today', () => {
       const status = getProjectStatus({ deadline: '2026-11-01' })
 
       expect(status.key).toBe('warning')
       expect(status.message).toBe('Deadline vence hoje')
     })
 
-    it.fails('returns warning 7 days before the deadline', () => {
+    it('returns warning 7 days before the deadline', () => {
       const status = getProjectStatus({ deadline: '2026-11-08' })
 
       expect(status.key).toBe('warning')
       expect(status.daysRemaining).toBe(7)
     })
 
-    it.fails('returns success 8 days before the deadline', () => {
+    it('returns success 8 days before the deadline', () => {
       const status = getProjectStatus({ deadline: '2026-11-09' })
 
       expect(status.key).toBe('success')
