@@ -172,7 +172,7 @@ govtech/
         │
         ├── shared/       ← O que mais de uma área usa. Não importa de features/.
         │   ├── layout/        Sidebar, Topbar, GlobalSearch e ChatbotModal.
-        │   ├── ui/            Brand, Icon, ModalShell, StatCard, StatusBadge, Toast.
+        │   ├── ui/            Brand, Icon, Modal, StatCard, StatusBadge, Toast/ToastProvider.
         │   ├── hooks/         useLocalStorage (estado salvo no navegador), useTheme (tema claro/escuro).
         │   ├── lib/           projectUtils.js: normaliza projetos, formata datas e calcula o semáforo de prazo.
         │   └── constants/     colors, defaultSettings, projectStatus (Saudável/Atenção/Risco), storageKeys.
@@ -349,7 +349,7 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 | `StatCard` | Cartão com título, valor grande, subtexto, ícone e variação (`trend`) com seta. |
 | `StatusBadge` | Etiqueta colorida. `status` = `success`, `warning`, `danger`… |
 | `Toast` | Aviso que some sozinho após alguns segundos. Exibido pelo `ToastProvider`; as páginas chamam `const { showToast } = useToast()` (`src/shared/hooks/useToast.js`). A área do aviso tem `role="status"`, então leitores de tela anunciam a mensagem. |
-| `ModalShell` | Moldura genérica de modal (fundo + caixa). |
+| `Modal` | Diálogo acessível usado por todos os modais (projetos, RBAC): `role="dialog"`, título ligado por `aria-labelledby`, foco entra no diálogo e fica preso nele (Tab), `Esc` fecha e o foco volta para quem abriu. No celular (< 640 px) abre como folha a partir da parte de baixo. Substituiu o `ModalShell` em 01/11/2026. Props: `title`, `kicker`, `size` (`sm`/`md`/`lg`), `onClose`. |
 | `ChatbotModal` | Assistente com FAQ fixa. |
 
 ### 9.3 Dashboard
@@ -575,6 +575,6 @@ O `Toast.jsx`, que estava sem uso, voltou a ser usado em 01/11/2026 pelo `ToastP
 
 - Li por completo: `App.jsx`, `main.jsx`, `ProjectsPage.jsx`, `AuditPage.jsx`, `RepositoriesPage.jsx`, `RbacPage.jsx`, `SettingsPage.jsx`, `ProjectFormModal.jsx`, `DeleteProjectModal.jsx`, `utils/`, `hooks/`, `constants/`, `data/mockData.js` e a configuração (`package.json`, `vite.config.js`, `vercel.json`, `index.html`).
 - Li parcialmente: `LoginPage.jsx`, `OverviewPage.jsx`, `Sidebar.jsx`, `Topbar.jsx`, `GlobalSearch.jsx`, `ChatbotModal.jsx`, `ProjectDetailModal.jsx`, `Icon.jsx`. Os trechos não lidos não foram descritos em detalhe.
-- Não li linha a linha: `LandingPage.jsx`, `Toast`, `ModalShell`, `StatCard`, `StatusBadge`, `Brand`, `RoleDetailModal`, os componentes de gráfico (`PullRequestFlowChart`, `PullRequestDistribution`), `AutomatedAlerts`, `RecentActivityPanel`, `RepositoriesList`, `PullRequestsList`, `BranchesList`, e os arquivos CSS. Para eles, a descrição vem do nome, de títulos visíveis no código e de quem os importa.
+- Não li linha a linha: `LandingPage.jsx`, `Toast`, `StatCard`, `StatusBadge`, `Brand`, `RoleDetailModal`, os componentes de gráfico (`PullRequestFlowChart`, `PullRequestDistribution`), `AutomatedAlerts`, `RecentActivityPanel`, `RepositoriesList`, `PullRequestsList`, `BranchesList`, e os arquivos CSS. Para eles, a descrição vem do nome, de títulos visíveis no código e de quem os importa.
 - Os itens da §15.1 marcados como “verificado pelo código” não foram observados no navegador. Vale abrir `npm run dev` e conferir, especialmente as duas barras laterais e os selos da página de Projetos.
 - Esta documentação descreve o estado do commit `193c764` mais a limpeza da branch `chore/limpeza` (31/10/2026). Se o código mudar, ela precisa ser atualizada.

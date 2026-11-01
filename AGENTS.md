@@ -21,7 +21,7 @@ Os comandos `npm` rodam **dentro de `frontend/`**. Hoje existem `dev`, `build`, 
 cd frontend
 npm run dev            # Vite em http://localhost:5173
 npm run build          # build de produção (deve passar antes de qualquer PR)
-npm run lint           # ESLint
+npm run lint           # ESLint (falha com qualquer warning: --max-warnings 0)
 npm run test:run       # Vitest uma vez (use este; `npm test` fica em watch)
 npm run test:e2e       # Playwright
 npx supabase start     # stack local (Docker)
