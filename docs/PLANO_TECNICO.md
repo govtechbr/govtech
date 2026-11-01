@@ -21,6 +21,7 @@
 13. [Qualidade: lint e formatação](#13-qualidade-lint-e-formatação--aprovado-e-aplicado-em-31102026)
 14. [Testes](#14-testes--aprovado-e-aplicado-em-01112026)
 15. [Nova estrutura](#15-nova-estrutura--concluída-em-01112026)
+16. [Proposta: fase Supabase (aguardando aprovação)](#16-proposta-fase-supabase-primeira-entrega-aguardando-aprovação)
 
 ---
 
@@ -933,3 +934,107 @@ Commits: (1) `git mv` + correção dos caminhos relativos; (2) alias `@/` → `s
 **Escopo da etapa 4, decisão de 01/11:** `Button`, `Badge` e `Card` **não** foram extraídos. As classes globais (`primary-button`, `status-badge`, `panel`) já padronizam o visual, e trocar dezenas de usos agora não muda nada na demo nem na nota; o `Modal` era o componente que resolvia acessibilidade e celular. Continuam com `style={{}}` (pendência pós-18/11): links da Sidebar, menu da conta da Topbar, Configurações, RBAC, Auditoria, Repositórios e o corpo do Chatbot. **Pendências visuais que já existiam:** o selo de status do detalhe mostra a bolinha duas vezes; os cartões de métrica de Projetos ficam com o texto lado a lado no desktop.
 
 **Vercel (incidente de 01/11, resolvido):** o projeto `govtech` (time `guilherme-kenzo-zanardi-onos-projects`, id `prj_Pk1wHhjaTUqhuLiQA61q5zZv3WBJ`) foi criado com Root Directory na raiz do repositório. O preview do PR #2 falhou com `sh: vite: command not found` (`exit 127`): sem `package.json` na raiz, nada foi instalado. **Correção:** Root Directory = `frontend`, aplicado pelo MCP da Vercel depois que o dono autorizou o acesso do Claude ao time. O redeploy do mesmo commit (`4a0daf2`) ficou `READY`. Atenção: até o merge do PR #2, a `main` ainda não tem `frontend/`, então um push direto na `main` falharia na Vercel.
+
+---
+
+## 16. Fase Supabase, primeira entrega (✅ aprovada em 01/11/2026, em execução)
+
+Andamento no registro da §16.9. Decisões de 01/11: **o Claude executa** a fase (não o Dev B) e **não haverá Docker** (o dono do projeto preferiu não instalar; decisão revista no mesmo dia).
+
+**Como trabalhar sem Docker (substitui o fluxo local da §4.5):**
+- As migrations continuam **versionadas como arquivos** em `backend/supabase/migrations/` (fonte da verdade, revisadas no PR).
+- São aplicadas no projeto **`govtech-br`** pelo MCP do Supabase (`apply_migration`), **cada uma com aprovação explícita**, como manda o CLAUDE.md.
+- Os testes pgTAP rodam no próprio `govtech-br`, no SQL Editor, convertidos por `backend/supabase/scripts/to_sql_editor.py` num bloco que se desfaz sozinho: nada do que o teste cria fica no banco (ver §16.9).
+- O Security Advisor (`get_advisors`) roda depois de cada migration.
+- O `govtech-br` ainda não tem usuários reais, então serve como ambiente de desenvolvimento até a defesa.
+
+### 16.1 Objetivo da primeira entrega
+Cadastro → login → criar ou entrar numa organização → **CRUD de projetos no banco, isolado por organização**. Repositórios, PRs, auditoria e GitHub ficam para as entregas seguintes (16.6).
+
+### 16.2 Ajustes no esboço da §4.3 (encontrados ao revisar)
+
+| # | Esboço da §4.3 | Proposta | Motivo |
+|---|---|---|---|
+| 1 | `projects` sem `status` | `status text not null default 'success' check (status in ('success','warning','danger'))` | Status **manual** é decisão do time (Q6); sem a coluna, a regra se perde |
+| 2 | `owner_id uuid` (FK para usuário) | `owner text` (nome livre), como hoje na tela | Hoje o responsável é texto livre e pode não ter conta no sistema. Pode virar FK depois sem quebrar a tela |
+| 3 | `organizations.slug` | **removido** | Nada usa; o `join_code` já identifica a organização no cadastro |
+| 4 | `create_organization` / `join_organization` | Função `security definer` em `private` + "embrulho" `security invoker` em `public` (o que a API expõe) | Regra do projeto: `security definer` só em `private`; a API só enxerga `public` |
+| 5 | `repositories text[]` do front | Mantido como `repositories text[]` **nesta entrega** | A tabela `repositories` nasce com a sincronização do GitHub (16.6). Evita criar uma tabela N:N que seria refeita |
+| 6 | Sem `updated_at` automático | Trigger `private.set_updated_at()` | Data de alteração confiável, sem depender do front |
+
+### 16.3 Migration `core_schema` (tabelas e regras)
+
+| Tabela | Colunas principais | Quem lê | Quem escreve |
+|---|---|---|---|
+| `profiles` | `id` (= `auth.users.id`), `full_name` | O próprio usuário e colegas da mesma organização | O próprio usuário (nome). Criado por trigger no cadastro |
+| `organizations` | `id`, `name`, `join_code` (8 caracteres aleatórios) | Membros | Admin (renomear e gerar novo código). Criada só pela função `create_organization` |
+| `organization_members` | `organization_id`, `user_id`, `role` (`admin`/`developer`/`stakeholder`/`viewer`) | Membros da mesma organização | Admin (mudar papel, remover). Entrada só pelas funções |
+| `projects` | `id`, `organization_id`, `name`, `description`, `deadline`, `owner`, `priority`, `status`, `progress`, `repositories`, `created_by`, `created_at`, `updated_at` | Membros | Inserir/editar: admin e developer. Excluir: só admin |
+
+**Funções (RPC) chamadas pelo front:**
+- `create_organization(name)`: cria a organização e coloca quem chamou como **admin**. Devolve o id.
+- `join_organization(code)`: entra como **viewer**. Código inválido → erro genérico, sem dizer se a organização existe.
+- `regenerate_join_code(org)`: só admin; invalida o código antigo.
+
+**Regras de segurança aplicadas (AGENTS.md):** RLS em todas as 4 tabelas, com uma policy por operação; `(select auth.uid())` nas policies; índice em toda coluna usada em policy; funções `security definer` em `private` com `set search_path = ''`; Security Advisor rodado depois da migration.
+
+### 16.4 Testes pgTAP (`backend/supabase/tests/`)
+
+| Caso | Positivo | Negativo |
+|---|---|---|
+| Ler projetos | Membro vê os da própria organização | **Não vê** os de outra organização |
+| Criar projeto | Admin e developer criam | Viewer e stakeholder **não** criam; ninguém cria em organização alheia |
+| Editar projeto | Admin e developer editam | Viewer **não** edita; não dá para "mover" um projeto para outra organização |
+| Excluir projeto | Admin exclui | Developer **não** exclui |
+| Organização | `create_organization` torna admin | Não-membro **não** lê a organização nem o `join_code` |
+| Entrar por código | Código certo → viewer | Código errado → erro; ninguém se autopromove a admin |
+| Membros | Admin muda papel | Viewer **não** muda papel de ninguém (nem o próprio) |
+| Perfil | Trigger cria perfil no cadastro | Usuário **não** edita perfil de outro |
+
+### 16.5 Front-end
+
+| Item | O que muda |
+|---|---|
+| Dependência | `@supabase/supabase-js` **2.118.0** (exata; 15/10/2026) |
+| `shared/lib/supabase.js` | Único lugar que cria o client (`VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`); `.env.example` versionado |
+| `features/auth/` | Login e cadastro reais (react-hook-form + zod, previstos no plano), `AuthProvider` e `ProtectedRoute`. Cadastro com as duas opções: **criar organização** ou **entrar com código** |
+| `projectsApi.js` | As 4 funções passam a chamar o Supabase. Telas, hooks e testes de tela **não mudam** (contrato da etapa 5) |
+| Testes | MSW para simular a API do Supabase nos testes de API (`onUnhandledRequest: 'error'`), como prevê o AGENTS.md |
+| Vercel | As 2 variáveis públicas configuradas pelo MCP da Vercel |
+
+**Dependências novas desta entrega (todas previstas no plano):** `@supabase/supabase-js` 2.118.0, `react-hook-form`, `zod` e `msw` (versões conferidas na hora de instalar, com pelo menos 2 semanas de publicação). O CLI do Supabase **não** é instalado: sem Docker, o MCP faz o papel dele.
+
+### 16.6 Entregas seguintes (cada uma com proposta própria)
+1. **Auditoria:** trigger `private.audit_row()` e tela de Auditoria lendo do banco (§4.4).
+2. **GitHub:** chave por projeto no Vault, Edge Function `github-sync`, tabelas `repositories`/`pull_requests`/`branches` (§4.7).
+3. **RBAC:** tela de membros com troca de papel e código de convite.
+
+### 16.7 Ordem de execução (cada passo vira commit)
+1. `backend/supabase/migrations/` com a migration `core_schema` e o `seed.sql` (organização demo com os 4 projetos do mock), revisados no PR.
+2. **Pedir aprovação** → aplicar no `govtech-br` pelo MCP → Security Advisor.
+3. Testes pgTAP no `govtech-br` (em transação com `rollback`) → todos verdes.
+4. Front: client, auth, cadastro, `projectsApi` no Supabase, testes.
+5. Variáveis públicas na Vercel (MCP) e teste ponta a ponta no preview do PR.
+
+### 16.8 Riscos
+
+| Risco | Mitigação |
+|---|---|
+| Sem banco local, um erro de migration atinge o `govtech-br` | Cada migration é revisada e aprovada antes; o banco ainda não tem usuários reais; testes rodam em transação com `rollback` |
+| Plano gratuito pausa o projeto após 7 dias sem uso (Q11: aceito) | Acessar antes da defesa; reativar leva ~1 min |
+| E-mail de confirmação do cadastro tem limite de envio no plano gratuito | Para a demo, desligar a confirmação por e-mail no projeto (decisão a aprovar no passo 5) |
+| Dados do `localStorage` não migram para o banco | Esperado: o banco começa com o seed demo |
+
+### 16.9 Registro de execução
+
+| Passo | Resultado |
+|---|---|
+| 1. Migration e seed | `20261101120000_core_schema.sql`, `seed.sql` e `tests/core_rls.test.sql` (25 testes) commitados na branch `feat/supabase-core` |
+| 2. Aplicar no `govtech-br` | Aplicada pelo MCP (`apply_migration`, nome `core_schema`) com aprovação. Security Advisor sem alertas |
+| 3. Testes pgTAP | **25/25 ok** em 01/11/2026. Banco conferido vazio depois (0 usuários, organizações e projetos; `pgtap` não ficou instalado) |
+
+**Incidente no passo 3 (registro para o TCC):**
+- O MCP do Supabase pede confirmação do usuário para `execute_sql` com UPDATE/DELETE, e essa confirmação é recusada automaticamente nesta ferramenta. Decidimos não contornar a trava. O dono do projeto passou a rodar os testes no SQL Editor.
+- As duas primeiras tentativas no SQL Editor falharam com `42P01: relation does not exist`. Os resultados iam para uma tabela auxiliar (primeiro temporária, depois em `public`) criada no próprio script, e o editor analisa o script inteiro antes de executar.
+- Solução: `backend/supabase/scripts/to_sql_editor.py` converte o teste num único bloco `DO`. Os resultados ficam numa variável e o bloco termina com um erro proposital que mostra o resultado e desfaz tudo. Isso é mais seguro que `rollback` manual, porque não depende do editor respeitar a transação.
+- Nenhuma tentativa deixou dados no banco (conferido pelo MCP com consultas só de leitura).
