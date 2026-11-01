@@ -4,7 +4,7 @@
 -- scripts/to_sql_editor.py e rodar no SQL Editor (ver backend/README.md).
 --
 -- Cenário:
---   Org A: alice (admin), carol (viewer), projeto A conectado ao GitHub
+--   Org A: alice (admin), carol (stakeholder), projeto A conectado ao GitHub
 --   Org B: dave (admin), projeto B com dados sincronizados
 -- =====================================================================
 
@@ -26,7 +26,7 @@ insert into public.organizations (id, name, join_code) values
 
 insert into public.organization_members (organization_id, user_id, role) values
   ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'admin'),
-  ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000c', 'viewer'),
+  ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000c', 'stakeholder'),
   ('10000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000d', 'admin');
 
 insert into public.projects (id, organization_id, name) values
@@ -38,11 +38,15 @@ select private.github_save_token(
   '00000000-0000-0000-0000-00000000000a'
 );
 
-insert into public.repositories (id, project_id, organization_id, github_id, full_name, name, html_url) values
-  ('30000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-00000000000a',
+insert into public.repositories (id, organization_id, github_id, full_name, name, html_url) values
+  ('30000000-0000-0000-0000-00000000000a',
    '10000000-0000-0000-0000-00000000000a', 1, 'alice/repo-a', 'repo-a', 'https://github.com/alice/repo-a'),
-  ('30000000-0000-0000-0000-00000000000b', '20000000-0000-0000-0000-00000000000b',
+  ('30000000-0000-0000-0000-00000000000b',
    '10000000-0000-0000-0000-00000000000b', 2, 'dave/repo-b', 'repo-b', 'https://github.com/dave/repo-b');
+
+insert into public.project_repositories (project_id, repository_id, organization_id) values
+  ('20000000-0000-0000-0000-00000000000a', '30000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-00000000000a'),
+  ('20000000-0000-0000-0000-00000000000b', '30000000-0000-0000-0000-00000000000b', '10000000-0000-0000-0000-00000000000b');
 
 insert into public.pull_requests
   (repository_id, organization_id, number, title, state, html_url, created_at_github, updated_at_github) values
@@ -66,7 +70,7 @@ select results_eq(
   'a chave fica no Vault e só o servidor a lê de volta'
 );
 
--- ---------- carol (viewer da Org A) ----------
+-- ---------- carol (stakeholder da Org A) ----------
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}';
 
@@ -110,9 +114,8 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ insert into public.repositories (project_id, organization_id, github_id, full_name, name, html_url)
-     values ('20000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-00000000000a',
-             9, 'x/y', 'y', 'https://github.com/x/y') $$,
+  $$ insert into public.repositories (organization_id, github_id, full_name, name, html_url)
+     values ('10000000-0000-0000-0000-00000000000a', 9, 'x/y', 'y', 'https://github.com/x/y') $$,
   '42501', null,
   'o front não grava repositórios (só a Edge Function)'
 );
@@ -154,7 +157,7 @@ select results_eq(
 select private.github_disconnect('20000000-0000-0000-0000-00000000000a');
 select results_eq(
   $$ select (select count(*) from public.github_credentials where project_id = '20000000-0000-0000-0000-00000000000a')::int,
-            (select count(*) from public.repositories where project_id = '20000000-0000-0000-0000-00000000000a')::int,
+            (select count(*) from public.repositories where id = '30000000-0000-0000-0000-00000000000a')::int,
             (select count(*) from vault.secrets where name = 'github:20000000-0000-0000-0000-00000000000a')::int $$,
   $$ values (0, 0, 0) $$,
   'desconectar apaga a conexão, os dados e o segredo'
