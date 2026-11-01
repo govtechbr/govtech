@@ -60,21 +60,27 @@ export default function ProjectDetailModal({ project, onClose, onEdit, onDelete 
         )}
       </div>
 
-      <div className={styles.actions}>
-        <button type="button" className="primary-button small" onClick={onEdit}>
-          <Edit3 size={14} />
-          Editar
-        </button>
+      {(onEdit || onDelete) && (
+        <div className={styles.actions}>
+          {onEdit && (
+            <button type="button" className="primary-button small" onClick={onEdit}>
+              <Edit3 size={14} />
+              Editar
+            </button>
+          )}
 
-        <button
-          type="button"
-          className={`secondary-button small ${styles.dangerText}`}
-          onClick={onDelete}
-        >
-          <Trash2 size={14} />
-          Excluir
-        </button>
-      </div>
+          {onDelete && (
+            <button
+              type="button"
+              className={`secondary-button small ${styles.dangerText}`}
+              onClick={onDelete}
+            >
+              <Trash2 size={14} />
+              Excluir
+            </button>
+          )}
+        </div>
+      )}
     </Modal>
   )
 }

@@ -238,29 +238,6 @@ export const auditEvents = [
   },
 ]
 
-export const accessRoles = [
-  {
-    label: 'Admin',
-    icon: 'Shield',
-    description: 'Acesso total, políticas e RBAC.',
-  },
-  {
-    label: 'Developer',
-    icon: 'Code2',
-    description: 'Pipelines, releases e serviços.',
-  },
-  {
-    label: 'Stakeholder',
-    icon: 'BriefcaseBusiness',
-    description: 'KPIs e relatórios executivos.',
-  },
-  {
-    label: 'Viewer',
-    icon: 'Eye',
-    description: 'Consulta de status e auditoria.',
-  },
-]
-
 export const repositoryList = [
   {
     name: 'govtech-api',
@@ -375,44 +352,5 @@ export const branchList = [
     updated: '1 dia atrás',
     protection: 'Atenção',
     status: 'danger',
-  },
-]
-
-export const rbacUsers = [
-  {
-    initials: 'MC',
-    name: 'Marina Costa',
-    email: 'marina.costa@govtech.ms',
-    role: 'Admin',
-    team: 'Plataforma',
-    status: 'Ativo',
-    lastAccess: 'Agora',
-  },
-  {
-    initials: 'AS',
-    name: 'Ana Silva',
-    email: 'ana.silva@govtech.ms',
-    role: 'Dev Lead',
-    team: 'Backend',
-    status: 'Ativo',
-    lastAccess: '8 min atrás',
-  },
-  {
-    initials: 'CM',
-    name: 'Carlos Melo',
-    email: 'carlos.melo@govtech.ms',
-    role: 'Dev',
-    team: 'Frontend',
-    status: 'Ativo',
-    lastAccess: '21 min atrás',
-  },
-  {
-    initials: 'JS',
-    name: 'João Santos',
-    email: 'joao.santos@govtech.ms',
-    role: 'Auditor',
-    team: 'Compliance',
-    status: 'Ausente',
-    lastAccess: '2h atrás',
   },
 ]

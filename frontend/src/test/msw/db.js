@@ -10,6 +10,15 @@ export const testUser = {
   user_metadata: { full_name: 'Alice Souza' },
 }
 
+// Colega de organização (developer), para a tela de membros
+export const colleague = {
+  id: '00000000-0000-0000-0000-00000000000b',
+  aud: 'authenticated',
+  role: 'authenticated',
+  email: 'bruno@test.local',
+  user_metadata: { full_name: 'Bruno Lima' },
+}
+
 export const testPassword = 'senha-certa'
 export const testOrganization = {
   id: '10000000-0000-0000-0000-00000000000a',
@@ -25,10 +34,14 @@ export const otherOrganization = {
 export const db = {}
 
 export function resetDb({ withOrganization = true } = {}) {
-  db.users = [testUser]
-  db.organizations = [testOrganization, otherOrganization]
+  db.users = [testUser, colleague]
+  // Cópias: um teste que gera novo código não muda o próximo
+  db.organizations = [{ ...testOrganization }, { ...otherOrganization }]
   db.members = withOrganization
-    ? [{ organization_id: testOrganization.id, user_id: testUser.id, role: 'admin' }]
+    ? [
+        { organization_id: testOrganization.id, user_id: testUser.id, role: 'admin' },
+        { organization_id: testOrganization.id, user_id: colleague.id, role: 'developer' },
+      ]
     : []
   db.projects = mockProjects.map((project, index) => ({
     ...project,

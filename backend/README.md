@@ -33,7 +33,12 @@ python scripts/to_sql_editor.py tests/core_rls.test.sql core_rls.editor.sql
 2. A mensagem de erro começa com `RESULTADO DOS TESTES` e traz uma linha `ok N - …` por teste. Qualquer `not ok` é falha.
 3. Não versione o arquivo gerado.
 
-Resultado em 01/11/2026: **25/25 ok** (`core_rls.test.sql`), banco conferido vazio depois da execução.
+| Arquivo | Testes | Último resultado |
+|---|---|---|
+| `core_rls.test.sql` | 25 | 25/25 ok (02/11/2026, depois da migration `members`) |
+| `members.test.sql` | 8 | 8/8 ok (02/11/2026) |
+
+Depois de cada execução, o banco é conferido pelo MCP: nenhum usuário `@test.local` nem a extensão `pgtap` ficam para trás.
 
 ## Regras (resumo do AGENTS.md)
 

@@ -7,8 +7,8 @@ export default function DeleteProjectModal({ project, onClose, onConfirm }) {
   return (
     <Modal title="Confirmar exclusão" kicker="EXCLUIR PROJETO" size="sm" onClose={onClose}>
       <p className={styles.description}>
-        Deseja excluir o projeto <strong>{project.name}</strong>? Esta ação remove o item do
-        dashboard e do armazenamento local.
+        Deseja excluir o projeto <strong>{project.name}</strong>? Ele sai do painel de toda a
+        organização e a ação não pode ser desfeita.
       </p>
 
       <div className={styles.actions}>

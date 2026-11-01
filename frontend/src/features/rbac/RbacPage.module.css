@@ -1,0 +1,156 @@
+/* Papéis */
+.rolesPanel {
+  margin-bottom: var(--space-6);
+}
+
+.roles {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (min-width: 640px) {
+  .roles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .roles {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.roleCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 80px;
+  padding: var(--space-4);
+  border: 1px solid transparent;
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.roleCard:hover,
+.roleCard:focus-visible {
+  border-color: var(--primary);
+}
+
+.roleText {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.roleText strong {
+  color: var(--text);
+  font-size: var(--font-size-md);
+}
+
+.roleText small {
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+}
+
+/* Tabela de membros */
+.state {
+  padding: var(--space-4) 0;
+  color: var(--muted);
+  font-size: var(--font-size-md);
+}
+
+.you {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.roleSelect {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+}
+
+.actionsCell {
+  text-align: right;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Modais */
+.description {
+  margin: 0 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+}
+
+.roleSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.roleSummary p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--font-size-md);
+}
+
+.permissions {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.permissions strong {
+  display: block;
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.permissions ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.permissions li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.permissions li svg {
+  flex-shrink: 0;
+  color: var(--success);
+}
+
+.modalActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.dangerButton {
+  background: var(--danger);
+}
+
+.hint {
+  margin: var(--space-3) 0 0;
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+}

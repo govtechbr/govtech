@@ -2,7 +2,7 @@
 
 Plataforma web de **governança e monitoramento de projetos de TI**: painel com indicadores, lista de projetos com prazo e progresso, visão de repositórios/Pull Requests/branches, auditoria, controle de acesso (RBAC) e configurações.
 
-> **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações e projetos são reais** e ficam no banco. As outras telas (repositórios, auditoria, RBAC, indicadores) ainda mostram dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
+> **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações, membros e projetos são reais** e ficam no banco. As outras telas (repositórios, auditoria, indicadores) ainda mostram dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
 
 ---
 
@@ -169,7 +169,7 @@ govtech/
         │   ├── projects/      ProjectsPage.jsx + components/ (modais) + api/projectsApi.js (Supabase).
         │   ├── repositories/  RepositoriesPage.jsx + components/ (repositórios, PRs, branches).
         │   ├── audit/         AuditPage.jsx (eventos de auditoria).
-        │   ├── rbac/          RbacPage.jsx + components/ (detalhes de um papel).
+        │   ├── rbac/          RbacPage.jsx (membros reais) + api/membersApi.js + components/ (papel, convite, remover).
         │   └── settings/      SettingsPage.jsx.
         │
         ├── shared/       ← O que mais de uma área usa. Não importa de features/.
@@ -320,10 +320,13 @@ Os dados de exemplo de cada lista ficam em `data/mockData.js` (`repositoryList`,
 - Cartões com **valores fixos**: “34” aprovações e “92%” de conformidade.
 - Botões **“Exportar CSV”** e **“Filtrar”** existem, mas **não têm ação** (não fazem nada ao clicar).
 
-### 8.8 `RbacPage.jsx` — Acessos e RBAC
-- Quatro papéis (`accessRoles`): Admin, Developer, Stakeholder, Viewer. Clicar em um abre `RoleDetailModal`.
-- Tabela de usuários de exemplo (`rbacUsers` em `data/mockData.js`, 4 pessoas com e-mail `@govtech.ms`).
-- Botões “Convidar usuário”, “Nova função”, “Filtrar” e “Adicionar” **não têm ação**.
+### 8.8 `RbacPage.jsx` — Acessos e RBAC (dados reais desde 02/11/2026)
+- **Papéis e permissões:** quatro cartões (Admin, Developer, Stakeholder, Viewer) com o que cada papel **realmente** pode fazer (`utils/roles.js`, espelho das regras do banco). Clicar abre `RoleDetailModal`.
+- **Membros:** nome, e-mail e papel de cada pessoa da organização (`membersApi.listMembers`).
+- **Admin:** troca o papel numa lista, remove membros (com confirmação) e abre **Convidar**, que mostra o código com botão de copiar e permite **gerar novo código** (o anterior para de valer).
+- **Outros papéis:** veem a lista sem controles e podem **sair** da organização.
+- O banco não deixa a organização sem admin: rebaixar ou remover o último mostra “A organização precisa de pelo menos um administrador.”.
+- O papel também decide os botões da página de Projetos: viewer e stakeholder não veem criar, editar nem excluir; developer não vê excluir (`projectPermissions` em `app/routes.jsx`). Quem bloqueia de verdade é o RLS.
 
 ### 8.9 `SettingsPage.jsx` — Configurações
 Quatro abas:
@@ -389,7 +392,9 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 
 | Componente | Função |
 |---|---|
-| `RoleDetailModal` | Mostra detalhes de um papel selecionado. |
+| `RoleDetailModal` | O que um papel pode fazer. |
+| `InviteModal` | Código de convite, copiar e gerar novo (só admin). |
+| `RemoveMemberModal` | Confirmação para remover alguém ou sair da organização. |
 
 ---
 
@@ -399,7 +404,7 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 
 | Arquivo | Conteúdo | Quem usa |
 |---|---|---|
-| `data/mockData.js` | `profile`, `services`, `repoStats`, `projects`, `pullRequests`, `branches`, `auditEvents`, `accessRoles`, `repositoryList`, `pullRequestList`, `branchList`, `rbacUsers` | Todas as telas. |
+| `data/mockData.js` | `profile`, `services`, `repoStats`, `projects`, `pullRequests`, `branches`, `auditEvents`, `repositoryList`, `pullRequestList`, `branchList` | Telas que ainda não têm dado real. (`accessRoles` e `rbacUsers` saíram em 02/11/2026.) |
 | Dentro dos próprios componentes | Só os números fixos dos cartões (ex.: “34” e “92%” na Auditoria) e a FAQ do chatbot | Cada tela. |
 
 Os mocks são intencionais: o app continua usando dados de exemplo até o Supabase entrar.
@@ -542,7 +547,7 @@ Organizados por gravidade. ✅ = resolvido na limpeza de 31/10/2026 (branch `cho
 
 ### 15.2 Média (comportamento enganoso)
 
-7. ⏳ **Botões sem função:** “Exportar CSV” e “Filtrar” (Auditoria e RBAC), “Convidar usuário”, “Nova função”, “Adicionar” (RBAC).
+7. ⏳ **Botões sem função:** “Exportar CSV” e “Filtrar” (Auditoria). Os do RBAC foram resolvidos em 02/11/2026: “Convidar” funciona; “Nova função”, “Filtrar” e “Adicionar” saíram.
 8. ⏳ **Respostas do chatbot descrevem funções que não existem** (`ChatbotModal.jsx`: “Exportar Dados”, “seção Riscos”, campo “branch”).
 9. ⏳ **Valores fixos** (“4.2 dias”, “3” alertas, “34”, “92%”). Mantidos por decisão do time até haver dados reais.
 10. ✅ **Login aceita qualquer coisa.** Resolvido em 01/11/2026: login real com o Supabase Auth.

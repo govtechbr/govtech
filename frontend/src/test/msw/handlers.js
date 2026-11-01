@@ -28,6 +28,36 @@ function eqParam(request, name) {
   return new URL(request.url).searchParams.get(name)?.replace(/^eq\./, '')
 }
 
+// Quem fez a chamada: o token simulado é "token-<id do usuário>" (ver sessionFor)
+function callerId(request) {
+  return request.headers.get('authorization')?.replace('Bearer token-', '')
+}
+
+function memberOf(organizationId, userId) {
+  return db.members.find(
+    (member) => member.organization_id === organizationId && member.user_id === userId,
+  )
+}
+
+// Igual ao trigger keep_one_admin do banco
+function leavesWithoutAdmin(member) {
+  return (
+    member.role === 'admin' &&
+    !db.members.some(
+      (other) =>
+        other.organization_id === member.organization_id &&
+        other.role === 'admin' &&
+        other.user_id !== member.user_id,
+    )
+  )
+}
+
+const lastAdminError = () =>
+  HttpResponse.json(
+    { code: 'P0001', message: 'A organização precisa de pelo menos um administrador.' },
+    { status: 400 },
+  )
+
 function authError(status, errorCode, msg) {
   return HttpResponse.json({ code: status, error_code: errorCode, msg }, { status })
 }
@@ -58,9 +88,30 @@ export const handlers = [
   http.post(`${url}/auth/v1/logout`, () => new HttpResponse(null, { status: 204 })),
 
   http.get(rest('organization_members'), ({ request }) => {
+    const select = new URL(request.url).searchParams.get('select')
+
+    // Lista de membros de uma organização, com o perfil de cada um
+    if (select.includes('profile:')) {
+      const organizationId = eqParam(request, 'organization_id')
+
+      return rows(
+        request,
+        db.members
+          .filter((member) => member.organization_id === organizationId)
+          .map((member) => {
+            const user = db.users.find(({ id }) => id === member.user_id)
+
+            return {
+              user_id: member.user_id,
+              role: member.role,
+              profile: { full_name: user.user_metadata.full_name, email: user.email },
+            }
+          }),
+      )
+    }
+
     const userId = eqParam(request, 'user_id')
     const members = db.members.filter((member) => member.user_id === userId)
-    const select = new URL(request.url).searchParams.get('select')
 
     return rows(
       request,
@@ -73,6 +124,42 @@ export const handlers = [
           : { organization_id: member.organization_id },
       ),
     )
+  }),
+
+  // RLS: só admin muda papel
+  http.patch(rest('organization_members'), async ({ request }) => {
+    const member = memberOf(eqParam(request, 'organization_id'), eqParam(request, 'user_id'))
+    const isAdmin = memberOf(member?.organization_id, callerId(request))?.role === 'admin'
+    const { role } = await request.json()
+
+    if (!member || !isAdmin) return rows(request, [])
+    if (role !== 'admin' && leavesWithoutAdmin(member)) return lastAdminError()
+
+    member.role = role
+    return rows(request, [{ user_id: member.user_id }])
+  }),
+
+  // RLS: admin remove qualquer um; o membro pode sair sozinho
+  http.delete(rest('organization_members'), ({ request }) => {
+    const member = memberOf(eqParam(request, 'organization_id'), eqParam(request, 'user_id'))
+    const caller = callerId(request)
+    const allowed =
+      member &&
+      (member.user_id === caller || memberOf(member.organization_id, caller)?.role === 'admin')
+
+    if (!allowed) return rows(request, [])
+    if (leavesWithoutAdmin(member)) return lastAdminError()
+
+    db.members = db.members.filter((other) => other !== member)
+    return rows(request, [{ user_id: member.user_id }])
+  }),
+
+  http.post(rest('rpc/regenerate_join_code'), async ({ request }) => {
+    const { org } = await request.json()
+    const organization = db.organizations.find(({ id }) => id === org)
+
+    organization.join_code = 'NOVOCOD001'
+    return HttpResponse.json(organization.join_code)
   }),
 
   http.post(rest('rpc/create_organization'), async ({ request }) => {

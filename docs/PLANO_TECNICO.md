@@ -1056,3 +1056,59 @@ Cadastro → login → criar ou entrar numa organização → **CRUD de projetos
 - As duas primeiras tentativas no SQL Editor falharam com `42P01: relation does not exist`. Os resultados iam para uma tabela auxiliar (primeiro temporária, depois em `public`) criada no próprio script, e o editor analisa o script inteiro antes de executar.
 - Solução: `backend/supabase/scripts/to_sql_editor.py` converte o teste num único bloco `DO`. Os resultados ficam numa variável e o bloco termina com um erro proposital que mostra o resultado e desfaz tudo. Isso é mais seguro que `rollback` manual, porque não depende do editor respeitar a transação.
 - Nenhuma tentativa deixou dados no banco (conferido pelo MCP com consultas só de leitura).
+
+---
+
+## 17. Tela de membros (RBAC real) (✅ aprovada e aplicada em 02/11/2026)
+
+Segunda entrega da fase Supabase (item 3 da §16.6). Registro de execução em §17.7.
+
+### 17.1 Problema
+- O visualizador vê os botões de criar, editar e excluir projeto, mas o banco recusa a ação. A tela promete o que não entrega.
+- Não há como promover alguém: quem entra pelo código fica como visualizador para sempre.
+- A página "Acessos e RBAC" mostra só dados de exemplo e tem botões sem função ("Nova função", "Filtrar", "Adicionar").
+
+### 17.2 O que muda na tela
+
+| Parte | Hoje | Proposta |
+|---|---|---|
+| Lista de usuários | Exemplo fixo (Marina, Ana…) | Membros reais da organização: nome, e-mail, papel |
+| Trocar papel | Não existe | Admin escolhe o papel numa lista (admin, developer, stakeholder, viewer) |
+| Remover membro | Não existe | Admin remove, com confirmação. Qualquer um pode **sair** da organização |
+| Convidar | Botão sem função | "Convidar" abre o código com botão de copiar e, para o admin, **gerar novo código** (o antigo para de valer) |
+| Papéis e permissões | Cartões com descrições inventadas | Mantidos, com o texto do que cada papel **realmente** pode fazer |
+| "Nova função", "Filtrar", "Adicionar" | Sem função | **Removidos** (papéis são fixos; adicionar é pelo código) |
+| Colunas "Time", "Status", "Último acesso" | Valores inventados | **Removidas** (sem dado real; regra de não inventar métricas) |
+| Projetos | Todos veem os botões | Viewer e stakeholder **não** veem criar, editar nem excluir; developer não vê excluir |
+
+**Quem é membro e não admin** vê a lista em modo leitura.
+
+### 17.3 Banco (migration nova `members`)
+1. **E-mail no perfil:** coluna `profiles.email`, preenchida pelo trigger de cadastro, com cópia dos usuários que já existem. Só colegas da mesma organização veem (policy atual), e ninguém edita pelo app. *Motivo:* o e-mail fica em `auth.users`, que o app não pode ler. O e-mail está entre os dados pessoais aprovados (Q13).
+2. **A organização nunca fica sem admin:** um trigger impede rebaixar ou remover o **último** admin, com a mensagem "A organização precisa de pelo menos um administrador.". Apagar a organização inteira continua funcionando.
+3. **pgTAP:** 6 testes novos (positivo e negativo): colega vê o e-mail, outra organização não vê; último admin não se rebaixa nem sai; com dois admins, um pode sair; usuário não altera o próprio e-mail; apagar a organização leva os membros junto.
+
+### 17.4 Front
+- `features/rbac/api/membersApi.js`: listar membros, trocar papel, remover, gerar novo código. Hooks com TanStack Query.
+- O papel do usuário chega às páginas pelos adaptadores de `app/routes.jsx`, porque uma feature não importa outra.
+- Testes com MSW: admin troca papel, viewer não vê os controles, último admin recebe o erro, botões de projeto por papel.
+
+### 17.5 Fora desta entrega
+- Convite por e-mail (precisa de serviço de e-mail; o código resolve).
+- Trocar de organização pela barra lateral (quem está em mais de uma usa a primeira).
+- "Último acesso" real (precisa ler `auth.users`; fica para depois, se houver tempo).
+
+### 17.6 Estimativa
+1 a 2 dias: migration + pgTAP (meio dia), tela de membros (1 dia), botões por papel nos projetos (meio dia).
+
+### 17.7 Registro de execução
+
+| Passo | Resultado |
+|---|---|
+| Migration `members` | `20261102120000_members.sql` aplicada no `govtech-br` pelo MCP, com aprovação. Os 2 perfis existentes ganharam o e-mail. Security Advisor: só o aviso de configuração "Leaked Password Protection" do Auth, que não tem relação com a migration |
+| pgTAP | `members.test.sql` **8/8 ok** e `core_rls.test.sql` **25/25 ok** (regressão), rodados no SQL Editor. Banco conferido limpo depois |
+| Front | Tela de membros, convite, botões de projeto por papel. **74 testes** (+10), lint e build verdes. Mocks `accessRoles` e `rbacUsers` removidos |
+
+**Ajuste antes de aplicar:** o trigger `keep_one_admin` devolvia `coalesce(new, old)`; virou um retorno explícito por operação (`old` no DELETE, `new` no UPDATE), mais claro de ler.
+
+**Ocorrência (registro para o TCC):** entre a criação da Porto e a aplicação da migration, a conta de visualizador saiu da organização. Os logs da API não mostram nenhuma exclusão feita pelo app. Os logs do Postgres mostram a tabela `organization_members` aberta no Table Editor do painel, então a hipótese mais provável é uma remoção manual por engano (as duas contas aparecem com o mesmo nome). Não houve perda de dados: a conta entra de novo com o código. Isso reforça duas coisas: a regra de **não editar o banco pelo painel** (AGENTS.md) e a próxima entrega, **auditoria**, que registraria quem removeu e quando.
