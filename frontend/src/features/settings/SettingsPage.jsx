@@ -14,7 +14,7 @@ import {
   TimerReset,
 } from 'lucide-react'
 
-import StatusBadge from '../../shared/ui/StatusBadge'
+import StatusBadge from '@/shared/ui/StatusBadge'
 
 function toDraft(settings) {
   return {

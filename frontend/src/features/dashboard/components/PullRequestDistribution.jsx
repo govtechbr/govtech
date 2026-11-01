@@ -1,4 +1,4 @@
-import { COLORS } from '../../../shared/constants/colors'
+import { COLORS } from '@/shared/constants/colors'
 
 export default function PullRequestDistribution({
   open = 2,

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronRight, GitBranch, GitPullRequest, Search, Server, Target, X } from 'lucide-react'
 
-import { branches, pullRequests, services } from '../../mocks/mockData'
-import { formatProjectDate } from '../lib/projectUtils'
+import { branches, pullRequests, services } from '@/mocks/mockData'
+import { formatProjectDate } from '@/shared/lib/projectUtils'
 
 export default function GlobalSearch({ open, ...props }) {
   // O painel só é montado quando aberto, então a busca sempre começa vazia

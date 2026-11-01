@@ -11,7 +11,7 @@ import {
   Workflow,
 } from 'lucide-react'
 
-import Brand from '../shared/ui/Brand'
+import Brand from '@/shared/ui/Brand'
 
 export default function LandingPage() {
   return (

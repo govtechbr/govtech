@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import ProjectsPage from '../ProjectsPage'
+import ProjectsPage from '@/features/projects/ProjectsPage'
 
 const initialProjects = [
   {

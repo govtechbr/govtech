@@ -1,5 +1,5 @@
-import { storageKeys } from '../../../shared/constants/storageKeys'
-import { normalizeProject } from '../../../shared/lib/projectUtils'
+import { storageKeys } from '@/shared/constants/storageKeys'
+import { normalizeProject } from '@/shared/lib/projectUtils'
 
 export function getStoredProjects(initialProjects = []) {
   const fallbackProjects = Array.isArray(initialProjects)

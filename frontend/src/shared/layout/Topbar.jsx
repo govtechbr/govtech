@@ -1,6 +1,6 @@
 import { Bell, ChevronRight, LogOut, Menu, Search, Settings2, UserRound } from 'lucide-react'
 
-import { profile } from '../../mocks/mockData'
+import { profile } from '@/mocks/mockData'
 
 export default function Topbar({
   active,

@@ -4,8 +4,8 @@ import { useState } from 'react'
 import DeleteProjectModal from './components/DeleteProjectModal'
 import ProjectDetailModal from './components/ProjectDetailModal'
 import ProjectFormModal from './components/ProjectFormModal'
-import { PROJECT_STATUS } from '../../shared/constants/projectStatus'
-import { normalizeProject } from '../../shared/lib/projectUtils'
+import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
+import { normalizeProject } from '@/shared/lib/projectUtils'
 
 export default function ProjectsPage({ projectList = [], setProjectList, onToast }) {
   const [showForm, setShowForm] = useState(false)

@@ -1,14 +1,14 @@
 import { Target } from 'lucide-react'
 
-import { COLORS } from '../../shared/constants/colors'
-import { pullRequests } from '../../mocks/mockData'
-import StatCard from '../../shared/ui/StatCard'
+import { COLORS } from '@/shared/constants/colors'
+import { pullRequests } from '@/mocks/mockData'
+import StatCard from '@/shared/ui/StatCard'
 import ProjectStatusSummary from './components/ProjectStatusSummary'
 import PullRequestFlowChart from './components/PullRequestFlowChart'
 import PullRequestDistribution from './components/PullRequestDistribution'
 import AutomatedAlerts from './components/AutomatedAlerts'
 import RecentActivityPanel from './components/RecentActivityPanel'
-import { formatProjectDate, getProjectStatus } from '../../shared/lib/projectUtils'
+import { formatProjectDate, getProjectStatus } from '@/shared/lib/projectUtils'
 
 export default function OverviewPage({ projectList }) {
   const prSummary = {

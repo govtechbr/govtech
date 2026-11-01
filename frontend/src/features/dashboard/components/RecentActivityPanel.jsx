@@ -1,7 +1,7 @@
 import { Check, GitFork, GitPullRequest } from 'lucide-react'
 
-import { COLORS } from '../../../shared/constants/colors'
-import { repoStats } from '../../../mocks/mockData'
+import { COLORS } from '@/shared/constants/colors'
+import { repoStats } from '@/mocks/mockData'
 
 export default function RecentActivityPanel() {
   return (

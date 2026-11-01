@@ -1,7 +1,7 @@
 import { AlertTriangle, Check } from 'lucide-react'
 
-import { COLORS } from '../../../shared/constants/colors.js'
-import { getProjectStatus } from '../../../shared/lib/projectUtils.js'
+import { COLORS } from '@/shared/constants/colors.js'
+import { getProjectStatus } from '@/shared/lib/projectUtils.js'
 
 function SummaryCount({ value, label, color, background, border }) {
   return (

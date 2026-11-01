@@ -1,5 +1,5 @@
 import { GitBranch, GitPullRequest, MoreHorizontal, ShieldCheck } from 'lucide-react'
-import { repositoryList as repositories } from '../../../mocks/mockData'
+import { repositoryList as repositories } from '@/mocks/mockData'
 
 export default function RepositoriesList() {
   return (

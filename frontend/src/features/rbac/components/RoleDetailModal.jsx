@@ -1,8 +1,8 @@
 import { Check } from 'lucide-react'
 
-import ModalShell from '../../../shared/ui/ModalShell'
-import Icon from '../../../shared/ui/Icon'
-import { COLORS } from '../../../shared/constants/colors'
+import ModalShell from '@/shared/ui/ModalShell'
+import Icon from '@/shared/ui/Icon'
+import { COLORS } from '@/shared/constants/colors'
 
 const rolePermissions = {
   Admin: [

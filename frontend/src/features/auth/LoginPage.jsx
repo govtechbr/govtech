@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ArrowUpRight, Check, ChevronRight, Eye, LockKeyhole, UserRound } from 'lucide-react'
 
-import Brand from '../../shared/ui/Brand'
+import Brand from '@/shared/ui/Brand'
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)

@@ -1,4 +1,4 @@
-import { COLORS } from '../../../shared/constants/colors'
+import { COLORS } from '@/shared/constants/colors'
 
 const weeklyFlow = [
   { week: 'Sem. 1', created: 10, merged: 7, closed: 1 },

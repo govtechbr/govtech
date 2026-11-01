@@ -1,6 +1,6 @@
 import { AlertTriangle, Bell } from 'lucide-react'
 
-import { COLORS } from '../../../shared/constants/colors'
+import { COLORS } from '@/shared/constants/colors'
 
 const alerts = [
   {

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 
-import { PROJECT_STATUS } from '../../../shared/constants/projectStatus'
-import { services } from '../../../mocks/mockData'
+import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
+import { services } from '@/mocks/mockData'
 
 export default function ProjectFormModal({ project, onClose, onSave }) {
   const [form, setForm] = useState({

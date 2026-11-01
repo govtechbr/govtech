@@ -1,5 +1,5 @@
 import { Download, FileSearch, Filter, ShieldCheck } from 'lucide-react'
-import { auditEvents } from '../../mocks/mockData'
+import { auditEvents } from '@/mocks/mockData'
 
 export default function AuditPage() {
   return (

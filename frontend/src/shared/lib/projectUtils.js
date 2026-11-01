@@ -1,5 +1,5 @@
-import { COLORS } from '../constants/colors'
-import { PROJECT_STATUS } from '../constants/projectStatus'
+import { COLORS } from '@/shared/constants/colors'
+import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
 
 export function formatProjectDate(date) {
   if (!date) return '-'

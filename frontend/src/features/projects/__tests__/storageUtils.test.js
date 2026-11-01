@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { storageKeys } from '../../../shared/constants/storageKeys'
-import { getStoredProjects, saveProjects } from '../utils/storageUtils'
+import { storageKeys } from '@/shared/constants/storageKeys'
+import { getStoredProjects, saveProjects } from '@/features/projects/utils/storageUtils'
 
 const initialProjects = [{ id: 1, name: 'Mock', status: 'warning' }]
 

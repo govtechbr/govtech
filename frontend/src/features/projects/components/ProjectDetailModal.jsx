@@ -1,7 +1,7 @@
 import { Edit3, Server, Trash2, X } from 'lucide-react'
 
-import StatusBadge from '../../../shared/ui/StatusBadge'
-import { formatProjectDate, getProjectStatus } from '../../../shared/lib/projectUtils'
+import StatusBadge from '@/shared/ui/StatusBadge'
+import { formatProjectDate, getProjectStatus } from '@/shared/lib/projectUtils'
 
 export default function ProjectDetailModal({ project, onClose, onEdit, onDelete }) {
   const status = getProjectStatus(project)

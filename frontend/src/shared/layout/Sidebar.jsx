@@ -11,10 +11,10 @@ import {
   X,
 } from 'lucide-react'
 
-import Brand from '../ui/Brand'
-import Icon from '../ui/Icon'
+import Brand from '@/shared/ui/Brand'
+import Icon from '@/shared/ui/Icon'
 import ChatbotModal from './ChatbotModal'
-import { auditEvents, profile } from '../../mocks/mockData'
+import { auditEvents, profile } from '@/mocks/mockData'
 
 const menuItems = [
   {

@@ -1,5 +1,5 @@
 import { Clock3, GitPullRequest, MessageSquareText, UserRound } from 'lucide-react'
-import { pullRequestList as pullRequests } from '../../../mocks/mockData'
+import { pullRequestList as pullRequests } from '@/mocks/mockData'
 
 export default function PullRequestsList() {
   return (

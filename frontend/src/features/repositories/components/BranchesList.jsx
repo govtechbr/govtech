@@ -1,5 +1,5 @@
 import { GitBranch, GitCommitHorizontal, ShieldCheck } from 'lucide-react'
-import { branchList as branches } from '../../../mocks/mockData'
+import { branchList as branches } from '@/mocks/mockData'
 
 export default function BranchesList() {
   return (

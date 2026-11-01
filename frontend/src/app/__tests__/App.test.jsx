@@ -1,8 +1,8 @@
 import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import App from '../App'
-import { renderWithRouter } from '../../test/renderWithRouter'
+import App from '@/app/App'
+import { renderWithRouter } from '@/test/renderWithRouter'
 
 function sidebar() {
   return screen.getByRole('complementary')

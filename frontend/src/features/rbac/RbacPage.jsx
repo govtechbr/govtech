@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Search, Shield, UserRound, Users } from 'lucide-react'
 
 import RoleDetailModal from './components/RoleDetailModal'
-import { accessRoles, rbacUsers as users } from '../../mocks/mockData'
-import Icon from '../../shared/ui/Icon'
-import StatusBadge from '../../shared/ui/StatusBadge'
+import { accessRoles, rbacUsers as users } from '@/mocks/mockData'
+import Icon from '@/shared/ui/Icon'
+import StatusBadge from '@/shared/ui/StatusBadge'
 
 export default function RbacPage() {
   const [selectedRole, setSelectedRole] = useState(null)

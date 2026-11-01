@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { formatProjectDate, getProjectStatus, normalizeProject } from '../projectUtils'
+import { formatProjectDate, getProjectStatus, normalizeProject } from '@/shared/lib/projectUtils'
 
 describe('getProjectStatus', () => {
   beforeEach(() => {
