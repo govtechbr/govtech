@@ -3,8 +3,9 @@
 -- Cada regra tem caso positivo e negativo (AGENTS.md).
 --
 -- Roda dentro de uma transação que termina em ROLLBACK: nada do que o
--- teste cria fica no banco. Sem Docker, é executado no govtech-br pelo
--- MCP do Supabase; com Docker, `supabase test db` também funciona.
+-- teste cria fica no banco. Sem Docker, roda no SQL Editor do govtech-br
+-- depois de convertido por scripts/to_sql_editor.py (ver backend/README.md);
+-- com Docker, `supabase test db` também funciona.
 --
 -- Cenário:
 --   Org A: alice (admin), bob (developer), carol (viewer)

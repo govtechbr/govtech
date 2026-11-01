@@ -935,14 +935,14 @@ Commits: (1) `git mv` + correção dos caminhos relativos; (2) alias `@/` → `s
 
 ---
 
-## 16. Proposta: fase Supabase, primeira entrega (aguardando aprovação)
+## 16. Fase Supabase, primeira entrega (✅ aprovada em 01/11/2026, em execução)
 
-**Nada disto foi executado.** Decisões de 01/11: **o Claude executa** a fase (não o Dev B) e **não haverá Docker** (o dono do projeto preferiu não instalar; decisão revista no mesmo dia).
+Andamento no registro da §16.9. Decisões de 01/11: **o Claude executa** a fase (não o Dev B) e **não haverá Docker** (o dono do projeto preferiu não instalar; decisão revista no mesmo dia).
 
 **Como trabalhar sem Docker (substitui o fluxo local da §4.5):**
 - As migrations continuam **versionadas como arquivos** em `backend/supabase/migrations/` (fonte da verdade, revisadas no PR).
 - São aplicadas no projeto **`govtech-br`** pelo MCP do Supabase (`apply_migration`), **cada uma com aprovação explícita**, como manda o CLAUDE.md.
-- Os testes pgTAP rodam no próprio `govtech-br` dentro de uma transação que termina em `rollback`: nada do que o teste cria fica no banco.
+- Os testes pgTAP rodam no próprio `govtech-br`, no SQL Editor, convertidos por `backend/supabase/scripts/to_sql_editor.py` num bloco que se desfaz sozinho: nada do que o teste cria fica no banco (ver §16.9).
 - O Security Advisor (`get_advisors`) roda depois de cada migration.
 - O `govtech-br` ainda não tem usuários reais, então serve como ambiente de desenvolvimento até a defesa.
 
@@ -1022,3 +1022,17 @@ Cadastro → login → criar ou entrar numa organização → **CRUD de projetos
 | Plano gratuito pausa o projeto após 7 dias sem uso (Q11: aceito) | Acessar antes da defesa; reativar leva ~1 min |
 | E-mail de confirmação do cadastro tem limite de envio no plano gratuito | Para a demo, desligar a confirmação por e-mail no projeto (decisão a aprovar no passo 5) |
 | Dados do `localStorage` não migram para o banco | Esperado: o banco começa com o seed demo |
+
+### 16.9 Registro de execução
+
+| Passo | Resultado |
+|---|---|
+| 1. Migration e seed | `20261101120000_core_schema.sql`, `seed.sql` e `tests/core_rls.test.sql` (25 testes) commitados na branch `feat/supabase-core` |
+| 2. Aplicar no `govtech-br` | Aplicada pelo MCP (`apply_migration`, nome `core_schema`) com aprovação. Security Advisor sem alertas |
+| 3. Testes pgTAP | **25/25 ok** em 01/11/2026. Banco conferido vazio depois (0 usuários, organizações e projetos; `pgtap` não ficou instalado) |
+
+**Incidente no passo 3 (registro para o TCC):**
+- O MCP do Supabase pede confirmação do usuário para `execute_sql` com UPDATE/DELETE, e essa confirmação é recusada automaticamente nesta ferramenta. Decidimos não contornar a trava. O dono do projeto passou a rodar os testes no SQL Editor.
+- As duas primeiras tentativas no SQL Editor falharam com `42P01: relation does not exist`. Os resultados iam para uma tabela auxiliar (primeiro temporária, depois em `public`) criada no próprio script, e o editor analisa o script inteiro antes de executar.
+- Solução: `backend/supabase/scripts/to_sql_editor.py` converte o teste num único bloco `DO`. Os resultados ficam numa variável e o bloco termina com um erro proposital que mostra o resultado e desfaz tudo. Isso é mais seguro que `rollback` manual, porque não depende do editor respeitar a transação.
+- Nenhuma tentativa deixou dados no banco (conferido pelo MCP com consultas só de leitura).
