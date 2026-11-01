@@ -270,6 +270,7 @@ Definidas em `src/app/App.jsx`:
 - **Cadastro** (`SignupPage`): cria a conta com o nome em `user_metadata.full_name`; um trigger do banco cria o perfil. Se o Supabase exigir confirmação de e-mail, a tela avisa para abrir o link.
 - **Organização** (`OrganizationPage`): duas opções, **criar** (`create_organization`, vira admin) ou **entrar com código** (`join_organization`, vira viewer; o código não diferencia maiúsculas). Código errado mostra “Código de organização inválido.” sem dizer se a organização existe.
 - **Sair**: no menu da conta (Topbar). A barra lateral e o menu mostram o nome, o papel e a organização de quem está logado.
+- **Código de convite**: o admin vê o código da organização no menu da conta, com botão de copiar (`shared/layout/InviteCode.jsx`). Os outros papéis não veem o código na tela. O RLS deixa qualquer membro ler a organização, então o código não é segredo dentro dela: se um dia precisar ser, a coluna sai do `select` dos não-admins por migration.
 
 ### 8.2 `LandingPage.jsx` — Apresentação (marketing)
 Página de vendas com seções com âncora (`#capabilities`, `#how-it-works`, `#standards`, `#demo`):

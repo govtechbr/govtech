@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import App from '@/app/App'
-import { db, signInAs, testPassword, testUser } from '@/test/msw/db'
+import { db, signInAs, testOrganization, testPassword, testUser } from '@/test/msw/db'
 import { renderWithRouter } from '@/test/renderWithRouter'
 
 function sidebar() {
@@ -119,6 +119,29 @@ describe('App', () => {
       expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
       expect(await screen.findByRole('button', { name: /editar/i })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /novo projeto/i })).toBeInTheDocument()
+    })
+  })
+
+  describe('invite code', () => {
+    it('shows the organization code to the admin and copies it', async () => {
+      const { user } = await renderApp('/dashboard')
+
+      await user.click(screen.getByRole('button', { name: /menu da conta/i }))
+      expect(screen.getByText(testOrganization.join_code)).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Copiar código de convite' }))
+
+      expect(await navigator.clipboard.readText()).toBe(testOrganization.join_code)
+      expect(screen.getByRole('button', { name: 'Código copiado' })).toBeInTheDocument()
+    })
+
+    it('hides the code from members who are not admins', async () => {
+      db.members[0].role = 'viewer'
+      const { user } = await renderApp('/dashboard')
+
+      await user.click(screen.getByRole('button', { name: /menu da conta/i }))
+
+      expect(screen.queryByText(testOrganization.join_code)).not.toBeInTheDocument()
     })
   })
 

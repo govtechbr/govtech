@@ -77,7 +77,7 @@ export const handlers = [
 
   http.post(rest('rpc/create_organization'), async ({ request }) => {
     const { org_name: name } = await request.json()
-    const organization = { id: crypto.randomUUID(), name }
+    const organization = { id: crypto.randomUUID(), name, join_code: 'NOVO000001' }
 
     db.organizations.push(organization)
     db.members.push({ organization_id: organization.id, user_id: db.users[0].id, role: 'admin' })
@@ -87,7 +87,7 @@ export const handlers = [
   http.post(rest('rpc/join_organization'), async ({ request }) => {
     const { code } = await request.json()
 
-    if (code !== otherOrganization.joinCode) {
+    if (code !== otherOrganization.join_code) {
       return HttpResponse.json(
         { code: 'P0002', message: 'Código de organização inválido.' },
         { status: 400 },

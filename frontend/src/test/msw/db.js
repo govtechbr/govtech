@@ -11,11 +11,15 @@ export const testUser = {
 }
 
 export const testPassword = 'senha-certa'
-export const testOrganization = { id: '10000000-0000-0000-0000-00000000000a', name: 'Org A' }
+export const testOrganization = {
+  id: '10000000-0000-0000-0000-00000000000a',
+  name: 'Org A',
+  join_code: 'CODEA00001',
+}
 export const otherOrganization = {
   id: '10000000-0000-0000-0000-00000000000b',
   name: 'Org B',
-  joinCode: 'CODEB00001',
+  join_code: 'CODEB00001',
 }
 
 export const db = {}

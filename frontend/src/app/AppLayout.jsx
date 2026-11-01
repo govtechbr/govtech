@@ -46,6 +46,8 @@ function useAccount() {
     name,
     initials,
     role: organization ? `${roleLabels[organization.role]} · ${organization.name}` : '',
+    // Só o admin vê o código de convite (é quem chama a equipe)
+    joinCode: organization?.role === 'admin' ? organization.joinCode : null,
   }
 }
 
