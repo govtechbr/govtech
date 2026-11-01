@@ -1,9 +1,10 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import ProjectsPage from '@/features/projects/ProjectsPage'
+import ToastProvider from '@/shared/ui/ToastProvider'
 
 const initialProjects = [
   {
@@ -30,18 +31,22 @@ const initialProjects = [
   },
 ]
 
-function Harness({ onToast = vi.fn() }) {
+function Harness({ initialProjectId }) {
   const [projectList, setProjectList] = useState(initialProjects)
 
   return (
-    <ProjectsPage projectList={projectList} setProjectList={setProjectList} onToast={onToast} />
+    <ToastProvider>
+      <ProjectsPage
+        projectList={projectList}
+        setProjectList={setProjectList}
+        initialProjectId={initialProjectId}
+      />
+    </ToastProvider>
   )
 }
 
-function renderPage() {
-  const onToast = vi.fn()
-
-  return { user: userEvent.setup(), onToast, ...render(<Harness onToast={onToast} />) }
+function renderPage(props = {}) {
+  return { user: userEvent.setup(), ...render(<Harness {...props} />) }
 }
 
 function metric(label) {
@@ -62,7 +67,7 @@ describe('ProjectsPage', () => {
   })
 
   it('creates a project with the chosen status', async () => {
-    const { user, onToast } = renderPage()
+    const { user } = renderPage()
 
     await user.click(screen.getByRole('button', { name: /novo projeto/i }))
     await user.type(screen.getByLabelText('Nome do Projeto'), 'Portal do Cidadão')
@@ -75,11 +80,11 @@ describe('ProjectsPage', () => {
     expect(screen.getByRole('heading', { name: 'Portal do Cidadão' })).toBeInTheDocument()
     expect(metric('Projetos ativos')).toHaveTextContent('3')
     expect(metric('Em atenção')).toHaveTextContent('2')
-    expect(onToast).toHaveBeenCalledWith('Projeto criado com sucesso.')
+    expect(screen.getByRole('status')).toHaveTextContent('Projeto criado com sucesso.')
   })
 
   it('edits an existing project', async () => {
-    const { user, onToast } = renderPage()
+    const { user } = renderPage()
 
     await user.click(screen.getByRole('heading', { name: 'Sistema de Notificações' }))
     await user.click(screen.getByRole('button', { name: /editar/i }))
@@ -95,7 +100,7 @@ describe('ProjectsPage', () => {
     expect(
       screen.queryByRole('heading', { name: 'Sistema de Notificações' }),
     ).not.toBeInTheDocument()
-    expect(onToast).toHaveBeenCalledWith('Projeto atualizado com sucesso.')
+    expect(screen.getByRole('status')).toHaveTextContent('Projeto atualizado com sucesso.')
   })
 
   it('deletes a project after confirmation', async () => {
@@ -109,6 +114,13 @@ describe('ProjectsPage', () => {
       screen.queryByRole('heading', { name: 'Plataforma de Pagamentos' }),
     ).not.toBeInTheDocument()
     expect(metric('Projetos ativos')).toHaveTextContent('1')
+  })
+
+  it('opens the project given by initialProjectId', () => {
+    renderPage({ initialProjectId: 2 })
+
+    expect(screen.getByRole('button', { name: /editar/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { name: 'Sistema de Notificações' })).toHaveLength(2)
   })
 
   it('keeps the project when deletion is cancelled', async () => {
