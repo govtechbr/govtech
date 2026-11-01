@@ -8,7 +8,7 @@ supabase/
 ├── seed.sql      organização de demonstração com os projetos do mock
 ├── tests/        testes pgTAP das regras de acesso
 ├── functions/    Edge Functions (Deno, JavaScript): github
-└── scripts/      to_sql_editor.py: prepara um teste para o SQL Editor
+└── scripts/      to_sql_editor.py: prepara os testes para o SQL Editor
 ```
 
 ## Como as mudanças chegam ao banco (sem Docker)
@@ -21,35 +21,36 @@ Decisão de 01/11/2026 (`docs/PLANO_TECNICO.md` §16):
 
 Migration aplicada não é editada: correção é sempre uma migration nova.
 
-**Quando o MCP recusa a migration:** a ferramenta pede uma confirmação que é recusada automaticamente quando o SQL contém `delete`/`update` (mesmo dentro de funções). Nesse caso, o dono do projeto cola o **arquivo versionado** no SQL Editor (nunca SQL escrito à mão no painel) e a versão é registrada em `supabase_migrations.schema_migrations` pelo MCP. Foi o caso da `github` (02/11/2026).
+**Quando o MCP recusa a migration:** a ferramenta pede uma confirmação que é recusada automaticamente quando o SQL contém `delete`/`update` (mesmo dentro de funções). Nesse caso, o dono do projeto cola o **arquivo versionado** no SQL Editor (nunca SQL escrito à mão no painel) e a versão é registrada em `supabase_migrations.schema_migrations` pelo MCP. Foi o caso da `github` (02/11/2026) e da `repository_selection` (03/11/2026).
 
 ## Edge Function `github`
 
-Conecta, sincroniza e desconecta a chave do GitHub de um projeto (`docs/PLANO_TECNICO.md` §18).
+Conecta a chave do GitHub de um projeto, lista o que ela enxerga, salva os repositórios escolhidos pelo admin, sincroniza e desconecta (`docs/PLANO_TECNICO.md` §18).
 
 - `functions/github/index.js`: entrada (Deno). Confere o login e o papel do usuário **no banco** antes de agir; usa a chave de serviço (variável de ambiente do Supabase, nunca no front) só para o Vault e para gravar os dados.
 - `functions/github/github.js`: conversa com a API do GitHub e converte as respostas. Sem dependência do Deno.
 - Testes: `node --test backend/supabase/functions/github/github.test.js` (rodam no CI).
-- Publicação: pelo MCP do Supabase (`deploy_edge_function`), com aprovação. Versão atual: 1 (02/11/2026).
+- Publicação: pelo MCP do Supabase (`deploy_edge_function`), com aprovação. Versão atual: 2 (03/11/2026, seleção de repositórios).
 
 ## Como rodar os testes pgTAP (sem Docker)
 
-O SQL Editor do Supabase analisa o script inteiro antes de executar, então o arquivo de teste não roda nele como está. O script converte o teste num único bloco `DO`, que termina com um **erro proposital** mostrando o resultado; o erro desfaz tudo o que o teste criou, inclusive a extensão `pgtap`.
+O SQL Editor do Supabase analisa o script inteiro antes de executar, então o arquivo de teste não roda nele como está. O script converte os testes num único bloco `DO`: cada arquivo roda num sub-bloco que se desfaz sozinho, e um **erro proposital** no fim mostra o resultado de todos; o erro desfaz tudo o que os testes criaram, inclusive a extensão `pgtap`.
 
 ```bash
 cd backend/supabase
-python scripts/to_sql_editor.py tests/core_rls.test.sql core_rls.editor.sql
+python scripts/to_sql_editor.py tests/*.test.sql todos.editor.sql   # ou só um arquivo
 ```
 
-1. Cole o `core_rls.editor.sql` no SQL Editor do `govtech-br` e clique em **Run**.
-2. A mensagem de erro começa com `RESULTADO DOS TESTES` e traz uma linha `ok N - …` por teste. Qualquer `not ok` é falha.
+1. Cole o `todos.editor.sql` no SQL Editor do `govtech-br` e clique em **Run**.
+2. A mensagem de erro começa com `RESULTADO DOS TESTES` e traz, para cada arquivo, uma linha `# arquivo` e uma linha `ok N - …` por teste. Qualquer `not ok` é falha.
 3. Não versione o arquivo gerado.
 
 | Arquivo | Testes | Último resultado |
 |---|---|---|
-| `core_rls.test.sql` | 25 | 25/25 ok (02/11/2026, depois da migration `members`) |
-| `members.test.sql` | 8 | 8/8 ok (02/11/2026) |
-| `github.test.sql` | 15 | 15/15 ok (02/11/2026) |
+| `core_rls.test.sql` | 25 | 25/25 ok (03/11/2026, depois da migration `repository_selection`) |
+| `members.test.sql` | 8 | 8/8 ok (03/11/2026) |
+| `github.test.sql` | 15 | 15/15 ok (03/11/2026) |
+| `repository_selection.test.sql` | 11 | 11/11 ok (03/11/2026) |
 
 Depois de cada execução, o banco é conferido pelo MCP: nenhum usuário `@test.local` nem a extensão `pgtap` ficam para trás.
 

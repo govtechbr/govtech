@@ -1141,7 +1141,8 @@ Terceira entrega da fase Supabase. Detalha a §4.7 e passa na frente da auditori
 | Tabela | Colunas principais | Quem lê | Quem escreve |
 |---|---|---|---|
 | `github_credentials` | `project_id` (PK), `organization_id`, `secret_id` (Vault), `token_last4`, `github_login`, `last_synced_at`, `created_by` | Membros (sem o segredo) | **Só a Edge Function** |
-| `repositories` | `project_id`, `organization_id`, `github_id`, `full_name`, `description`, `language`, `default_branch`, `html_url`, `private`, `pushed_at` | Membros | **Só a Edge Function** |
+| `repositories` | `organization_id`, `github_id` (único por empresa desde a E1), `full_name`, `description`, `language`, `default_branch`, `html_url`, `private`, `pushed_at` | Membros | **Só a Edge Function** |
+| `project_repositories` (E1) | `project_id`, `repository_id`, `organization_id` | Membros | **Só a Edge Function** |
 | `pull_requests` | `repository_id`, `organization_id`, `number`, `title`, `state` (open/closed/merged), `draft`, `author_login`, `html_url`, `created_at_github`, `updated_at_github`, `merged_at` | Membros | **Só a Edge Function** |
 | `branches` | `repository_id`, `organization_id`, `name`, `last_commit_sha`, `protected` | Membros | **Só a Edge Function** |
 
@@ -1186,7 +1187,7 @@ Uma função com três ações. Todas conferem o login (JWT) e o papel do usuár
 | Passo | Resultado |
 |---|---|
 | Migration `github` | O MCP **recusou** aplicar (a confirmação de SQL com `delete` é recusada automaticamente). O dono do projeto rodou o arquivo versionado no SQL Editor ("Success"); a versão foi registrada no histórico pelo MCP. Security Advisor: sem alertas novos |
-| Migration `drop_project_repositories` | **Separada de propósito** e ainda **não aplicada**: o site em produção lê `projects.repositories` até o merge do front. Aplicar logo depois do merge |
+| Migration `drop_project_repositories` | Separada de propósito para não quebrar o site em produção. Aplicada junto com a E1 (03/11/2026) |
 | pgTAP | `github.test.sql` **15/15 ok**. Banco conferido depois: Vault vazio, sem usuários de teste, sem `pgtap` |
 | Edge Function | `github` publicada pelo MCP (versão 1, `verify_jwt` ligado). Lógica do GitHub com 9 testes `node --test`, que entraram no CI (job `edge-functions`) |
 | Front | Seção GitHub no detalhe do projeto, página Repositórios com dados reais, filtro por projeto e métricas calculadas. **86 testes** (+12, −1 do campo removido), lint e build verdes |
@@ -1196,5 +1197,19 @@ Uma função com três ações. Todas conferem o login (JWT) e o papel do usuár
 - **Casamento repositório ↔ id:** o upsert não garante a ordem das linhas devolvidas, então a sincronização casa cada repositório pelo `github_id`.
 - **Erro de chave = HTTP 400**, não 401: o front poderia confundir com sessão expirada.
 - **Sem `@supabase/server`:** a Edge Function usa o mesmo `supabase-js` 2.118.0 do front, para não trazer dependência nova.
+- **Erro de desenho (G1):** a chave *fine-grained* lê **todos os repositórios públicos**, não só os escolhidos ao criá-la. O primeiro teste real trouxe 18 repositórios em vez de 1. Corrigido na E1 (abaixo).
 - **`shared/lib/date.js`** criado (o AGENTS.md já pedia): `timeAgo`, `formatDuration`.
 - **Ainda com dados de exemplo:** gráficos de PR da Visão geral e a busca global (repositórios e branches), por estarem fora do escopo desta entrega.
+
+**E1: seleção de repositórios e fim do viewer** (regras A2, G2–G5 de `docs/REGRAS_DE_NEGOCIO.md`; 03/11/2026)
+
+| Passo | Resultado |
+|---|---|
+| Migration `repository_selection` | Viewer vira stakeholder (constraint impede o papel voltar), `join_organization` dá stakeholder, `repositories` passa a ser único por `(organization_id, github_id)` e sem `project_id`, tabela N:N `project_repositories` com RLS, trigger que apaga o repositório quando nenhum projeto o usa. Apaga os repositórios já sincronizados (são cache do GitHub; voltam ao escolher). MCP recusou (tem `delete`/`update`); o dono rodou o arquivo versionado no SQL Editor junto com a `drop_project_repositories` e as duas versões foram registradas pelo MCP |
+| Banco conferido | Coluna `projects.repositories` e `repositories.project_id` removidas, `project_repositories` com RLS, 0 viewers, papel padrão `stakeholder`. Security Advisor: só o aviso de senha vazada (Auth), já conhecido |
+| pgTAP | Os 4 arquivos num único script (`to_sql_editor.py` aceita vários): **todos ok** segundo o dono do projeto (63 testes: 25 + 8 + 15 + 11 do novo `repository_selection.test.sql`) |
+| Edge Function | `github` versão 2: ações `list` (o que a chave enxerga, marcando o que já é do projeto) e `select` (salva a escolha e sincroniza); `sync` só busca os repositórios escolhidos. 10 testes `node --test` |
+| Front | `RepositoryPicker` abre logo depois de conectar e pelo botão "Escolher repositórios" (admin). Página Repositórios mostra cada repositório uma vez, com a coluna Projetos. Viewer removido das telas. **91 testes**, lint e build verdes |
+
+- **Janela no deploy:** entre a migration e o merge do front, a página Repositórios e a sincronização da produção dão erro (o site antigo ainda lê `repositories.project_id`). Aceito por ser poucos minutos e o sistema ainda não ter usuários reais.
+- **Depois do merge:** o admin abre o projeto, clica em "Escolher repositórios" e marca os do projeto.

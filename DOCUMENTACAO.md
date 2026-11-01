@@ -248,7 +248,7 @@ Definidas em `src/app/App.jsx`:
 | `/` | redireciona para `/login` | Público | — |
 | `/login` | `LoginPage` | Público | Login com e-mail e senha. Quem já está logado vai para `/dashboard`. |
 | `/cadastro` | `SignupPage` | Público | Cria a conta (nome, e-mail, senha). |
-| `/organizacao` | `OrganizationPage` | Logado | Criar organização (vira admin) ou entrar com código (vira viewer). |
+| `/organizacao` | `OrganizationPage` | Logado | Criar organização (vira admin) ou entrar com código (vira stakeholder). |
 | `/landing` | `LandingPage` | Público | Página institucional. |
 | `/dashboard` | `AppLayout` → `OverviewPage` | Autenticado | Visão geral. |
 | `/audit` | `AppLayout` → `AuditPage` | Autenticado | Auditoria. |
@@ -268,7 +268,7 @@ Definidas em `src/app/App.jsx`:
 - As três telas usam a mesma moldura (`AuthLayout`) e formulários com **react-hook-form + zod** (`utils/schemas.js`). Erros aparecem embaixo de cada campo, ligados por `aria-describedby`.
 - **Login** (`LoginPage`): `signInWithPassword`. Mensagens em pt-BR para senha errada, e-mail não confirmado e excesso de tentativas.
 - **Cadastro** (`SignupPage`): cria a conta com o nome em `user_metadata.full_name`; um trigger do banco cria o perfil. Se o Supabase exigir confirmação de e-mail, a tela avisa para abrir o link.
-- **Organização** (`OrganizationPage`): duas opções, **criar** (`create_organization`, vira admin) ou **entrar com código** (`join_organization`, vira viewer; o código não diferencia maiúsculas). Código errado mostra “Código de organização inválido.” sem dizer se a organização existe.
+- **Organização** (`OrganizationPage`): duas opções, **criar** (`create_organization`, vira admin) ou **entrar com código** (`join_organization`, vira stakeholder; o código não diferencia maiúsculas). Código errado mostra “Código de organização inválido.” sem dizer se a organização existe.
 - **Sair**: no menu da conta (Topbar). A barra lateral e o menu mostram o nome, o papel e a organização de quem está logado.
 - **Código de convite**: o admin vê o código da organização no menu da conta, com botão de copiar (`shared/layout/InviteCode.jsx`). Os outros papéis não veem o código na tela. O RLS deixa qualquer membro ler a organização, então o código não é segredo dentro dela: se um dia precisar ser, a coluna sai do `select` dos não-admins por migration.
 
@@ -303,14 +303,14 @@ Recebe `projectList` e mostra:
 - **3 indicadores**: total, “em atenção” (`status === 'warning'`), “riscos críticos” (`status === 'danger'`).
 - **Novo projeto**: abre `ProjectFormModal` vazio.
 - **Clique em um card**: abre `ProjectDetailModal` (descrição, prazo formatado, status calculado, botões Editar e Excluir conforme o papel, e a seção **GitHub**).
-- **Seção GitHub** (`GitHubPanel`, desde 02/11/2026): o admin cola a chave *fine-grained* do GitHub (só leitura). A chave é testada no GitHub, guardada criptografada no Vault e nunca volta para o navegador; a tela mostra só `••••` + os 4 últimos caracteres e o login. Admin e developer clicam em **Sincronizar**; o admin também troca e remove a chave. Viewer e stakeholder só veem a situação.
+- **Seção GitHub** (`GitHubPanel`, desde 02/11/2026): o admin cola a chave *fine-grained* do GitHub (só leitura). A chave é testada no GitHub, guardada criptografada no Vault e nunca volta para o navegador; a tela mostra só `••••` + os 4 últimos caracteres e o login. Logo depois de conectar, o admin **escolhe os repositórios do projeto** numa lista com tudo o que a chave enxerga (a chave sempre lê também os repositórios públicos); dá para mudar depois em **Escolher repositórios**. Salvar já sincroniza. Admin e developer clicam em **Sincronizar** (só aparece com repositórios escolhidos); o admin também troca e remove a chave. Stakeholder só vê a situação.
 - **Editar**: mesmo formulário, preenchido. Ao salvar, o projeto é substituído pelo mesmo `id`.
 - **Excluir**: abre `DeleteProjectModal` pedindo confirmação; depois filtra o projeto da lista.
 - Os avisos (toast) aparecem ao criar, editar e excluir.
 
 ### 8.6 `RepositoriesPage.jsx` — Repositórios (dados reais do GitHub desde 02/11/2026)
 - **Filtro por projeto** (“Todos os projetos” ou um projeto) e três abas: **Repositórios**, **Pull Requests** e **Branches**.
-- Os dados vêm das tabelas `repositories`, `pull_requests` e `branches`, preenchidas pela Edge Function `github` quando alguém clica em **Sincronizar** no projeto. Não há atualização automática.
+- Os dados vêm das tabelas `repositories`, `pull_requests` e `branches`, preenchidas pela Edge Function `github` quando alguém clica em **Sincronizar** no projeto. Cada repositório é guardado uma vez por empresa e ligado aos projetos pela tabela `project_repositories`: um repositório usado por dois projetos aparece uma vez, com a coluna **Projetos** listando os dois. Não há atualização automática.
 - **Números calculados**, nada fixo (`utils/metrics.js`): PRs abertos, PRs mergeados nos últimos 30 dias e tempo médio até o merge.
 - Limites por sincronização: 100 repositórios por chave; 100 PRs (os mais recentes) e 100 branches por repositório.
 - Sem nada sincronizado, a página explica como conectar.
@@ -321,12 +321,12 @@ Recebe `projectList` e mostra:
 - Botões **“Exportar CSV”** e **“Filtrar”** existem, mas **não têm ação** (não fazem nada ao clicar).
 
 ### 8.8 `RbacPage.jsx` — Acessos e RBAC (dados reais desde 02/11/2026)
-- **Papéis e permissões:** quatro cartões (Admin, Developer, Stakeholder, Viewer) com o que cada papel **realmente** pode fazer (`utils/roles.js`, espelho das regras do banco). Clicar abre `RoleDetailModal`.
+- **Papéis e permissões:** três cartões (Admin, Developer, Stakeholder; o viewer saiu em 03/11/2026) com o que cada papel **realmente** pode fazer (`utils/roles.js`, espelho das regras do banco). Clicar abre `RoleDetailModal`.
 - **Membros:** nome, e-mail e papel de cada pessoa da organização (`membersApi.listMembers`).
 - **Admin:** troca o papel numa lista, remove membros (com confirmação) e abre **Convidar**, que mostra o código com botão de copiar e permite **gerar novo código** (o anterior para de valer).
 - **Outros papéis:** veem a lista sem controles e podem **sair** da organização.
 - O banco não deixa a organização sem admin: rebaixar ou remover o último mostra “A organização precisa de pelo menos um administrador.”.
-- O papel também decide os botões da página de Projetos: viewer e stakeholder não veem criar, editar nem excluir; developer não vê excluir (`projectPermissions` em `app/routes.jsx`). Quem bloqueia de verdade é o RLS.
+- O papel também decide os botões da página de Projetos: stakeholder não vê criar, editar nem excluir; developer não vê excluir (`projectPermissions` em `app/routes.jsx`). Quem bloqueia de verdade é o RLS.
 
 ### 8.9 `SettingsPage.jsx` — Configurações
 Quatro abas:
