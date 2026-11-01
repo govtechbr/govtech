@@ -138,6 +138,7 @@ function syncProject(projectId) {
         state: 'open',
         draft: false,
         author_login: 'dono-gh',
+        approval_count: 1,
         html_url: `${repository.html_url}/pull/12`,
         created_at_github: new Date().toISOString(),
         merged_at: null,
@@ -156,13 +157,16 @@ function syncProject(projectId) {
     ]
   }
 
-  db.githubCredentials.find((row) => row.project_id === projectId).last_synced_at =
-    new Date().toISOString()
+  Object.assign(
+    db.githubCredentials.find((row) => row.project_id === projectId),
+    { last_synced_at: new Date().toISOString(), last_sync_error: null },
+  )
   return HttpResponse.json({
     repositoryCount: linked.length,
     unavailableCount: 0,
     pullRequestCount: linked.length,
     branchCount: linked.length,
+    commitCount: linked.length,
   })
 }
 

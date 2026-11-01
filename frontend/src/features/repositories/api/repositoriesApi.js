@@ -14,7 +14,7 @@ function fail() {
 
 const repositoryColumns = 'id, full_name, name, description, language, html_url, private, pushed_at'
 const pullRequestColumns =
-  'id, repository_id, number, title, state, draft, author_login, html_url, created_at_github, merged_at'
+  'id, repository_id, number, title, state, draft, author_login, approval_count, html_url, created_at_github, merged_at'
 const branchColumns = 'id, name, last_commit_sha, protected'
 
 // Com projeto: o join "!inner" deixa só as linhas ligadas a ele

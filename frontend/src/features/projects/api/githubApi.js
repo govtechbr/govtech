@@ -47,7 +47,7 @@ export async function getGitHubConnection(projectId) {
   const [connection, repositories] = await Promise.all([
     supabase
       .from('github_credentials')
-      .select('token_last4, github_login, last_synced_at')
+      .select('token_last4, github_login, last_synced_at, last_sync_error')
       .eq('project_id', projectId)
       .maybeSingle(),
     supabase
@@ -66,6 +66,8 @@ export async function getGitHubConnection(projectId) {
     last4: connection.data.token_last4,
     login: connection.data.github_login,
     lastSyncedAt: connection.data.last_synced_at,
+    // por que a sincronização automática (a cada hora) falhou; some na próxima que der certo
+    lastSyncError: connection.data.last_sync_error,
     repositories: repositories.data
       .map((row) => row.repository)
       .sort((a, b) => a.full_name.localeCompare(b.full_name)),

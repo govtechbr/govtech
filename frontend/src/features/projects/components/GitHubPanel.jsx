@@ -112,7 +112,7 @@ export default function GitHubPanel({ projectId, canManage, canSync }) {
     try {
       const result = await sync.mutateAsync(projectId)
       showToast(
-        `Sincronizado: ${result.repositoryCount} repositório(s), ${result.pullRequestCount} PR(s) e ${result.branchCount} branch(es).`,
+        `Sincronizado: ${result.repositoryCount} repositório(s), ${result.pullRequestCount} PR(s), ${result.branchCount} branch(es) e ${result.commitCount} commit(s).`,
       )
     } catch (error) {
       showToast(error.message, 'danger')
@@ -175,9 +175,16 @@ export default function GitHubPanel({ projectId, canManage, canSync }) {
           ·{' '}
           {github.lastSyncedAt
             ? `sincronizado ${timeAgo(github.lastSyncedAt)}`
-            : 'ainda não sincronizado'}
+            : 'ainda não sincronizado'}{' '}
+          · atualiza sozinho a cada hora
         </span>
       </p>
+
+      {github.lastSyncError && (
+        <p role="alert" className={styles.error}>
+          A última sincronização automática falhou: {github.lastSyncError}
+        </p>
+      )}
 
       {picking && canManage && (
         <RepositoryPicker

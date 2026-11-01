@@ -55,6 +55,7 @@ export default function PullRequestsList({ pullRequests }) {
                 <th>REPOSITÓRIO</th>
                 <th>AUTOR</th>
                 <th>ABERTO</th>
+                <th>APROVAÇÕES</th>
                 <th>STATUS</th>
               </tr>
             </thead>
@@ -82,6 +83,7 @@ export default function PullRequestsList({ pullRequests }) {
                   <td className="mono">{pr.repository.name}</td>
                   <td>{pr.author_login ?? '—'}</td>
                   <td className="muted-cell">{timeAgo(pr.created_at_github)}</td>
+                  <td>{pr.approval_count > 0 ? pr.approval_count : 'Nenhuma'}</td>
                   <td>
                     <StatusBadge status={states[pr.state].status}>
                       {pr.draft && pr.state === 'open' ? 'Rascunho' : states[pr.state].label}
