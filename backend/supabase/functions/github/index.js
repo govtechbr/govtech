@@ -273,7 +273,6 @@ async function sync({ project, asServer }) {
 
   let pullRequestCount = 0
   let branchCount = 0
-
   let commitCount = 0
   const since = new Date(Date.now() - COMMIT_DAYS * 24 * 60 * 60 * 1000).toISOString()
 

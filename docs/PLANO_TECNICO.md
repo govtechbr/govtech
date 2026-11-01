@@ -1222,3 +1222,15 @@ Uma função com três ações. Todas conferem o login (JWT) e o papel do usuár
 - **Trocar de empresa remonta as telas** (`key` no `Outlet`), para não sobrar projeto aberto da empresa anterior.
 - **Adicionar empresa:** item na lista da barra lateral que leva a `/organizacao`. Lá aparece "Voltar para o painel" para quem já tem empresa, e a empresa criada ou a que acabou de entrar passa a ser a escolhida.
 - **Testes:** 6 novos com MSW (filtro de projetos e repositórios, lembrar a última, empresa que sumiu, projeto novo na empresa certa, adicionar empresa por código). **96 testes**, lint e build verdes.
+
+**E3: mais dados do GitHub e sincronização a cada hora** (regras G6–G8; 04/11/2026)
+
+| Passo | Resultado |
+|---|---|
+| Migration `github_sync_hourly` | PRs com `approval_count` e `author_avatar_url`; tabela `commits` (sha, login, avatar, data; sem nome, e-mail nem mensagem) com RLS; `github_credentials.last_sync_error`; senha do agendador gerada dentro do Vault; pg_cron + pg_net com o job `github-sync-hourly` (minuto 7 de cada hora). **Aplicada pelo MCP** (não tem `delete`/`update`); a versão registrada foi ajustada para a do arquivo (`20261104120000`), porque o MCP grava a hora da aplicação e o arquivo precisa vir depois das migrations do GitHub |
+| Edge Function | Versão 3, `verify_jwt` **desligado** (aprovado): ação `sync-all` só com a senha do Vault, responde 202 e sincroniza em segundo plano (`EdgeRuntime.waitUntil`); a falha de um projeto vai para `last_sync_error` e não para os outros. PRs pela **API GraphQL** (uma chamada traz os 100 PRs e as aprovações); commits da branch padrão dos últimos 90 dias (até 300; repositório vazio = nenhum). 14 testes `node --test` |
+| Verificação em produção | Disparo manual do job: **202**, "Teste 1" sincronizado (18 PRs com avatar, 87 commits, sem erro). Senha errada: **401**. Security Advisor: só o aviso de senha vazada (Auth) |
+| Front | Painel mostra "atualiza sozinho a cada hora" e o último erro; lista de PRs com a coluna Aprovações. **97 testes**, lint e build verdes |
+
+- **Achado para a E4:** no repositório de demonstração nenhum PR tem aprovação (o dono faz merge sem revisor). Pela regra do §6, **todo PR mergeado vai gerar o alerta "sem aprovação"**. É o comportamento certo, mas vale combinar a demonstração (ex.: pedir revisão a um colega em alguns PRs).
+- **Fine-grained token e GraphQL:** funcionou com a chave atual (só leitura de conteúdo e PRs).
