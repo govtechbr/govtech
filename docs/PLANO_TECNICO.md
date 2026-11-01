@@ -1,6 +1,6 @@
 # GovTech MS — Plano Técnico (Back-end Supabase, Refatoração, Testes, Responsividade)
 
-> **Status (01/11/2026):** ✅ Limpeza (branch `chore/limpeza`) · ✅ Qualidade: ESLint, Prettier e Husky (branch `chore/qualidade`) · ✅ Skills instaladas · ✅ Testes P0 (branch `test/setup`, §14) · Supabase `govtech-br` em São Paulo, vazio · 📝 **Nova estrutura aguardando aprovação** (§15).
+> **Status (01/11/2026):** ✅ Limpeza (branch `chore/limpeza`) · ✅ Qualidade: ESLint, Prettier e Husky (branch `chore/qualidade`) · ✅ Skills instaladas · ✅ Testes P0 (branch `test/setup`, §14) · Supabase `govtech-br` em São Paulo, vazio · 🚧 **Nova estrutura em execução** (§15).
 >
 > Autor: Tech Lead (IA) · Data: 31/10/2026 · Base: commit `193c764` (branch `main`)
 
@@ -20,7 +20,7 @@
 12. [Referências](#12-referências)
 13. [Qualidade: lint e formatação](#13-qualidade-lint-e-formatação--aprovado-e-aplicado-em-31102026)
 14. [Testes](#14-testes--aprovado-e-aplicado-em-01112026)
-15. [Proposta: Nova estrutura (aguardando aprovação)](#15-proposta-nova-estrutura-aguardando-aprovação)
+15. [Nova estrutura](#15-nova-estrutura--aprovada-em-01112026-em-execução)
 
 ---
 
@@ -827,9 +827,9 @@ Os 4 casos estão em `utils/__tests__/projectUtils.test.js` marcados com `it.fai
 
 ---
 
-## 15. Proposta: Nova estrutura (aguardando aprovação)
+## 15. Nova estrutura (✅ aprovada em 01/11/2026, em execução)
 
-**Nada disto foi feito ainda.** Detalha os passos 3 a 6 da §5.4 para a janela de 04 a 10/11 (Dev A). Como a fase Testes terminou antes, dá para começar já em 02/11.
+**Aprovada integralmente em 01/11**, com as recomendações da 15.7. O andamento fica registrado na 15.9. Detalha os passos 3 a 6 da §5.4 para a janela de 04 a 10/11 (Dev A). Como a fase Testes terminou antes, dá para começar já em 02/11.
 
 ### 15.1 Princípios
 - **Mover não muda lógica.** Commits de movimentação só trocam caminhos (`git mv` + ajuste de `import`). Assim o Git mantém o histórico de cada arquivo e a revisão fica trivial.
