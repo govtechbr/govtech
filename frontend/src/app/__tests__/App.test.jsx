@@ -1,22 +1,35 @@
 import { screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import App from '@/app/App'
+import { db, signInAs, testPassword, testUser } from '@/test/msw/db'
 import { renderWithRouter } from '@/test/renderWithRouter'
 
 function sidebar() {
   return screen.getByRole('complementary')
 }
 
+// Área logada: espera a sessão e as organizações carregarem antes de seguir
+async function renderApp(route) {
+  const result = renderWithRouter(<App />, { route })
+
+  await screen.findByRole('complementary')
+  return result
+}
+
 describe('App', () => {
-  it('renders a single sidebar on the overview (regression #1)', () => {
-    renderWithRouter(<App />, { route: '/dashboard' })
+  beforeEach(() => {
+    signInAs()
+  })
+
+  it('renders a single sidebar on the overview (regression #1)', async () => {
+    await renderApp('/dashboard')
 
     expect(screen.getAllByRole('complementary')).toHaveLength(1)
   })
 
   it('navigates to the projects page from the sidebar', async () => {
-    const { user } = renderWithRouter(<App />, { route: '/dashboard' })
+    const { user } = await renderApp('/dashboard')
 
     await user.click(within(sidebar()).getByRole('button', { name: 'Projetos' }))
 
@@ -24,7 +37,7 @@ describe('App', () => {
   })
 
   it('keeps a created project after remounting', async () => {
-    const { user, unmount } = renderWithRouter(<App />, { route: '/projects' })
+    const { user, unmount } = await renderApp('/projects')
 
     await user.click(screen.getByRole('button', { name: /novo projeto/i }))
     await user.type(screen.getByLabelText('Nome do Projeto'), 'Projeto Persistido')
@@ -35,13 +48,13 @@ describe('App', () => {
     await screen.findByText('Projeto criado com sucesso.')
     unmount()
 
-    renderWithRouter(<App />, { route: '/projects' })
+    await renderApp('/projects')
 
     expect(await screen.findByRole('heading', { name: 'Projeto Persistido' })).toBeInTheDocument()
   })
 
   it('shows a toast after creating a project', async () => {
-    const { user } = renderWithRouter(<App />, { route: '/projects' })
+    const { user } = await renderApp('/projects')
 
     await user.click(screen.getByRole('button', { name: /novo projeto/i }))
     await user.type(screen.getByLabelText('Nome do Projeto'), 'Projeto Avisado')
@@ -50,7 +63,7 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Responsável'), 'Dev')
     await user.click(screen.getByRole('button', { name: /criar projeto/i }))
 
-    expect(screen.getByText('Projeto criado com sucesso.')).toBeInTheDocument()
+    expect(await screen.findByText('Projeto criado com sucesso.')).toBeInTheDocument()
   })
 
   it('renders the landing page lazily', async () => {
@@ -62,8 +75,8 @@ describe('App', () => {
   })
 
   it('opens the account menu and goes to settings', async () => {
-    const { user } = renderWithRouter(<App />, { route: '/dashboard' })
-    const avatar = screen.getByRole('button', { name: /menu da conta/i })
+    const { user } = await renderApp('/dashboard')
+    const avatar = screen.getByRole('button', { name: 'Menu da conta de Alice Souza' })
 
     await user.click(avatar)
     expect(avatar).toHaveAttribute('aria-expanded', 'true')
@@ -75,7 +88,7 @@ describe('App', () => {
   })
 
   it('switches the workspace from the sidebar', async () => {
-    const { user } = renderWithRouter(<App />, { route: '/dashboard' })
+    const { user } = await renderApp('/dashboard')
 
     await user.click(within(sidebar()).getByRole('button', { name: /trocar workspace/i }))
     await user.click(within(sidebar()).getByRole('button', { name: /govtech-ti/i }))
@@ -87,7 +100,7 @@ describe('App', () => {
 
   describe('global search', () => {
     it('opens from the topbar and closes', async () => {
-      const { user } = renderWithRouter(<App />, { route: '/dashboard' })
+      const { user } = await renderApp('/dashboard')
 
       await user.click(screen.getByRole('button', { name: 'Buscar' }))
       expect(screen.getByRole('searchbox', { name: /buscar no sistema/i })).toBeInTheDocument()
@@ -97,7 +110,7 @@ describe('App', () => {
     })
 
     it('opens the chosen project on the projects page', async () => {
-      const { user } = renderWithRouter(<App />, { route: '/dashboard' })
+      const { user } = await renderApp('/dashboard')
 
       await user.click(screen.getByRole('button', { name: 'Buscar' }))
       await user.type(screen.getByRole('searchbox'), 'Pagamentos')
@@ -106,6 +119,49 @@ describe('App', () => {
       expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
       expect(await screen.findByRole('button', { name: /editar/i })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /novo projeto/i })).toBeInTheDocument()
+    })
+  })
+
+  describe('authentication', () => {
+    beforeEach(() => {
+      localStorage.clear()
+    })
+
+    it('sends visitors without a session to the login page', async () => {
+      renderWithRouter(<App />, { route: '/dashboard' })
+
+      expect(await screen.findByRole('heading', { name: 'Bem-vindo de volta' })).toBeInTheDocument()
+    })
+
+    it('logs in and opens the dashboard', async () => {
+      const { user } = renderWithRouter(<App />, { route: '/login' })
+
+      await user.type(await screen.findByLabelText('E-mail'), testUser.email)
+      await user.type(screen.getByLabelText('Senha'), testPassword)
+      await user.click(screen.getByRole('button', { name: /entrar na plataforma/i }))
+
+      expect(await screen.findByRole('complementary')).toBeInTheDocument()
+    })
+
+    it('asks for an organization when the user has none', async () => {
+      db.members = []
+      signInAs()
+      renderWithRouter(<App />, { route: '/dashboard' })
+
+      expect(
+        await screen.findByRole('heading', { name: 'Onde você trabalha?' }),
+      ).toBeInTheDocument()
+    })
+
+    it('signs out from the account menu', async () => {
+      signInAs()
+      const { user } = await renderApp('/dashboard')
+
+      await user.click(screen.getByRole('button', { name: /menu da conta/i }))
+      await user.click(screen.getByRole('button', { name: 'Sair' }))
+
+      expect(await screen.findByRole('heading', { name: 'Bem-vindo de volta' })).toBeInTheDocument()
+      expect(localStorage.getItem('govtech-auth')).toBeNull()
     })
   })
 })

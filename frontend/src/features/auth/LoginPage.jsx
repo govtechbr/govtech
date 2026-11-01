@@ -1,120 +1,82 @@
-import { useState } from 'react'
-import { ArrowUpRight, Check, ChevronRight, Eye, LockKeyhole, UserRound } from 'lucide-react'
+import { ChevronRight, UserRound } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { Link, Navigate } from 'react-router-dom'
 
-import Brand from '@/shared/ui/Brand'
+import { signIn } from '@/features/auth/api/authApi'
+import AuthField from '@/features/auth/components/AuthField'
+import styles from '@/features/auth/components/AuthForms.module.css'
+import AuthLayout from '@/features/auth/components/AuthLayout'
+import PasswordField from '@/features/auth/components/PasswordField'
+import { useSession } from '@/features/auth/hooks/useAuth'
+import { loginSchema } from '@/features/auth/utils/schemas'
+import { zodResolver } from '@/shared/lib/zodResolver'
 
 export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [toast, setToast] = useState(false)
+  const session = useSession()
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '' } })
 
-  const submit = (event) => {
-    event.preventDefault()
-    setToast(true)
+  // Quem já entrou vai direto ao painel (inclusive logo depois do login)
+  if (session) {
+    return <Navigate to="/dashboard" replace />
+  }
 
-    window.setTimeout(() => {
-      window.location.href = '/dashboard'
-    }, 700)
+  async function onSubmit(values) {
+    try {
+      await signIn(values)
+    } catch (error) {
+      setError('root', { message: error.message })
+    }
   }
 
   return (
-    <div className="login-page">
-      <header className="public-header">
-        <Brand />
+    <AuthLayout
+      kicker="ACESSO CORPORATIVO"
+      title="Bem-vindo de volta"
+      subtitle="Acesse a plataforma GovTech MS."
+    >
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <AuthField
+          id="email"
+          label="E-mail"
+          icon={UserRound}
+          type="email"
+          autoComplete="email"
+          error={errors.email}
+          {...register('email')}
+        />
 
-        <nav className="public-nav">
-          <a href="landing#capabilities" className="nav-link">
-            Capacidades
-          </a>
+        <PasswordField
+          id="password"
+          label="Senha"
+          autoComplete="current-password"
+          error={errors.password}
+          {...register('password')}
+        />
 
-          <a className="text-link" href="/dashboard">
-            Ver demonstração <ArrowUpRight size={15} />
-          </a>
-        </nav>
-      </header>
+        {errors.root && (
+          <p role="alert" className={styles.formError}>
+            {errors.root.message}
+          </p>
+        )}
 
-      <main>
-        <section className="hero-section container">
-          <div className="hero-copy">
-            <div className="eyebrow">
-              <span className="eyebrow-pulse" />
-              v2.4 — IT GOVERNANCE PLATFORM
-            </div>
+        <button
+          className={`primary-button full-width ${styles.submit}`}
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Entrando…' : 'Entrar na plataforma'}
+          <ChevronRight size={17} />
+        </button>
+      </form>
 
-            <h1>
-              Governança e
-              <br />
-              <span className="accent-text"> monitoramento de</span>
-              <br />
-              projetos de TI<span className="title-dot">.</span>
-            </h1>
-
-            <p className="hero-lead">
-              Monitoramento automatizado de Pull Requests, prazos de projetos, indicadores de
-              processo e alertas de governança.
-            </p>
-          </div>
-
-          <div className="login-card elevation-3">
-            <div className="login-card-top">
-              <div>
-                <span className="card-kicker">ACESSO CORPORATIVO</span>
-                <h2>Bem-vindo de volta</h2>
-                <p>Acesse a plataforma GovTech MS.</p>
-              </div>
-
-              <div className="secure-icon">
-                <LockKeyhole size={20} />
-              </div>
-            </div>
-
-            <form onSubmit={submit}>
-              <label htmlFor="email">Email corporativo</label>
-
-              <div className="input-wrap">
-                <UserRound size={17} />
-
-                <input id="email" type="email" defaultValue="marina.costa@govtech.ms" required />
-              </div>
-
-              <label htmlFor="password">Senha</label>
-
-              <div className="input-wrap">
-                <LockKeyhole size={17} />
-
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  defaultValue="govtech-demo"
-                  required
-                />
-
-                <button
-                  type="button"
-                  className="input-action"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  <Eye size={17} />
-                </button>
-              </div>
-
-              {/* Espaço entre senha e botão */}
-              <div style={{ height: '16px' }} />
-
-              <button className="primary-button full-width" type="submit">
-                Entrar na Plataforma
-                <ChevronRight size={17} />
-              </button>
-            </form>
-          </div>
-        </section>
-      </main>
-
-      {toast && (
-        <div className="toast toast-success">
-          <Check size={17} />
-          Sessão demo iniciada. Abrindo dashboard…
-        </div>
-      )}
-    </div>
+      <p className={styles.footer}>
+        Ainda não tem conta? <Link to="/cadastro">Criar conta</Link>
+      </p>
+    </AuthLayout>
   )
 }

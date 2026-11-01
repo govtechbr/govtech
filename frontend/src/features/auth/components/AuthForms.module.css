@@ -1,0 +1,91 @@
+.status {
+  padding: var(--space-8) var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  text-align: center;
+}
+
+.fieldError {
+  margin-top: var(--space-1);
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+}
+
+/* Erro do formulário inteiro (ex.: senha errada) */
+.formError,
+.notice {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.formError {
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+.notice {
+  border: 1px solid var(--color-border);
+  background: var(--color-primary-50);
+  color: var(--color-text-primary);
+}
+
+.submit {
+  margin-top: var(--space-6);
+}
+
+.footer {
+  margin-top: var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.footer a,
+.linkButton {
+  color: var(--color-primary-600);
+  font-weight: 600;
+}
+
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+/* Escolha entre criar e entrar numa organização */
+.choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.choice button {
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--space-2);
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.choice button[aria-pressed='true'] {
+  background: var(--color-surface);
+  box-shadow: var(--elevation-1);
+  color: var(--color-primary-600);
+}
+
+.hint {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}

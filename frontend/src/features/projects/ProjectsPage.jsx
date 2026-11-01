@@ -56,8 +56,9 @@ export default function ProjectsPage({ initialProjectId }) {
       }
 
       closeForm()
-    } catch {
-      showToast('Não foi possível salvar o projeto.', 'danger')
+    } catch (error) {
+      // A API já devolve a mensagem pronta (ex.: sem permissão para alterar)
+      showToast(error.message, 'danger')
     }
   }
 
@@ -69,8 +70,8 @@ export default function ProjectsPage({ initialProjectId }) {
       setSelectedProjectId(null)
       setShowDeleteConfirm(false)
       showToast('Projeto excluído com sucesso.', 'warning')
-    } catch {
-      showToast('Não foi possível excluir o projeto.', 'danger')
+    } catch (error) {
+      showToast(error.message, 'danger')
     }
   }
 

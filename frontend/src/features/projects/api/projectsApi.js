@@ -1,38 +1,102 @@
-import { getStoredProjects, saveProjects } from '@/features/projects/utils/storageUtils'
-import { projects as mockProjects } from '@/mocks/mockData'
 import { normalizeProject } from '@/shared/lib/projectUtils'
+import { supabase } from '@/shared/lib/supabase'
 
-// Único ponto de acesso aos dados de projeto. Hoje lê e grava no localStorage
-// (com os mocks como ponto de partida); na fase Supabase só este arquivo muda.
-// As funções são async para já terem o mesmo formato de uma chamada de rede.
+// Único ponto de acesso aos dados de projeto. As regras de quem vê e quem
+// altera ficam no banco (RLS): aqui só se pede, e o banco decide.
+
+const columns = [
+  'name',
+  'description',
+  'deadline',
+  'owner',
+  'priority',
+  'status',
+  'progress',
+  'repositories',
+]
+const selectColumns = ['id', ...columns].join(', ')
+
+// Normaliza só os campos enviados, para uma edição parcial não sobrescrever o resto
+function toRow(data) {
+  const normalized = normalizeProject(data)
+  const row = Object.fromEntries(
+    columns.filter((column) => column in data).map((column) => [column, normalized[column]]),
+  )
+
+  if ('deadline' in row) {
+    row.deadline = row.deadline || null
+  }
+
+  return row
+}
+
+const notFound = 'Projeto não encontrado ou sem permissão para alterá-lo.'
+
+function fail(error) {
+  // PGRST116: nenhuma linha voltou. Com RLS, isso também é o que acontece quando
+  // o usuário não pode alterar o projeto: o banco não diz qual dos dois foi.
+  if (error.code === 'PGRST116') {
+    throw new Error(notFound)
+  }
+
+  if (error.code === '42501') {
+    throw new Error('Você não tem permissão para esta ação.')
+  }
+
+  throw new Error('Não foi possível falar com o servidor. Tente de novo.')
+}
+
+async function currentOrganizationId() {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const userId = sessionData.session?.user.id
+  const { data, error } = await supabase
+    .from('organization_members')
+    .select('organization_id')
+    .eq('user_id', userId)
+    .order('created_at')
+    .limit(1)
+    .maybeSingle()
+
+  if (error) fail(error)
+  if (!data) throw new Error('Você ainda não faz parte de uma organização.')
+
+  return data.organization_id
+}
 
 export async function listProjects() {
-  return getStoredProjects(mockProjects)
+  const { data, error } = await supabase.from('projects').select(selectColumns).order('created_at')
+
+  if (error) fail(error)
+  return data.map((project) => normalizeProject(project))
 }
 
 export async function createProject(data) {
-  const projects = getStoredProjects(mockProjects)
-  const project = normalizeProject({ ...data, id: Date.now() })
+  const organizationId = await currentOrganizationId()
+  const { data: created, error } = await supabase
+    .from('projects')
+    .insert({ ...toRow(normalizeProject(data)), organization_id: organizationId })
+    .select(selectColumns)
+    .single()
 
-  saveProjects([...projects, project])
-  return project
+  if (error) fail(error)
+  return normalizeProject(created)
 }
 
 export async function updateProject(id, data) {
-  const projects = getStoredProjects(mockProjects)
-  const current = projects.find((project) => project.id === id)
+  const { data: updated, error } = await supabase
+    .from('projects')
+    .update(toRow(data))
+    .eq('id', id)
+    .select(selectColumns)
+    .single()
 
-  if (!current) {
-    throw new Error('Projeto não encontrado.')
-  }
-
-  const updated = normalizeProject({ ...current, ...data, id })
-  saveProjects(projects.map((project) => (project.id === id ? updated : project)))
-  return updated
+  if (error) fail(error)
+  return normalizeProject(updated)
 }
 
 export async function deleteProject(id) {
-  const projects = getStoredProjects(mockProjects)
+  const { data, error } = await supabase.from('projects').delete().eq('id', id).select('id')
 
-  saveProjects(projects.filter((project) => project.id !== id))
+  if (error) fail(error)
+  if (data.length === 0) throw new Error(notFound)
 }

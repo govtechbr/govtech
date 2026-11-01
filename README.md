@@ -20,8 +20,11 @@ Requisito: **Node 22.12 ou mais novo**.
 ```bash
 cd frontend
 npm install        # instala as dependências e o hook de pre-commit (Husky)
+cp .env.example .env.local   # e preencha com a URL e a chave publicável do Supabase
 npm run dev        # http://localhost:5173
 ```
+
+Os testes não precisam do `.env.local`: usam um Supabase simulado (MSW, em `src/test/msw`).
 
 ## Comandos (dentro de `frontend/`)
 

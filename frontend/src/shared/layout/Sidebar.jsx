@@ -15,7 +15,7 @@ import Brand from '@/shared/ui/Brand'
 import Icon from '@/shared/ui/Icon'
 import ChatbotModal from './ChatbotModal'
 import styles from './Sidebar.module.css'
-import { auditEvents, profile } from '@/mocks/mockData'
+import { auditEvents } from '@/mocks/mockData'
 
 const menuItems = [
   {
@@ -59,7 +59,7 @@ const workspaces = [
   { id: 3, name: 'govtech-ti', logo: 'T' },
 ]
 
-export default function Sidebar({ open, setOpen, settings, setSettings }) {
+export default function Sidebar({ open, setOpen, settings, setSettings, account }) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -225,11 +225,11 @@ export default function Sidebar({ open, setOpen, settings, setSettings }) {
           </button>
 
           <div className="profile-row">
-            <span className="avatar">{profile.initials}</span>
+            <span className="avatar">{account.initials}</span>
 
             <span>
-              <b>{profile.name}</b>
-              <small>{profile.role}</small>
+              <b>{account.name}</b>
+              <small>{account.role}</small>
             </span>
           </div>
         </div>

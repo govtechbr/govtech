@@ -1032,6 +1032,22 @@ Cadastro → login → criar ou entrar numa organização → **CRUD de projetos
 | 1. Migration e seed | `20261101120000_core_schema.sql`, `seed.sql` e `tests/core_rls.test.sql` (25 testes) commitados na branch `feat/supabase-core` |
 | 2. Aplicar no `govtech-br` | Aplicada pelo MCP (`apply_migration`, nome `core_schema`) com aprovação. Security Advisor sem alertas |
 | 3. Testes pgTAP | **25/25 ok** em 01/11/2026. Banco conferido vazio depois (0 usuários, organizações e projetos; `pgtap` não ficou instalado) |
+| 4. Front | Branch `feat/supabase-frontend`: client, login, cadastro, escolha de organização, `ProtectedRoute`, `projectsApi` no Supabase, MSW. 64 testes, lint e build verdes. Conferido no navegador (build de produção contra o `govtech-br`): `/dashboard` sem login vai para `/login`, senha errada mostra a mensagem certa, sem rolagem horizontal em 390 e 1440 |
+| 5. Vercel | `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` criadas pelo MCP (production, preview, development) |
+
+**Decisões tomadas no passo 4:**
+- **Versões:** `@supabase/supabase-js` 2.118.0, `react-hook-form` **7.90.0** (a 7.91.0 tinha só 9 dias), `zod` 4.6.7, `msw` 3.0.3 (dev). Os 9 alertas do `npm audit` já existiam antes e estão só nas ferramentas de lint.
+- **Sem `@hookform/resolvers`:** não estava no plano, então o adaptador zod → react-hook-form virou uma função de 20 linhas em `shared/lib/zodResolver.js`.
+- **Cadastro em dois passos:** primeiro a conta (nome, e-mail, senha), depois a tela `/organizacao` (criar ou entrar com código). Com a confirmação de e-mail ligada, não há sessão logo após o cadastro, e as funções do banco exigem login. Os dois passos funcionam com a confirmação ligada ou desligada, e quem fica sem organização volta sempre para essa tela.
+- **Organização atual:** um projeto novo vai para a primeira organização do usuário. A troca de organização pela barra lateral (hoje com dados de exemplo) entra com a tela de membros (§16.6).
+- **Erros do RLS:** editar ou excluir sem permissão não dá erro no banco, só afeta 0 linhas. A API transforma isso em “Projeto não encontrado ou sem permissão para alterá-lo.”, para a tela não mostrar sucesso falso.
+- **Regra no ESLint:** só `features/*/api/` pode importar `shared/lib/supabase`.
+- **Build:** `supabase-js` e os formulários vão para arquivos separados (`manualChunks`), o que tirou o aviso de pacote grande (o principal tinha passado de 326 kB para 680 kB).
+- **Removidos:** `storageUtils.js` e o teste dele (gravação no localStorage, sem uso agora) e a chave `govtech:projects`.
+
+**Pendências para o dono do projeto (painel do Supabase, Authentication):**
+- **Confirmação de e-mail:** o servidor de e-mail gratuito do Supabase manda poucos e-mails por hora. Para a demo, recomendo desligar “Confirm email” (risco já previsto em §16.8).
+- **URL Configuration:** “Site URL” = `https://govtech-three.vercel.app`, e em “Redirect URLs” adicionar `https://govtech-three.vercel.app/**` e `http://localhost:5173/**`. Sem isso, o link do e-mail de confirmação aponta para `localhost:3000`.
 
 **Incidente no passo 3 (registro para o TCC):**
 - O MCP do Supabase pede confirmação do usuário para `execute_sql` com UPDATE/DELETE, e essa confirmação é recusada automaticamente nesta ferramenta. Decidimos não contornar a trava. O dono do projeto passou a rodar os testes no SQL Editor.
