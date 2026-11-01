@@ -216,15 +216,17 @@ Ele usa `<Routes>` para comparar o endereço atual com a lista de rotas (ver §7
 **Passo 4 — Telas públicas ou autenticadas.**
 - `/`, `/login` → `LoginPage`.
 - `/landing` → `LandingPage`.
-- `/dashboard`, `/audit`, `/repositories`, `/projects`, `/access`, `/settings` → `AuthenticatedLayout`.
+- `/landing` é carregada sob demanda (`lazy()`): o código dela só baixa quando alguém abre a página.
+- `/dashboard`, `/audit`, `/repositories`, `/projects`, `/access`, `/settings` → rotas filhas de `AppLayout` (rotas aninhadas).
 
-**Passo 5 — `AuthenticatedLayout` monta a casca do sistema.**
-Dentro de `src/app/App.jsx` ele:
-1. Guarda estados de tela: aviso (toast), menu lateral aberto e menu da conta.
+**Passo 5 — `AppLayout` monta a casca do sistema.**
+O `App.jsx` envolve tudo em `ToastProvider` (avisos) e declara as rotas. O `src/app/AppLayout.jsx`:
+1. Guarda estados de tela: menu lateral aberto, menu da conta e busca global aberta.
 2. Carrega as configurações com `useLocalStorage('govtech:settings', defaultSettings)` e aplica o tema com `useTheme`.
 3. Carrega a lista de projetos com `getStoredProjects(projetosDoMock)` e grava cada mudança em `govtech:projects` com `saveProjects`.
 4. Descobre a seção atual pelo endereço, usando `routeSections` (ex.: `/projects` → “Projetos”).
-5. Desenha `Sidebar`, `Topbar`, `GlobalSearch` e, conforme a seção, a página correspondente.
+5. Desenha `Sidebar`, `Topbar`, `GlobalSearch` e um `<Outlet>`: o React Router coloca ali a página da rota atual.
+6. Repassa projetos e configurações às páginas pelo `context` do `<Outlet>`; os adaptadores em `src/app/routes.jsx` leem esse contexto e passam como props (saem na etapa 5, com o TanStack Query).
 
 **Passo 6 — Ações do usuário mudam o estado.**
 Exemplo: ao criar um projeto, `ProjectsPage` chama `setProjectList(...)`. Como `projectList` é estado do React, a tela é redesenhada. O `useLocalStorage`/`saveProjects` grava a nova lista no navegador.
@@ -243,12 +245,12 @@ Definidas em `src/app/App.jsx`:
 | `/` | `LoginPage` | Público | Tela inicial. |
 | `/login` | `LoginPage` | Público | Mesma tela. |
 | `/landing` | `LandingPage` | Público | Página institucional. |
-| `/dashboard` | `AuthenticatedLayout` → `OverviewPage` | Autenticado | Visão geral. |
-| `/audit` | `AuthenticatedLayout` → `AuditPage` | Autenticado | Auditoria. |
-| `/repositories` | `AuthenticatedLayout` → `RepositoriesPage` | Autenticado | Repositórios. |
-| `/projects` | `AuthenticatedLayout` → `ProjectsPage` | Autenticado | Projetos. |
-| `/access` | `AuthenticatedLayout` → `RbacPage` | Autenticado | Acessos e RBAC. |
-| `/settings` | `AuthenticatedLayout` → `SettingsPage` | Autenticado | Configurações. |
+| `/dashboard` | `AppLayout` → `OverviewPage` | Autenticado | Visão geral. |
+| `/audit` | `AppLayout` → `AuditPage` | Autenticado | Auditoria. |
+| `/repositories` | `AppLayout` → `RepositoriesPage` | Autenticado | Repositórios. |
+| `/projects` | `AppLayout` → `ProjectsPage` | Autenticado | Projetos. |
+| `/access` | `AppLayout` → `RbacPage` | Autenticado | Acessos e RBAC. |
+| `/settings` | `AppLayout` → `SettingsPage` | Autenticado | Configurações. |
 | qualquer outro | redireciona para `/` | — | — |
 
 > “Autenticado” aqui é só nome: não há verificação de login. Qualquer pessoa digitando `/dashboard` entra.
@@ -336,7 +338,7 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 |---|---|---|
 | `Sidebar` | Menu lateral com logo, seletor de “workspace”, itens de menu e botão do chatbot. Usa `useNavigate` para trocar de rota. | `open`, `setOpen`, `settings` |
 | `Topbar` | Barra superior: botão de menu (mobile), breadcrumb “GOVTECH PLATFORM › SEÇÃO”, sino e menu da conta. | `active`, `setOpen`, `onNavigate` |
-| `GlobalSearch` | Busca em projetos, serviços, PRs e branches. Retorna `null` quando fechada (`open` falso). **Hoje o `App.jsx` a renderiza sem props, então ela nunca abre.** | `open`, `onClose`, `projects`, `onNavigate`, `setSelectedProject` |
+| `GlobalSearch` | Busca em projetos, serviços, PRs e branches. Abre pelo botão de lupa da Topbar e fecha com `Esc`, com o X ou clicando fora. Escolher um projeto leva a `/projects` com o detalhe dele aberto. | `open`, `onClose`, `projects`, `onNavigate`, `onSelectProject` |
 
 ### 9.2 Comuns
 
@@ -346,7 +348,7 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 | `Icon` | Recebe um **nome** de ícone em texto (`name="Shield"`) e busca no mapa `iconMap`. Se o nome não existir, mostra o ícone de interrogação (`CircleHelp`) como fallback. |
 | `StatCard` | Cartão com título, valor grande, subtexto, ícone e variação (`trend`) com seta. |
 | `StatusBadge` | Etiqueta colorida. `status` = `success`, `warning`, `danger`… |
-| `Toast` | Aviso que some sozinho após alguns segundos. |
+| `Toast` | Aviso que some sozinho após alguns segundos. Exibido pelo `ToastProvider`; as páginas chamam `const { showToast } = useToast()` (`src/shared/hooks/useToast.js`). A área do aviso tem `role="status"`, então leitores de tela anunciam a mensagem. |
 | `ModalShell` | Moldura genérica de modal (fundo + caixa). |
 | `ChatbotModal` | Assistente com FAQ fixa. |
 
@@ -537,7 +539,7 @@ Organizados por gravidade. ✅ = resolvido na limpeza de 31/10/2026 (branch `cho
 9. ⏳ **Valores fixos** (“4.2 dias”, “3” alertas, “34”, “92%”). Mantidos por decisão do time até haver dados reais.
 10. ⏳ **Login aceita qualquer coisa** (`LoginPage.jsx`). Entra com o Supabase Auth.
 11. ⏳ **Integrações e 2FA são demonstrativas.**
-12. ⏳ **Busca global nunca abre:** `App.jsx` renderiza `<GlobalSearch />` sem `open` e o botão da Topbar chama uma função vazia.
+12. ✅ **Busca global nunca abre:** corrigido em 01/11/2026 (o `AppLayout` controla `open` e a Topbar abre a busca); coberto por testes.
 
 ### 15.3 Baixa (qualidade de código)
 
@@ -548,7 +550,7 @@ Organizados por gravidade. ✅ = resolvido na limpeza de 31/10/2026 (branch `cho
 17. ✅ Imports não usados removidos (`LandingPage`, `OverviewPage`).
 18. ⏳ **Nomes de ícone em texto** (`icon: 'GitPullRequest'`) com fallback silencioso em `Icon.jsx`.
 19. ⏳ **~330 estilos inline** e **10 breakpoints diferentes**: tratados na fase de nova estrutura/responsividade.
-20. ⏳ **Sem favicon**: o navegador registra um 404 de `/favicon.ico` (sem efeito visível).
+20. ✅ **Sem favicon**: corrigido em 01/11/2026 com `frontend/public/favicon.svg`.
 
 ---
 
@@ -565,7 +567,7 @@ Removido na limpeza de 31/10/2026 (recuperável pelo histórico do git):
 | `projectsMock` em `ProjectsPage.jsx` | Declarado e não usado |
 | `THEME`, `TOKEN` em `storageKeys.js`; `getStoredSettings`, `saveSettings` | Sem uso após a unificação |
 
-Ainda sem uso, mas **mantido de propósito**: `components/common/Toast.jsx`, que será a base do aviso global na nova estrutura.
+O `Toast.jsx`, que estava sem uso, voltou a ser usado em 01/11/2026 pelo `ToastProvider`.
 
 ---
 
