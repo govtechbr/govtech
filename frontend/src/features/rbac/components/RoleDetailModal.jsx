@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react'
 
-import ModalShell from '@/shared/ui/ModalShell'
+import Modal from '@/shared/ui/Modal'
 import Icon from '@/shared/ui/Icon'
 import { COLORS } from '@/shared/constants/colors'
 
@@ -36,7 +36,7 @@ export default function RoleDetailModal({ role, onClose }) {
   const permissions = rolePermissions[role.label] || ['Permissões configuráveis para esta função.']
 
   return (
-    <ModalShell onClose={onClose} title={role.label} subtitle="DETALHES DA FUNÇÃO" maxWidth="520px">
+    <Modal title={role.label} kicker="DETALHES DA FUNÇÃO" onClose={onClose}>
       <div
         style={{
           display: 'flex',
@@ -112,6 +112,6 @@ export default function RoleDetailModal({ role, onClose }) {
           Fechar
         </button>
       </div>
-    </ModalShell>
+    </Modal>
   )
 }
