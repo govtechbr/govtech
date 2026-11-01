@@ -1035,6 +1035,8 @@ Cadastro → login → criar ou entrar numa organização → **CRUD de projetos
 | 4. Front | Branch `feat/supabase-frontend`: client, login, cadastro, escolha de organização, `ProtectedRoute`, `projectsApi` no Supabase, MSW. 64 testes, lint e build verdes. Conferido no navegador (build de produção contra o `govtech-br`): `/dashboard` sem login vai para `/login`, senha errada mostra a mensagem certa, sem rolagem horizontal em 390 e 1440 |
 | 5. Vercel | `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` criadas pelo MCP (production, preview, development) |
 
+| Ajuste pós-merge | Branch `feat/admin-join-code` (01/11/2026): o admin não tinha onde ver o código de convite. Achado no primeiro uso real, quando o código foi confundido com o nome da empresa. Agora o código aparece no menu da conta, só para admin, com botão de copiar |
+
 **Decisões tomadas no passo 4:**
 - **Versões:** `@supabase/supabase-js` 2.118.0, `react-hook-form` **7.90.0** (a 7.91.0 tinha só 9 dias), `zod` 4.6.7, `msw` 3.0.3 (dev). Os 9 alertas do `npm audit` já existiam antes e estão só nas ferramentas de lint.
 - **Sem `@hookform/resolvers`:** não estava no plano, então o adaptador zod → react-hook-form virou uma função de 20 linhas em `shared/lib/zodResolver.js`.

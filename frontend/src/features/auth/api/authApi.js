@@ -52,12 +52,16 @@ export async function signOut() {
 export async function listMyOrganizations(userId) {
   const { data, error } = await supabase
     .from('organization_members')
-    .select('role, organization:organizations (id, name)')
+    .select('role, organization:organizations (id, name, join_code)')
     .eq('user_id', userId)
     .order('created_at')
 
   if (error) throw new Error('Não foi possível carregar suas organizações.')
-  return data.map(({ role, organization }) => ({ ...organization, role }))
+  return data.map(({ role, organization: { join_code: joinCode, ...organization } }) => ({
+    ...organization,
+    joinCode,
+    role,
+  }))
 }
 
 export async function createOrganization(name) {

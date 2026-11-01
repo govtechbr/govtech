@@ -1,5 +1,7 @@
 import { Bell, ChevronRight, LogOut, Menu, Search, Settings2, UserRound } from 'lucide-react'
 
+import InviteCode from '@/shared/layout/InviteCode'
+
 export default function Topbar({
   active,
   setOpen,
@@ -77,6 +79,8 @@ export default function Topbar({
 
               <small style={{ color: 'var(--muted)' }}>{account.role}</small>
             </div>
+
+            {account.joinCode && <InviteCode code={account.joinCode} />}
 
             <button
               className="secondary-button"
