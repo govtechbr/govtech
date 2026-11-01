@@ -26,7 +26,6 @@ const roleLabels = {
   admin: 'Administrador',
   developer: 'Desenvolvedor',
   stakeholder: 'Stakeholder',
-  viewer: 'Visualizador',
 }
 
 // Nome, iniciais e papel de quem está logado, para a barra lateral e o menu da conta

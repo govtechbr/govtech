@@ -9,7 +9,7 @@ export default function InviteModal({ joinCode, regenerating, onRegenerate, onCl
     <Modal title="Convidar para a organização" kicker="CONVITE" size="sm" onClose={onClose}>
       <p className={styles.description}>
         Quem recebe o código cria a conta e escolhe <strong>Entrar com código</strong>. Entra como
-        Viewer; depois você muda o papel aqui.
+        Stakeholder; depois você muda o papel aqui.
       </p>
 
       <InviteCode code={joinCode} />

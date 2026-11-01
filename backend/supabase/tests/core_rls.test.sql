@@ -8,7 +8,7 @@
 -- com Docker, `supabase test db` também funciona.
 --
 -- Cenário:
---   Org A: alice (admin), bob (developer), carol (viewer)
+--   Org A: alice (admin), bob (developer), carol (stakeholder)
 --   Org B: dave (admin)
 --   eve: sem organização
 -- =====================================================================
@@ -34,7 +34,7 @@ insert into public.organizations (id, name, join_code) values
 insert into public.organization_members (organization_id, user_id, role) values
   ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'admin'),
   ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b', 'developer'),
-  ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000c', 'viewer'),
+  ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000c', 'stakeholder'),
   ('10000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000d', 'admin');
 
 insert into public.projects (id, organization_id, name) values
@@ -122,28 +122,28 @@ select throws_ok(
   'só admin gera novo código'
 );
 
--- ---------- carol (viewer da Org A) ----------
+-- ---------- carol (stakeholder da Org A) ----------
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}';
 
 select throws_ok(
   $$ insert into public.projects (organization_id, name) values ('10000000-0000-0000-0000-00000000000a', 'Da Carol') $$,
   '42501', null,
-  'viewer não cria projeto'
+  'stakeholder não cria projeto'
 );
 
 update public.projects set progress = 99 where id = '20000000-0000-0000-0000-00000000000a';
 select results_eq(
   $$ select progress from public.projects where id = '20000000-0000-0000-0000-00000000000a' $$,
   $$ values (50::smallint) $$,
-  'viewer não edita projeto'
+  'stakeholder não edita projeto'
 );
 
 update public.organization_members set role = 'admin'
   where user_id = '00000000-0000-0000-0000-00000000000c';
 select results_eq(
   $$ select role::text from public.organization_members where user_id = '00000000-0000-0000-0000-00000000000c' $$,
-  $$ values ('viewer') $$,
-  'viewer não se promove a admin'
+  $$ values ('stakeholder') $$,
+  'stakeholder não se promove a admin'
 );
 
 update public.profiles set full_name = 'Hackeada' where id = '00000000-0000-0000-0000-00000000000a';
@@ -200,8 +200,8 @@ select results_eq(
   $$ select role::text from public.organization_members
      where user_id = '00000000-0000-0000-0000-00000000000e'
        and organization_id = '10000000-0000-0000-0000-00000000000b' $$,
-  $$ values ('viewer') $$,
-  'quem entra por código começa como viewer'
+  $$ values ('stakeholder') $$,
+  'quem entra por código começa como stakeholder'
 );
 
 select public.create_organization('Org da Eve');

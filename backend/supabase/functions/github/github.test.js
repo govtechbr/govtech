@@ -4,16 +4,17 @@ import { describe, it } from 'node:test'
 
 import {
   checkToken,
-  fetchProjectData,
+  fetchRepositoryData,
   GitHubError,
   githubErrorMessage,
   pullRequestState,
   toBranchRow,
   toPullRequestRow,
+  toAvailableRepository,
   toRepositoryRow,
 } from './github.js'
 
-const ids = { projectId: 'p1', organizationId: 'o1', repositoryId: 'r1' }
+const ids = { organizationId: 'o1', repositoryId: 'r1' }
 
 // fetch falso: responde pelo caminho pedido
 function fakeFetch(routes) {
@@ -63,14 +64,32 @@ const pr = {
 }
 
 describe('row mapping', () => {
-  it('maps a repository with the project and organization', () => {
+  it('maps a repository to its organization (projects link to it separately)', () => {
     const row = toRepositoryRow(repo, ids)
 
-    assert.equal(row.project_id, 'p1')
+    assert.equal(row.project_id, undefined)
     assert.equal(row.organization_id, 'o1')
     assert.equal(row.github_id, 42)
     assert.equal(row.full_name, 'dono/app')
     assert.equal(row.private, true)
+  })
+
+  it('marks which available repositories are already selected', () => {
+    const other = { ...repo, id: 99, full_name: 'dono/outro', private: false }
+
+    assert.deepEqual(
+      [repo, other].map((item) => toAvailableRepository(item, new Set([42]))),
+      [
+        { githubId: 42, fullName: 'dono/app', description: null, private: true, selected: true },
+        {
+          githubId: 99,
+          fullName: 'dono/outro',
+          description: null,
+          private: false,
+          selected: false,
+        },
+      ],
+    )
   })
 
   it('tells merged PRs apart from closed ones', () => {
@@ -111,14 +130,15 @@ describe('GitHub calls', () => {
     assert.equal(calls[0].options.headers.Authorization, 'Bearer t0k3n')
   })
 
-  it('fetches pulls and branches of every repository', async () => {
-    const { impl } = fakeFetch({
-      '/user/repos': [200, [repo]],
+  it('fetches pulls and branches only of the chosen repositories', async () => {
+    const { impl, calls } = fakeFetch({
       '/repos/dono/app/pulls': [200, [pr]],
       '/repos/dono/app/branches': [200, [{ name: 'main', commit: { sha: 'abc' } }]],
     })
 
-    const [data] = await fetchProjectData('t', impl)
+    const [data] = await fetchRepositoryData('t', [repo], impl)
+
+    assert.equal(calls.length, 2)
 
     assert.equal(data.repo.full_name, 'dono/app')
     assert.equal(data.pulls.length, 1)

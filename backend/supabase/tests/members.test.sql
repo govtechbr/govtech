@@ -4,7 +4,7 @@
 -- scripts/to_sql_editor.py e rodar no SQL Editor (ver backend/README.md).
 --
 -- Cenário:
---   Org A: alice (admin), bob (developer), carol (viewer)
+--   Org A: alice (admin), bob (developer), carol (stakeholder)
 --   Org B: dave (admin)
 -- =====================================================================
 
@@ -28,7 +28,7 @@ insert into public.organizations (id, name, join_code) values
 insert into public.organization_members (organization_id, user_id, role) values
   ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'admin'),
   ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b', 'developer'),
-  ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000c', 'viewer'),
+  ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000c', 'stakeholder'),
   ('10000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000d', 'admin');
 
 -- 1. cadastro guarda o e-mail no perfil
@@ -38,7 +38,7 @@ select results_eq(
   'cadastro guarda o e-mail no perfil'
 );
 
--- ---------- carol (viewer da Org A) ----------
+-- ---------- carol (stakeholder da Org A) ----------
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}';
 
@@ -67,7 +67,7 @@ select is_empty(
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';
 
 select throws_ok(
-  $$ update public.organization_members set role = 'viewer'
+  $$ update public.organization_members set role = 'stakeholder'
      where user_id = '00000000-0000-0000-0000-00000000000a'
        and organization_id = '10000000-0000-0000-0000-00000000000a' $$,
   'P0001', 'A organização precisa de pelo menos um administrador.',

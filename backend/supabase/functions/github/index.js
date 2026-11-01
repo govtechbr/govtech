@@ -9,8 +9,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2.118.0'
 
 import {
   checkToken,
-  fetchProjectData,
+  fetchRepositoryData,
   GitHubError,
+  listRepositories,
+  toAvailableRepository,
   toBranchRow,
   toPullRequestRow,
   toRepositoryRow,
@@ -25,6 +27,8 @@ const corsHeaders = {
 // Quem pode cada ação (decisão G2: admin e developer sincronizam)
 const allowedRoles = {
   connect: ['admin'],
+  list: ['admin'],
+  select: ['admin'],
   disconnect: ['admin'],
   sync: ['admin', 'developer'],
 }
@@ -146,37 +150,123 @@ async function replaceRows(asServer, table, rows, scope, conflictKey, columns = 
   return data
 }
 
-async function sync({ project, asServer }) {
+async function readToken(asServer, projectId) {
   const { data: token, error } = await asServer.rpc('github_read_token', {
-    p_project_id: project.id,
+    p_project_id: projectId,
   })
   check(error)
   if (!token) throw new RequestError('Este projeto ainda não tem chave do GitHub.', 400)
 
-  const ids = {
-    projectId: project.id,
-    organizationId: project.organization_id,
-  }
-  const projectData = await fetchProjectData(token)
+  return token
+}
 
-  const repositories = await replaceRows(
-    asServer,
-    'repositories',
-    projectData.map(({ repo }) => toRepositoryRow(repo, ids)),
-    ['project_id', project.id],
-    'project_id,github_id',
-    'id, github_id',
+// Repositórios ligados ao projeto (a seleção do admin)
+async function linkedRepositories(asServer, projectId) {
+  const { data, error } = await asServer
+    .from('project_repositories')
+    .select('repository:repositories (id, github_id)')
+    .eq('project_id', projectId)
+  check(error)
+
+  return data.map((row) => row.repository)
+}
+
+// Lista o que a chave enxerga, marcando o que já está no projeto
+async function list({ project, asServer }) {
+  const token = await readToken(asServer, project.id)
+  const [repos, linked] = await Promise.all([
+    listRepositories(token),
+    linkedRepositories(asServer, project.id),
+  ])
+  const selectedIds = new Set(linked.map((repository) => repository.github_id))
+
+  return { repositories: repos.map((repo) => toAvailableRepository(repo, selectedIds)) }
+}
+
+// Salva a seleção do admin e já sincroniza. Só aceita repositórios que a chave enxerga.
+async function select(context, _token, body) {
+  const { project, asServer } = context
+  const githubIds = body.githubIds
+
+  if (!Array.isArray(githubIds) || githubIds.length === 0) {
+    throw new RequestError('Escolha ao menos um repositório.', 400)
+  }
+
+  const token = await readToken(asServer, project.id)
+  const visible = await listRepositories(token)
+  const chosen = visible.filter((repo) => githubIds.includes(repo.id))
+
+  if (chosen.length !== new Set(githubIds).size) {
+    throw new RequestError('Algum repositório escolhido não está mais disponível nesta chave.', 400)
+  }
+
+  const ids = { organizationId: project.organization_id }
+  const { data: repositories, error } = await asServer
+    .from('repositories')
+    .upsert(
+      chosen.map((repo) => toRepositoryRow(repo, ids)),
+      { onConflict: 'organization_id,github_id' },
+    )
+    .select('id')
+  check(error)
+
+  const keep = repositories.map((row) => row.id)
+  check(
+    (
+      await asServer.from('project_repositories').upsert(
+        keep.map((repositoryId) => ({
+          project_id: project.id,
+          repository_id: repositoryId,
+          organization_id: project.organization_id,
+        })),
+        { onConflict: 'project_id,repository_id', ignoreDuplicates: true },
+      )
+    ).error,
   )
-  const repositoryIdByGithubId = new Map(repositories.map((row) => [row.github_id, row.id]))
+
+  // Desmarcados saem do projeto; o banco apaga o repositório se nenhum projeto o usa (G5)
+  check(
+    (
+      await asServer
+        .from('project_repositories')
+        .delete()
+        .eq('project_id', project.id)
+        .not('repository_id', 'in', `(${keep.join(',')})`)
+    ).error,
+  )
+
+  return sync(context)
+}
+
+async function sync({ project, asServer }) {
+  const token = await readToken(asServer, project.id)
+  const linked = await linkedRepositories(asServer, project.id)
+
+  if (linked.length === 0) {
+    throw new RequestError('Escolha os repositórios do projeto antes de sincronizar.', 400)
+  }
+
+  // Dados atuais dos repositórios escolhidos que a chave ainda enxerga
+  const linkedIds = new Map(linked.map((repository) => [repository.github_id, repository.id]))
+  const visible = (await listRepositories(token)).filter((repo) => linkedIds.has(repo.id))
+  const ids = { organizationId: project.organization_id }
+
+  if (visible.length > 0) {
+    check(
+      (
+        await asServer.from('repositories').upsert(
+          visible.map((repo) => toRepositoryRow(repo, ids)),
+          { onConflict: 'organization_id,github_id' },
+        )
+      ).error,
+    )
+  }
 
   let pullRequestCount = 0
   let branchCount = 0
 
-  for (const { repo, pulls, branches } of projectData) {
-    const repoIds = {
-      ...ids,
-      repositoryId: repositoryIdByGithubId.get(repo.id),
-    }
+  for (const { repo, pulls, branches } of await fetchRepositoryData(token, visible)) {
+    const repoIds = { ...ids, repositoryId: linkedIds.get(repo.id) }
     const scope = ['repository_id', repoIds.repositoryId]
 
     await replaceRows(
@@ -209,7 +299,9 @@ async function sync({ project, asServer }) {
   )
 
   return {
-    repositoryCount: repositories.length,
+    repositoryCount: visible.length,
+    // escolhidos que a chave deixou de enxergar (ex.: permissão retirada no GitHub)
+    unavailableCount: linked.length - visible.length,
     pullRequestCount,
     branchCount,
     syncedAt,
@@ -225,21 +317,22 @@ async function disconnect({ project, asServer }) {
   return { disconnected: true }
 }
 
-const actions = { connect, sync, disconnect }
+const actions = { connect, list, select, sync, disconnect }
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (request.method !== 'POST') return json({ error: 'Use POST.' }, 405)
 
   try {
-    const { action, projectId, token } = await request.json()
+    const body = await request.json()
+    const { action, projectId, token } = body
 
     if (!actions[action] || typeof projectId !== 'string') {
       throw new RequestError('Pedido inválido.', 400)
     }
 
     const context = await authorize(request, projectId, action)
-    return json(await actions[action](context, token))
+    return json(await actions[action](context, token, body))
   } catch (error) {
     if (error instanceof RequestError) return json({ error: error.message }, error.status)
 

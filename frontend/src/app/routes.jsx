@@ -29,7 +29,6 @@ const projectPermissions = {
     manageGitHub: false,
     syncGitHub: false,
   },
-  viewer: { create: false, edit: false, delete: false, manageGitHub: false, syncGitHub: false },
 }
 
 export function OverviewRoute() {

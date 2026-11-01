@@ -50,13 +50,21 @@ export function resetDb({ withOrganization = true } = {}) {
   }))
   // GitHub: nada conectado no começo de cada teste
   db.githubCredentials = []
+  // Repositórios uma vez por empresa; a ligação com projetos fica em projectRepositories
   db.repositories = []
+  db.projectRepositories = []
   db.pullRequests = []
   db.branches = []
 }
 
 // Chave que a Edge Function simulada aceita
 export const validGitHubToken = 'github_pat_valida_1234567890abcd'
+
+// O que a chave simulada enxerga: um privado (o escolhido no GitHub) e um público
+export const githubAvailable = [
+  { id: 1, full_name: 'dono-gh/govtech', name: 'govtech', description: 'TCC', private: true },
+  { id: 2, full_name: 'dono-gh/blog', name: 'blog', description: null, private: false },
+]
 
 resetDb()
 

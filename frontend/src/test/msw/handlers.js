@@ -1,6 +1,13 @@
 import { http, HttpResponse } from 'msw/http'
 
-import { db, otherOrganization, sessionFor, testPassword, validGitHubToken } from '@/test/msw/db'
+import {
+  db,
+  otherOrganization,
+  sessionFor,
+  testPassword,
+  validGitHubToken,
+  githubAvailable,
+} from '@/test/msw/db'
 
 // Imita as respostas do Supabase (PostgREST e Auth) só no que o app usa.
 
@@ -62,9 +69,16 @@ function authError(status, errorCode, msg) {
   return HttpResponse.json({ code: status, error_code: errorCode, msg }, { status })
 }
 
-// Filtro do tipo ?repository.project_id=eq.<valor> (join com repositories)
+function linksOf(repositoryId) {
+  return db.projectRepositories
+    .filter((link) => link.repository_id === repositoryId)
+    .map((link) => ({ project_id: link.project_id }))
+}
+
+// Embute o repositório (com os projetos ligados) e aplica o filtro
+// ?repository.project_repositories.project_id=eq.<valor>
 function withRepository(request, rowsList) {
-  const projectId = eqParam(request, 'repository.project_id')
+  const projectId = eqParam(request, 'repository.project_repositories.project_id')
 
   return rowsList
     .map((row) => {
@@ -74,12 +88,16 @@ function withRepository(request, rowsList) {
         ...row,
         repository: {
           name: repository.name,
-          project_id: repository.project_id,
           default_branch: repository.default_branch,
+          project_repositories: linksOf(repository.id),
         },
       }
     })
-    .filter((row) => !projectId || row.repository.project_id === projectId)
+    .filter(
+      (row) =>
+        !projectId ||
+        row.repository.project_repositories.some((link) => link.project_id === projectId),
+    )
 }
 
 function byProjectParam(request, list) {
@@ -88,14 +106,69 @@ function byProjectParam(request, list) {
   return projectId ? list.filter((row) => row.project_id === projectId) : list
 }
 
-// Edge Function `github` simulada: aceita só validGitHubToken
-function githubFunction({ action, projectId, token }) {
+const githubError = (message) => HttpResponse.json({ error: message }, { status: 400 })
+
+// Sincroniza os repositórios ligados ao projeto: 1 PR e 1 branch "main" por repositório
+function syncProject(projectId) {
+  const linked = db.projectRepositories.filter((link) => link.project_id === projectId)
+
+  if (linked.length === 0) {
+    return githubError('Escolha os repositórios do projeto antes de sincronizar.')
+  }
+
+  for (const { repository_id: repositoryId } of linked) {
+    const repository = db.repositories.find(({ id }) => id === repositoryId)
+
+    db.pullRequests = [
+      ...db.pullRequests.filter((pr) => pr.repository_id !== repositoryId),
+      {
+        id: `pr-${repositoryId}`,
+        repository_id: repositoryId,
+        number: 12,
+        title: `Integração com o GitHub (${repository.name})`,
+        state: 'open',
+        draft: false,
+        author_login: 'dono-gh',
+        html_url: `${repository.html_url}/pull/12`,
+        created_at_github: new Date().toISOString(),
+        merged_at: null,
+      },
+    ]
+    db.branches = [
+      ...db.branches.filter((branch) => branch.repository_id !== repositoryId),
+      {
+        id: `branch-${repositoryId}`,
+        repository_id: repositoryId,
+        name: 'main',
+        last_commit_sha: 'abc1234def',
+        protected: true,
+      },
+    ]
+  }
+
+  db.githubCredentials.find((row) => row.project_id === projectId).last_synced_at =
+    new Date().toISOString()
+  return HttpResponse.json({
+    repositoryCount: linked.length,
+    unavailableCount: 0,
+    pullRequestCount: linked.length,
+    branchCount: linked.length,
+  })
+}
+
+// Igual ao trigger delete_orphan_repository: repositório sem projeto sai
+function unlink(predicate) {
+  db.projectRepositories = db.projectRepositories.filter((link) => !predicate(link))
+  db.repositories = db.repositories.filter((repository) =>
+    db.projectRepositories.some((link) => link.repository_id === repository.id),
+  )
+}
+
+// Edge Function `github` simulada: aceita só validGitHubToken e enxerga githubAvailable
+function githubFunction({ action, projectId, token, githubIds }) {
   if (action === 'connect') {
     if (token !== validGitHubToken) {
-      return HttpResponse.json(
-        { error: 'Chave do GitHub inválida ou expirada. Gere uma nova e conecte de novo.' },
-        { status: 400 },
-      )
+      return githubError('Chave do GitHub inválida ou expirada. Gere uma nova e conecte de novo.')
     }
 
     db.githubCredentials = [
@@ -107,54 +180,63 @@ function githubFunction({ action, projectId, token }) {
         last_synced_at: null,
       },
     ]
-    return HttpResponse.json({ login: 'dono-gh', repositoryCount: 1 })
+    return HttpResponse.json({ login: 'dono-gh', repositoryCount: githubAvailable.length })
   }
 
-  if (action === 'sync') {
-    const repository = {
-      id: `repo-${projectId}`,
-      project_id: projectId,
-      full_name: 'dono-gh/govtech',
-      name: 'govtech',
-      description: 'TCC',
-      language: 'JavaScript',
-      default_branch: 'main',
-      html_url: 'https://github.com/dono-gh/govtech',
-      private: true,
-      pushed_at: new Date().toISOString(),
+  if (action === 'list') {
+    const selected = new Set(
+      db.projectRepositories
+        .filter((link) => link.project_id === projectId)
+        .map((link) => db.repositories.find(({ id }) => id === link.repository_id).github_id),
+    )
+
+    return HttpResponse.json({
+      repositories: githubAvailable.map((repo) => ({
+        githubId: repo.id,
+        fullName: repo.full_name,
+        description: repo.description,
+        private: repo.private,
+        selected: selected.has(repo.id),
+      })),
+    })
+  }
+
+  if (action === 'select') {
+    const chosen = githubAvailable.filter((repo) => githubIds.includes(repo.id))
+
+    for (const repo of chosen) {
+      const id = `repo-${repo.id}`
+
+      if (!db.repositories.some((repository) => repository.id === id)) {
+        db.repositories.push({
+          id,
+          github_id: repo.id,
+          full_name: repo.full_name,
+          name: repo.name,
+          description: repo.description,
+          language: 'JavaScript',
+          default_branch: 'main',
+          html_url: `https://github.com/${repo.full_name}`,
+          private: repo.private,
+          pushed_at: new Date().toISOString(),
+        })
+      }
+
+      const linked = db.projectRepositories.some(
+        (link) => link.project_id === projectId && link.repository_id === id,
+      )
+      if (!linked) db.projectRepositories.push({ project_id: projectId, repository_id: id })
     }
 
-    db.repositories = [...db.repositories.filter((row) => row.id !== repository.id), repository]
-    db.pullRequests = [
-      {
-        id: `pr-${projectId}`,
-        repository_id: repository.id,
-        number: 12,
-        title: 'Integração com o GitHub',
-        state: 'open',
-        draft: false,
-        author_login: 'dono-gh',
-        html_url: 'https://github.com/dono-gh/govtech/pull/12',
-        created_at_github: new Date().toISOString(),
-        merged_at: null,
-      },
-    ]
-    db.branches = [
-      {
-        id: `branch-${projectId}`,
-        repository_id: repository.id,
-        name: 'main',
-        last_commit_sha: 'abc1234def',
-        protected: true,
-      },
-    ]
-    db.githubCredentials.find((row) => row.project_id === projectId).last_synced_at =
-      new Date().toISOString()
-    return HttpResponse.json({ repositoryCount: 1, pullRequestCount: 1, branchCount: 1 })
+    const keep = chosen.map((repo) => `repo-${repo.id}`)
+    unlink((link) => link.project_id === projectId && !keep.includes(link.repository_id))
+    return syncProject(projectId)
   }
 
+  if (action === 'sync') return syncProject(projectId)
+
   db.githubCredentials = db.githubCredentials.filter((row) => row.project_id !== projectId)
-  db.repositories = db.repositories.filter((row) => row.project_id !== projectId)
+  unlink((link) => link.project_id === projectId)
   return HttpResponse.json({ disconnected: true })
 }
 
@@ -167,8 +249,37 @@ export const handlers = [
     rows(request, byProjectParam(request, db.githubCredentials)),
   ),
 
-  http.get(rest('repositories'), ({ request }) =>
-    rows(request, byProjectParam(request, db.repositories)),
+  // Com ?project_repositories.project_id=eq.<valor>, só os ligados ao projeto
+  http.get(rest('repositories'), ({ request }) => {
+    const projectId = eqParam(request, 'project_repositories.project_id')
+
+    return rows(
+      request,
+      db.repositories
+        .map((repository) => ({ ...repository, project_repositories: linksOf(repository.id) }))
+        .filter(
+          (repository) =>
+            !projectId ||
+            repository.project_repositories.some((link) => link.project_id === projectId),
+        ),
+    )
+  }),
+
+  http.get(rest('project_repositories'), ({ request }) =>
+    rows(
+      request,
+      byProjectParam(request, db.projectRepositories).map((link) => {
+        const repository = db.repositories.find(({ id }) => id === link.repository_id)
+
+        return {
+          repository: {
+            id: repository.id,
+            full_name: repository.full_name,
+            html_url: repository.html_url,
+          },
+        }
+      }),
+    ),
   ),
 
   http.get(rest('pull_requests'), ({ request }) =>
@@ -298,7 +409,7 @@ export const handlers = [
     db.members.push({
       organization_id: otherOrganization.id,
       user_id: db.users[0].id,
-      role: 'viewer',
+      role: 'stakeholder',
     })
     return HttpResponse.json(otherOrganization.id)
   }),

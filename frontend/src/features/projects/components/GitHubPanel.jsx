@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { ExternalLink, KeyRound, RefreshCw, Unplug } from 'lucide-react'
+import { ExternalLink, KeyRound, ListChecks, RefreshCw, Unplug } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import styles from '@/features/projects/components/GitHubPanel.module.css'
+import RepositoryPicker from '@/features/projects/components/RepositoryPicker'
 import {
   useConnectGitHub,
   useDisconnectGitHub,
@@ -97,13 +98,14 @@ function TokenForm({ projectId, onDone, onCancel }) {
   )
 }
 
-// canManage: admin (conecta, troca e remove). canSync: admin e developer.
+// canManage: admin (conecta, escolhe repositórios, troca e remove). canSync: admin e developer.
 export default function GitHubPanel({ projectId, canManage, canSync }) {
   const { showToast } = useToast()
   const connection = useGitHubConnection(projectId)
   const sync = useSyncGitHub()
   const disconnect = useDisconnectGitHub()
   const [editing, setEditing] = useState(false)
+  const [picking, setPicking] = useState(false)
   const [confirmingRemoval, setConfirmingRemoval] = useState(false)
 
   async function runSync() {
@@ -150,7 +152,11 @@ export default function GitHubPanel({ projectId, canManage, canSync }) {
         {canManage ? (
           <TokenForm
             projectId={projectId}
-            onDone={() => setEditing(false)}
+            onDone={() => {
+              setEditing(false)
+              // Logo depois de conectar, o admin escolhe os repositórios do projeto
+              setPicking(true)
+            }}
             onCancel={editing ? () => setEditing(false) : null}
           />
         ) : (
@@ -173,7 +179,23 @@ export default function GitHubPanel({ projectId, canManage, canSync }) {
         </span>
       </p>
 
-      {github.repositories.length > 0 && (
+      {picking && canManage && (
+        <RepositoryPicker
+          projectId={projectId}
+          onDone={() => setPicking(false)}
+          onCancel={() => setPicking(false)}
+        />
+      )}
+
+      {!picking && github.repositories.length === 0 && (
+        <p className={styles.muted}>
+          {canManage
+            ? 'Escolha quais repositórios fazem parte deste projeto.'
+            : 'O admin ainda não escolheu os repositórios deste projeto.'}
+        </p>
+      )}
+
+      {!picking && github.repositories.length > 0 && (
         <ul className={styles.repoList}>
           {github.repositories.map((repository) => (
             <li key={repository.id}>
@@ -185,7 +207,7 @@ export default function GitHubPanel({ projectId, canManage, canSync }) {
         </ul>
       )}
 
-      {confirmingRemoval ? (
+      {picking ? null : confirmingRemoval ? (
         <div className={styles.confirm} role="group" aria-label="Confirmar remoção">
           <p>Remover a conexão apaga a chave e os dados sincronizados deste projeto.</p>
           <div className={styles.actions}>
@@ -207,7 +229,7 @@ export default function GitHubPanel({ projectId, canManage, canSync }) {
         </div>
       ) : (
         <div className={styles.actions}>
-          {canSync && (
+          {canSync && github.repositories.length > 0 && (
             <button
               type="button"
               className="primary-button small"
@@ -221,6 +243,18 @@ export default function GitHubPanel({ projectId, canManage, canSync }) {
 
           {canManage && (
             <>
+              <button
+                type="button"
+                className={
+                  github.repositories.length === 0
+                    ? 'primary-button small'
+                    : 'secondary-button small'
+                }
+                onClick={() => setPicking(true)}
+              >
+                <ListChecks size={14} />
+                Escolher repositórios
+              </button>
               <button
                 type="button"
                 className="secondary-button small"
