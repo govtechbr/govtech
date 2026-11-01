@@ -24,11 +24,12 @@ export function githubErrorMessage(status, rateLimitRemaining) {
   return 'O GitHub não respondeu. Tente de novo em alguns minutos.'
 }
 
-export async function githubGet(token, path, fetchImpl = fetch) {
+export async function githubGet(token, path, fetchImpl = fetch, init = {}) {
   let response
 
   try {
     response = await fetchImpl(`${API}${path}`, {
+      ...init,
       headers: {
         Accept: 'application/vnd.github+json',
         Authorization: `Bearer ${token}`,
@@ -48,6 +49,21 @@ export async function githubGet(token, path, fetchImpl = fetch) {
   return response.json()
 }
 
+// A API GraphQL responde 200 mesmo com erro; o erro vem no corpo
+export async function githubGraphql(token, query, variables, fetchImpl = fetch) {
+  const body = await githubGet(token, '/graphql', fetchImpl, {
+    method: 'POST',
+    body: JSON.stringify({ query, variables }),
+  })
+
+  if (body.errors?.length) {
+    const forbidden = body.errors.some(({ type }) => type === 'FORBIDDEN' || type === 'NOT_FOUND')
+    throw new GitHubError(githubErrorMessage(forbidden ? 403 : 500), forbidden ? 403 : 502)
+  }
+
+  return body.data
+}
+
 // Repositório é guardado uma vez por empresa (o vínculo com projetos é outra tabela)
 export function toRepositoryRow(repo, { organizationId }) {
   return {
@@ -65,12 +81,35 @@ export function toRepositoryRow(repo, { organizationId }) {
   }
 }
 
-// O GitHub diz "closed" também para PR mergeado; aqui os dois se separam
+// Os 100 PRs atualizados por último, já com o número de aprovações (regra G7)
+const pullRequestsQuery = `
+  query ($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      pullRequests(first: 100, orderBy: { field: UPDATED_AT, direction: DESC }) {
+        nodes {
+          number
+          title
+          state
+          isDraft
+          url
+          createdAt
+          updatedAt
+          mergedAt
+          closedAt
+          author { login avatarUrl }
+          reviews(states: APPROVED) { totalCount }
+        }
+      }
+    }
+  }
+`
+
+// GraphQL: OPEN, CLOSED ou MERGED
 export function pullRequestState(pr) {
-  if (pr.merged_at) return 'merged'
-  return pr.state === 'open' ? 'open' : 'closed'
+  return pr.state.toLowerCase()
 }
 
+// Do autor, só login e avatar (LGPD)
 export function toPullRequestRow(pr, { repositoryId, organizationId }) {
   return {
     repository_id: repositoryId,
@@ -78,13 +117,28 @@ export function toPullRequestRow(pr, { repositoryId, organizationId }) {
     number: pr.number,
     title: pr.title,
     state: pullRequestState(pr),
-    draft: Boolean(pr.draft),
-    author_login: pr.user?.login ?? null,
-    html_url: pr.html_url,
-    created_at_github: pr.created_at,
-    updated_at_github: pr.updated_at,
-    merged_at: pr.merged_at ?? null,
-    closed_at: pr.closed_at ?? null,
+    draft: Boolean(pr.isDraft),
+    author_login: pr.author?.login ?? null,
+    author_avatar_url: pr.author?.avatarUrl ?? null,
+    approval_count: pr.reviews?.totalCount ?? 0,
+    html_url: pr.url,
+    created_at_github: pr.createdAt,
+    updated_at_github: pr.updatedAt,
+    merged_at: pr.mergedAt ?? null,
+    closed_at: pr.closedAt ?? null,
+  }
+}
+
+// Do commit, nada de nome, e-mail ou mensagem (LGPD): só quem (login do GitHub,
+// quando o e-mail tem conta) e quando entrou na branch
+export function toCommitRow(commit, { repositoryId, organizationId }) {
+  return {
+    repository_id: repositoryId,
+    organization_id: organizationId,
+    sha: commit.sha,
+    author_login: commit.author?.login ?? null,
+    author_avatar_url: commit.author?.avatar_url ?? null,
+    committed_at: commit.commit.committer.date,
   }
 }
 
@@ -123,20 +177,43 @@ export async function checkToken(token, fetchImpl = fetch) {
   return { login: user.login, repositoryCount: repos.length }
 }
 
-// PRs (os 100 mais recentes) e branches (até 100) de cada repositório escolhido
-export function fetchRepositoryData(token, repos, fetchImpl = fetch) {
+const COMMIT_PAGES = 3
+
+// Commits da branch padrão desde `since` (até 300). Repositório vazio responde 409.
+async function fetchCommits(token, repo, since, fetchImpl) {
+  const commits = []
+
+  for (let page = 1; page <= COMMIT_PAGES; page += 1) {
+    const path = `/repos/${repo.full_name}/commits?sha=${encodeURIComponent(repo.default_branch)}&since=${since}&${PAGE}&page=${page}`
+    let batch
+
+    try {
+      batch = await githubGet(token, path, fetchImpl)
+    } catch (error) {
+      if (error instanceof GitHubError && error.status === 409) return []
+      throw error
+    }
+
+    commits.push(...batch)
+    if (batch.length < 100) break
+  }
+
+  return commits
+}
+
+// PRs (os 100 mais recentes, com aprovações), branches (até 100) e commits da
+// branch padrão desde `since`, de cada repositório escolhido
+export function fetchRepositoryData(token, repos, fetchImpl = fetch, since) {
   return Promise.all(
     repos.map(async (repo) => {
-      const [pulls, branches] = await Promise.all([
-        githubGet(
-          token,
-          `/repos/${repo.full_name}/pulls?state=all&sort=updated&direction=desc&${PAGE}`,
-          fetchImpl,
-        ),
+      const [owner, name] = repo.full_name.split('/')
+      const [pullData, branches, commits] = await Promise.all([
+        githubGraphql(token, pullRequestsQuery, { owner, name }, fetchImpl),
         githubGet(token, `/repos/${repo.full_name}/branches?${PAGE}`, fetchImpl),
+        fetchCommits(token, repo, since, fetchImpl),
       ])
 
-      return { repo, pulls, branches }
+      return { repo, pulls: pullData.repository.pullRequests.nodes, branches, commits }
     }),
   )
 }

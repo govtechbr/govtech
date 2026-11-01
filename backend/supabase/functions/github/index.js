@@ -1,6 +1,9 @@
 // Edge Function `github`: conectar, sincronizar e desconectar a chave de um projeto
 // (docs/PLANO_TECNICO.md §18). Roda no Deno do Supabase.
 //
+// verify_jwt desligado: o agendador (pg_cron) chama sem login, com a senha do
+// Vault no cabeçalho `x-cron-secret`. Todas as outras ações conferem o login aqui.
+//
 // Duas conexões com o banco:
 // - `asUser`: com o login de quem chamou; o RLS decide o que ele enxerga.
 // - `asServer`: com a chave de serviço, que só existe aqui. Usada para o Vault
@@ -14,6 +17,7 @@ import {
   listRepositories,
   toAvailableRepository,
   toBranchRow,
+  toCommitRow,
   toPullRequestRow,
   toRepositoryRow,
 } from './github.js'
@@ -32,6 +36,9 @@ const allowedRoles = {
   disconnect: ['admin'],
   sync: ['admin', 'developer'],
 }
+
+// Commits guardados: os do maior período do seletor da Visão geral
+const COMMIT_DAYS = 90
 
 class RequestError extends Error {
   constructor(message, status) {
@@ -57,6 +64,12 @@ function publishableKey() {
   const keys = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS')
 
   return keys ? JSON.parse(keys).default : Deno.env.get('SUPABASE_ANON_KEY')
+}
+
+function serverClient() {
+  return createClient(Deno.env.get('SUPABASE_URL'), serverKey(), {
+    auth: { persistSession: false },
+  })
 }
 
 function check(error) {
@@ -98,11 +111,7 @@ async function authorize(request, projectId, action) {
     throw new RequestError('Seu papel não permite esta ação.', 403)
   }
 
-  const asServer = createClient(url, serverKey(), {
-    auth: { persistSession: false },
-  })
-
-  return { user, project, asServer }
+  return { user, project, asServer: serverClient() }
 }
 
 async function connect({ user, project, asServer }, token) {
@@ -265,7 +274,15 @@ async function sync({ project, asServer }) {
   let pullRequestCount = 0
   let branchCount = 0
 
-  for (const { repo, pulls, branches } of await fetchRepositoryData(token, visible)) {
+  let commitCount = 0
+  const since = new Date(Date.now() - COMMIT_DAYS * 24 * 60 * 60 * 1000).toISOString()
+
+  for (const { repo, pulls, branches, commits } of await fetchRepositoryData(
+    token,
+    visible,
+    fetch,
+    since,
+  )) {
     const repoIds = { ...ids, repositoryId: linkedIds.get(repo.id) }
     const scope = ['repository_id', repoIds.repositoryId]
 
@@ -283,9 +300,18 @@ async function sync({ project, asServer }) {
       scope,
       'repository_id,name',
     )
+    // os que passaram de 90 dias saem por não virem mais do GitHub
+    await replaceRows(
+      asServer,
+      'commits',
+      commits.map((commit) => toCommitRow(commit, repoIds)),
+      scope,
+      'repository_id,sha',
+    )
 
     pullRequestCount += pulls.length
     branchCount += branches.length
+    commitCount += commits.length
   }
 
   const syncedAt = new Date().toISOString()
@@ -293,7 +319,7 @@ async function sync({ project, asServer }) {
     (
       await asServer
         .from('github_credentials')
-        .update({ last_synced_at: syncedAt })
+        .update({ last_synced_at: syncedAt, last_sync_error: null })
         .eq('project_id', project.id)
     ).error,
   )
@@ -304,8 +330,63 @@ async function sync({ project, asServer }) {
     unavailableCount: linked.length - visible.length,
     pullRequestCount,
     branchCount,
+    commitCount,
     syncedAt,
   }
+}
+
+function errorMessage(error) {
+  if (error instanceof RequestError || error instanceof GitHubError) return error.message
+
+  console.error(error)
+  return 'Erro inesperado. Tente de novo.'
+}
+
+// Agendador (regra G6): sincroniza um projeto por vez; a falha de um (ex.: chave
+// expirada) fica registrada na conexão e não para os outros
+async function syncAll(asServer) {
+  const { data, error } = await asServer
+    .from('github_credentials')
+    .select('project_id, organization_id')
+  check(error)
+
+  for (const row of data) {
+    const project = { id: row.project_id, organization_id: row.organization_id }
+
+    try {
+      await sync({ project, asServer })
+    } catch (syncError) {
+      await asServer
+        .from('github_credentials')
+        .update({ last_sync_error: errorMessage(syncError) })
+        .eq('project_id', project.id)
+    }
+  }
+}
+
+// Comparação em tempo constante, para não vazar a senha pelo tempo de resposta
+function sameSecret(given, expected) {
+  if (!given || !expected || given.length !== expected.length) return false
+
+  let difference = 0
+  for (let index = 0; index < given.length; index += 1) {
+    difference |= given.charCodeAt(index) ^ expected.charCodeAt(index)
+  }
+  return difference === 0
+}
+
+async function startSyncAll(request) {
+  const asServer = serverClient()
+  const { data: secret, error } = await asServer.rpc('github_cron_secret')
+  check(error)
+
+  if (!sameSecret(request.headers.get('x-cron-secret'), secret)) {
+    throw new RequestError('Não autorizado.', 401)
+  }
+
+  // Responde logo; a sincronização continua depois da resposta
+  EdgeRuntime.waitUntil(syncAll(asServer))
+  return json({ started: true }, 202)
 }
 
 async function disconnect({ project, asServer }) {
@@ -327,6 +408,8 @@ Deno.serve(async (request) => {
     const body = await request.json()
     const { action, projectId, token } = body
 
+    if (action === 'sync-all') return await startSyncAll(request)
+
     if (!actions[action] || typeof projectId !== 'string') {
       throw new RequestError('Pedido inválido.', 400)
     }
@@ -341,7 +424,6 @@ Deno.serve(async (request) => {
       return json({ error: error.message }, error.status >= 500 || !error.status ? 502 : 400)
     }
 
-    console.error(error)
-    return json({ error: 'Erro inesperado. Tente de novo.' }, 500)
+    return json({ error: errorMessage(error) }, 500)
   }
 })

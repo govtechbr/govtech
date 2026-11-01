@@ -9,6 +9,7 @@ import {
   githubErrorMessage,
   pullRequestState,
   toBranchRow,
+  toCommitRow,
   toPullRequestRow,
   toAvailableRepository,
   toRepositoryRow,
@@ -50,18 +51,32 @@ const repo = {
   pushed_at: '2026-11-01T10:00:00Z',
 }
 
+// PR como vem da API GraphQL (uma chamada traz os PRs e as aprovações)
 const pr = {
   number: 7,
   title: 'Adiciona login',
-  state: 'closed',
-  draft: false,
-  user: { login: 'ana' },
-  html_url: 'https://github.com/dono/app/pull/7',
-  created_at: '2026-10-30T10:00:00Z',
-  updated_at: '2026-10-31T10:00:00Z',
-  merged_at: '2026-10-31T10:00:00Z',
-  closed_at: '2026-10-31T10:00:00Z',
+  state: 'MERGED',
+  isDraft: false,
+  url: 'https://github.com/dono/app/pull/7',
+  createdAt: '2026-10-30T10:00:00Z',
+  updatedAt: '2026-10-31T10:00:00Z',
+  mergedAt: '2026-10-31T10:00:00Z',
+  closedAt: '2026-10-31T10:00:00Z',
+  author: { login: 'ana', avatarUrl: 'https://avatars.githubusercontent.com/u/1' },
+  reviews: { totalCount: 2 },
 }
+
+const commit = {
+  sha: 'abc123',
+  author: { login: 'ana', avatar_url: 'https://avatars.githubusercontent.com/u/1' },
+  commit: {
+    author: { name: 'Ana Silva', email: 'ana@empresa.com', date: '2026-10-30T09:00:00Z' },
+    committer: { name: 'GitHub', email: 'noreply@github.com', date: '2026-10-30T10:00:00Z' },
+    message: 'feat: login',
+  },
+}
+
+const pullsResponse = { data: { repository: { pullRequests: { nodes: [pr] } } } }
 
 describe('row mapping', () => {
   it('maps a repository to its organization (projects link to it separately)', () => {
@@ -92,15 +107,33 @@ describe('row mapping', () => {
     )
   })
 
-  it('tells merged PRs apart from closed ones', () => {
+  it('maps the GitHub PR states to ours', () => {
     assert.equal(pullRequestState(pr), 'merged')
-    assert.equal(pullRequestState({ ...pr, merged_at: null }), 'closed')
-    assert.equal(pullRequestState({ ...pr, state: 'open', merged_at: null }), 'open')
+    assert.equal(pullRequestState({ ...pr, state: 'CLOSED' }), 'closed')
+    assert.equal(pullRequestState({ ...pr, state: 'OPEN' }), 'open')
   })
 
-  it('maps a pull request, tolerating a deleted author', () => {
-    assert.equal(toPullRequestRow(pr, ids).author_login, 'ana')
-    assert.equal(toPullRequestRow({ ...pr, user: null }, ids).author_login, null)
+  it('maps a pull request with its approvals, tolerating a deleted author', () => {
+    const row = toPullRequestRow(pr, ids)
+
+    assert.equal(row.author_login, 'ana')
+    assert.equal(row.author_avatar_url, 'https://avatars.githubusercontent.com/u/1')
+    assert.equal(row.approval_count, 2)
+    assert.equal(row.merged_at, '2026-10-31T10:00:00Z')
+    assert.equal(toPullRequestRow({ ...pr, author: null }, ids).author_login, null)
+  })
+
+  it('keeps only the login and avatar of a commit author (LGPD)', () => {
+    assert.deepEqual(toCommitRow(commit, ids), {
+      repository_id: 'r1',
+      organization_id: 'o1',
+      sha: 'abc123',
+      author_login: 'ana',
+      author_avatar_url: 'https://avatars.githubusercontent.com/u/1',
+      committed_at: '2026-10-30T10:00:00Z',
+    })
+    // e-mail sem conta no GitHub: fica sem autor, nunca com o e-mail
+    assert.equal(toCommitRow({ ...commit, author: null }, ids).author_login, null)
   })
 
   it('maps a branch with its last commit', () => {
@@ -130,19 +163,66 @@ describe('GitHub calls', () => {
     assert.equal(calls[0].options.headers.Authorization, 'Bearer t0k3n')
   })
 
-  it('fetches pulls and branches only of the chosen repositories', async () => {
+  it('fetches pulls, branches and recent default-branch commits of the chosen repositories', async () => {
     const { impl, calls } = fakeFetch({
-      '/repos/dono/app/pulls': [200, [pr]],
+      '/graphql': [200, pullsResponse],
       '/repos/dono/app/branches': [200, [{ name: 'main', commit: { sha: 'abc' } }]],
+      '/repos/dono/app/commits': [200, [commit]],
     })
 
-    const [data] = await fetchRepositoryData('t', [repo], impl)
+    const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-01T00:00:00.000Z')
 
-    assert.equal(calls.length, 2)
+    assert.equal(calls.length, 3)
+    const graphql = calls.find(({ url }) => url.endsWith('/graphql'))
+    assert.deepEqual(JSON.parse(graphql.options.body).variables, { owner: 'dono', name: 'app' })
+    const commits = calls.find(({ url }) => url.includes('/commits'))
+    assert.match(commits.url, /sha=main/)
+    assert.match(commits.url, /since=2026-08-01T00:00:00.000Z/)
 
     assert.equal(data.repo.full_name, 'dono/app')
-    assert.equal(data.pulls.length, 1)
+    assert.equal(data.pulls[0].number, 7)
     assert.equal(data.branches[0].name, 'main')
+    assert.equal(data.commits[0].sha, 'abc123')
+  })
+
+  it('reads up to 3 pages of commits', async () => {
+    const page = Array.from({ length: 100 }, (_, index) => ({ ...commit, sha: `c${index}` }))
+    const { impl, calls } = fakeFetch({
+      '/graphql': [200, pullsResponse],
+      '/repos/dono/app/branches': [200, []],
+      '/repos/dono/app/commits': [200, page],
+    })
+
+    const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-01T00:00:00.000Z')
+
+    assert.equal(calls.filter(({ url }) => url.includes('/commits')).length, 3)
+    assert.equal(data.commits.length, 300)
+  })
+
+  it('treats an empty repository as having no commits', async () => {
+    const { impl } = fakeFetch({
+      '/graphql': [200, { data: { repository: { pullRequests: { nodes: [] } } } }],
+      '/repos/dono/app/branches': [200, []],
+      '/repos/dono/app/commits': [409, { message: 'Git Repository is empty.' }],
+    })
+
+    const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-01T00:00:00.000Z')
+
+    assert.deepEqual(data.commits, [])
+  })
+
+  it('reports a GraphQL error as a GitHub error', async () => {
+    const { impl } = fakeFetch({
+      '/graphql': [200, { errors: [{ type: 'FORBIDDEN', message: 'Resource not accessible' }] }],
+      '/repos/dono/app/branches': [200, []],
+      '/repos/dono/app/commits': [200, []],
+    })
+
+    await assert.rejects(fetchRepositoryData('t', [repo], impl, 'x'), (error) => {
+      assert.ok(error instanceof GitHubError)
+      assert.match(error.message, /permissão/)
+      return true
+    })
   })
 
   it('explains an invalid token in Portuguese', async () => {
