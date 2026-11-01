@@ -7,6 +7,7 @@ import ProjectFormModal from './components/ProjectFormModal'
 import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
 import { useToast } from '@/shared/hooks/useToast'
 import { normalizeProject } from '@/shared/lib/projectUtils'
+import styles from './ProjectsPage.module.css'
 
 export default function ProjectsPage({ projectList = [], setProjectList, initialProjectId }) {
   const { showToast: onToast } = useToast()
@@ -114,12 +115,7 @@ export default function ProjectsPage({ projectList = [], setProjectList, initial
 
       <div className="project-grid">
         {safeProjects.map((project) => (
-          <article
-            className="project-card elevation-1"
-            key={project.id}
-            onClick={() => handleProjectClick(project)}
-            style={{ cursor: 'pointer' }}
-          >
+          <article className={`project-card elevation-1 ${styles.card}`} key={project.id}>
             <div className="project-card-top">
               <div className="project-icon">
                 <FolderKanban size={19} />
@@ -130,7 +126,16 @@ export default function ProjectsPage({ projectList = [], setProjectList, initial
               </span>
             </div>
 
-            <h3>{project.name}</h3>
+            <h3>
+              {/* O botão cobre o cartão inteiro (::after), então clique e teclado funcionam em todo ele */}
+              <button
+                type="button"
+                className={styles.cardButton}
+                onClick={() => handleProjectClick(project)}
+              >
+                {project.name}
+              </button>
+            </h3>
 
             <div className="project-meta">
               <span>
@@ -176,7 +181,7 @@ export default function ProjectsPage({ projectList = [], setProjectList, initial
         />
       )}
 
-      {selectedProject && (
+      {selectedProject && !showDeleteConfirm && (
         <ProjectDetailModal
           project={selectedProject}
           onClose={() => setSelectedProject(null)}

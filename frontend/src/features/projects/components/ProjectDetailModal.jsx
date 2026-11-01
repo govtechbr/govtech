@@ -1,139 +1,80 @@
-import { Edit3, Server, Trash2, X } from 'lucide-react'
+import { Edit3, Server, Trash2 } from 'lucide-react'
 
-import StatusBadge from '@/shared/ui/StatusBadge'
 import { formatProjectDate, getProjectStatus } from '@/shared/lib/projectUtils'
+import Modal from '@/shared/ui/Modal'
+import StatusBadge from '@/shared/ui/StatusBadge'
+import styles from './ProjectModals.module.css'
 
 export default function ProjectDetailModal({ project, onClose, onEdit, onDelete }) {
   const status = getProjectStatus(project)
 
   return (
-    <div className="detail-popover" style={{ maxWidth: '560px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: '16px',
-        }}
-      >
-        <div>
-          <span className="section-kicker">DETALHES DO PROJETO</span>
-          <h3>{project.name}</h3>
-        </div>
+    <Modal title={project.name} kicker="DETALHES DO PROJETO" onClose={onClose}>
+      <p className={styles.description}>{project.description}</p>
 
-        <button className="icon-button" onClick={onClose}>
-          <X size={17} />
-        </button>
-      </div>
-
-      <p
-        style={{
-          color: 'var(--muted)',
-          fontSize: '14px',
-          lineHeight: 1.6,
-        }}
-      >
-        {project.description}
-      </p>
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '16px',
-          marginTop: '20px',
-        }}
-      >
-        <div>
-          <small style={{ color: 'var(--muted)' }}>Deadline</small>
-          <strong style={{ display: 'block', marginTop: '4px' }}>
+      <dl className={styles.facts}>
+        <div className={styles.fact}>
+          <dt>Deadline</dt>
+          <dd>
             {formatProjectDate(project.deadline)}
-          </strong>
-
-          <small style={{ color: status.color }}>{status.message}</small>
+            <span className={`${styles.deadlineMessage} ${styles[status.key]}`}>
+              {status.message}
+            </span>
+          </dd>
         </div>
 
-        <div>
-          <small style={{ color: 'var(--muted)' }}>Status</small>
-
-          <div style={{ marginTop: '6px' }}>
+        <div className={styles.fact}>
+          <dt>Status</dt>
+          <dd>
             <StatusBadge status={status.key}>
               {status.icon} {status.label}
             </StatusBadge>
-          </div>
+          </dd>
         </div>
 
-        <div>
-          <small style={{ color: 'var(--muted)' }}>Responsável</small>
-          <strong style={{ display: 'block', marginTop: '4px' }}>{project.owner}</strong>
+        <div className={styles.fact}>
+          <dt>Responsável</dt>
+          <dd>{project.owner}</dd>
         </div>
 
-        <div>
-          <small style={{ color: 'var(--muted)' }}>Progresso</small>
-          <strong style={{ display: 'block', marginTop: '4px' }}>{project.progress}%</strong>
+        <div className={styles.fact}>
+          <dt>Progresso</dt>
+          <dd>{project.progress}%</dd>
         </div>
-      </div>
+      </dl>
 
-      <div style={{ marginTop: '20px' }}>
-        <strong style={{ fontSize: '13px' }}>Repositórios vinculados</strong>
+      <div className={styles.section}>
+        <strong className={styles.sectionTitle}>Repositórios vinculados</strong>
 
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '7px',
-            marginTop: '10px',
-          }}
-        >
-          {project.repositories.length > 0 ? (
-            project.repositories.map((repository) => (
-              <span
-                key={repository}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  padding: '6px 9px',
-                  borderRadius: '6px',
-                  background: 'var(--bg-alt)',
-                  fontSize: '12px',
-                }}
-              >
+        {project.repositories.length > 0 ? (
+          <ul className={styles.repoList}>
+            {project.repositories.map((repository) => (
+              <li key={repository} className={styles.repoTag}>
                 <Server size={13} />
                 {repository}
-              </span>
-            ))
-          ) : (
-            <small style={{ color: 'var(--muted)' }}>Nenhum repositório vinculado.</small>
-          )}
-        </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={styles.muted}>Nenhum repositório vinculado.</p>
+        )}
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '10px',
-          marginTop: '24px',
-        }}
-      >
-        <button className="primary-button small" onClick={onEdit}>
+      <div className={styles.actions}>
+        <button type="button" className="primary-button small" onClick={onEdit}>
           <Edit3 size={14} />
           Editar
         </button>
 
         <button
-          className="secondary-button small"
+          type="button"
+          className={`secondary-button small ${styles.dangerText}`}
           onClick={onDelete}
-          style={{ color: 'var(--color-danger)' }}
         >
           <Trash2 size={14} />
           Excluir
         </button>
-
-        <button className="secondary-button small" onClick={onClose}>
-          Fechar
-        </button>
       </div>
-    </div>
+    </Modal>
   )
 }
