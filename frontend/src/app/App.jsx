@@ -1,0 +1,191 @@
+import { useEffect, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+
+import Sidebar from '../shared/layout/Sidebar'
+import Topbar from '../shared/layout/Topbar'
+import GlobalSearch from '../shared/layout/GlobalSearch'
+import AuditPage from '../features/audit/AuditPage'
+import RepositoriesPage from '../features/repositories/RepositoriesPage'
+import ProjectsPage from '../features/projects/ProjectsPage'
+import RbacPage from '../features/rbac/RbacPage'
+import SettingsPage from '../features/settings/SettingsPage'
+import OverviewPage from '../features/dashboard/OverviewPage'
+import LoginPage from '../features/auth/LoginPage'
+import LandingPage from '../landing/LandingPage'
+
+import { defaultSettings } from '../shared/constants/defaultSettings'
+import { useLocalStorage } from '../shared/hooks/useLocalStorage'
+import { useTheme } from '../shared/hooks/useTheme'
+import { storageKeys } from '../shared/constants/storageKeys'
+import { getStoredProjects, saveProjects } from '../features/projects/utils/storageUtils'
+import { projects as initialProjects } from '../mocks/mockData'
+
+import { Check } from 'lucide-react'
+
+import '../styles/tokens.css'
+import '../styles/index.css'
+
+const routeSections = {
+  '/dashboard': 'Visão geral',
+  '/audit': 'Auditoria',
+  '/repositories': 'Repositórios',
+  '/projects': 'Projetos',
+  '/access': 'Acessos e RBAC',
+  '/settings': 'Configurações',
+}
+
+const sectionRoutes = {
+  'Visão geral': '/dashboard',
+  Auditoria: '/audit',
+  Repositórios: '/repositories',
+  Projetos: '/projects',
+  'Acessos e RBAC': '/access',
+  Configurações: '/settings',
+}
+
+function AuthenticatedLayout() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [toastMessage, setToastMessage] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+
+  const [settings, setSettings] = useLocalStorage(storageKeys.SETTINGS, defaultSettings)
+
+  const [projectList, setProjectList] = useState(() => getStoredProjects(initialProjects))
+
+  useTheme(settings.theme)
+
+  const activeSection = routeSections[location.pathname] || 'Visão geral'
+
+  useEffect(() => {
+    saveProjects(projectList)
+  }, [projectList])
+
+  // Fecha os menus ao trocar de rota (ajuste de estado na renderização, sem useEffect)
+  const [lastPathname, setLastPathname] = useState(location.pathname)
+
+  if (location.pathname !== lastPathname) {
+    setLastPathname(location.pathname)
+    setSidebarOpen(false)
+    setAccountMenuOpen(false)
+  }
+
+  function handleNavigate(section) {
+    const route = sectionRoutes[section]
+
+    if (route) {
+      navigate(route)
+    }
+  }
+
+  function handleSaveSettings(nextSettings) {
+    setSettings((currentSettings) => ({
+      ...currentSettings,
+      ...nextSettings,
+      notifications: {
+        ...currentSettings.notifications,
+        ...nextSettings.notifications,
+      },
+    }))
+  }
+
+  function handleToast(message) {
+    setToastMessage(message)
+
+    window.setTimeout(() => {
+      setToastMessage('')
+    }, 3000)
+  }
+
+  return (
+    <div className="app-layout">
+      <Sidebar
+        active={activeSection}
+        onNavigate={handleNavigate}
+        open={sidebarOpen}
+        setOpen={setSidebarOpen}
+        settings={settings}
+        setSettings={setSettings}
+      />
+
+      <div className="main-content">
+        <Topbar
+          active={activeSection}
+          setOpen={setSidebarOpen}
+          onOpenSearch={() => {}}
+          accountMenuOpen={accountMenuOpen}
+          setAccountMenuOpen={setAccountMenuOpen}
+          onNavigate={handleNavigate}
+        />
+
+        <GlobalSearch />
+
+        {activeSection === 'Visão geral' && <OverviewPage projectList={projectList} />}
+
+        {activeSection === 'Auditoria' && <AuditPage />}
+
+        {activeSection === 'Repositórios' && <RepositoriesPage />}
+
+        {activeSection === 'Projetos' && (
+          <ProjectsPage
+            projectList={projectList}
+            setProjectList={setProjectList}
+            onToast={handleToast}
+          />
+        )}
+
+        {activeSection === 'Acessos e RBAC' && <RbacPage />}
+
+        {activeSection === 'Configurações' && (
+          <SettingsPage
+            settings={settings}
+            onSaveSettings={handleSaveSettings}
+            onToast={handleToast}
+          />
+        )}
+      </div>
+      {toastMessage && (
+        <div
+          className="elevation-3"
+          style={{
+            position: 'fixed',
+            right: '24px',
+            bottom: '24px',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '14px 16px',
+            color: 'var(--text-primary)',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '10px',
+          }}
+        >
+          <Check size={17} color="var(--color-success)" />
+          {toastMessage}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<LoginPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/landing" element={<LandingPage />} />
+
+      <Route path="/dashboard" element={<AuthenticatedLayout />} />
+      <Route path="/audit" element={<AuthenticatedLayout />} />
+      <Route path="/repositories" element={<AuthenticatedLayout />} />
+      <Route path="/projects" element={<AuthenticatedLayout />} />
+      <Route path="/access" element={<AuthenticatedLayout />} />
+      <Route path="/settings" element={<AuthenticatedLayout />} />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
