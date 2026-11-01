@@ -32,12 +32,12 @@ Plataforma web de **governança e monitoramento de projetos de TI**: painel com 
 
 Um site de página única (SPA — *Single Page Application*) feito em **React**, empacotado com **Vite**, que simula uma ferramenta de governança de TI. Ao trocar de menu, o navegador não recarrega a página: o React troca o conteúdo na tela.
 
-Estado atual do projeto (verificado no código, commit `8ed3a40`):
+Estado atual do projeto (verificado no código, base `193c764` + limpeza da branch `chore/limpeza`, 31/10/2026):
 
 | Item | Situação |
 |---|---|
 | Build de produção (`npm run build`) | Passa sem erros |
-| Histórico git | 6 commits, todos em 2026-10-01 |
+| Histórico git | Reiniciado: 1 commit (`193c764`). O histórico anterior (6 commits) não existe mais |
 | Chamadas de rede (`fetch`, `axios`, etc.) | Nenhuma |
 | Login | Simulado: qualquer senha redireciona para o painel |
 | Autenticação real / proteção de rotas | Não existe |
@@ -87,7 +87,7 @@ Pré-requisito: **Node.js** instalado (versão 18 ou superior recomendada). Para
 ### Passo 1 — Entrar na pasta do projeto
 
 ```bash
-cd C:\Users\oguil\Documents\tcc\govtech-ms
+cd C:\Users\oguil\Documents\tcc\govtech
 ```
 
 ### Passo 2 — Instalar as dependências
@@ -127,7 +127,7 @@ npm run preview
 ## 5. Estrutura de pastas
 
 ```
-govtech-ms/
+govtech/
 ├── index.html            ← Única página HTML. Contém só <div id="root">.
 ├── main.jsx              ← Ponto de entrada do React (liga tudo ao HTML).
 ├── App.jsx               ← Define as rotas e o layout autenticado.
@@ -143,7 +143,6 @@ govtech-ms/
 ├── pages/                ← Telas completas, uma por rota/menu.
 │   ├── LoginPage.jsx         Tela de login (simulada).
 │   ├── LandingPage.jsx       Página de apresentação do produto (marketing).
-│   ├── DashboardPage.jsx     Casca antiga do painel com troca de telas por estado (ver §15).
 │   ├── OverviewPage.jsx      “Visão geral”: KPIs, gráficos e status dos projetos.
 │   ├── ProjectsPage.jsx      Cadastro, edição, exclusão e cards de projetos.
 │   ├── RepositoriesPage.jsx  Abas: Repositórios, Pull Requests, Branches.
@@ -153,21 +152,22 @@ govtech-ms/
 │
 ├── components/           ← Peças reutilizáveis, agrupadas por assunto.
 │   ├── layout/           Estrutura da tela: Sidebar (menu lateral), Topbar (barra superior),
-│   │                     GlobalSearch (busca), DashboardLayout (casca do painel).
+│   │                     GlobalSearch (busca).
 │   ├── common/           Genéricos: Brand (logo), Icon (ícone por nome), StatCard (cartão de número),
-│   │                     StatusBadge (etiqueta colorida), Toast (aviso), ModalShell, ChatbotModal.
+│   │                     StatusBadge (etiqueta colorida), Toast (aviso, sem uso no momento), ModalShell, ChatbotModal.
 │   ├── dashboard/        Gráficos e painéis da Visão geral.
 │   ├── projects/         Modais de projeto (formulário, detalhes, exclusão).
 │   ├── repositories/     Listas e modal de repositórios, PRs e branches.
 │   └── rbac/             Modal de detalhes de um papel.
 │
 ├── data/                 ← Dados de exemplo (mock).
-│   ├── mockData.js       Dados principais usados pelo app.
-│   └── projects.js       Dados antigos, não utilizados (ver §16).
+│   └── mockData.js       TODOS os dados de exemplo do app (inclusive listas de repositórios,
+│                         PRs, branches e usuários do RBAC, que antes ficavam dentro dos componentes).
 │
 ├── constants/            ← Valores fixos.
 │   ├── colors.js         Cores usadas em gráficos e status.
 │   ├── defaultSettings.js Configurações padrão.
+│   ├── projectStatus.js  Status manual do projeto: Saudável, Atenção, Risco.
 │   └── storageKeys.js    Nomes das chaves do localStorage.
 │
 ├── hooks/                ← Funções reutilizáveis com lógica de estado.
@@ -213,9 +213,9 @@ Ele usa `<Routes>` para comparar o endereço atual com a lista de rotas (ver §7
 
 **Passo 5 — `AuthenticatedLayout` monta a casca do sistema.**
 Dentro de `App.jsx` ele:
-1. Guarda estados de tela: aviso (toast), menu lateral aberto, menu da conta, e `isAuthenticated` (sempre `true`).
-2. Carrega as configurações com `useLocalStorage('govtech:settings', defaultSettings)`.
-3. Carrega a lista de projetos com `getStoredProjects(projetosDoMock)`.
+1. Guarda estados de tela: aviso (toast), menu lateral aberto e menu da conta.
+2. Carrega as configurações com `useLocalStorage('govtech:settings', defaultSettings)` e aplica o tema com `useTheme`.
+3. Carrega a lista de projetos com `getStoredProjects(projetosDoMock)` e grava cada mudança em `govtech:projects` com `saveProjects`.
 4. Descobre a seção atual pelo endereço, usando `routeSections` (ex.: `/projects` → “Projetos”).
 5. Desenha `Sidebar`, `Topbar`, `GlobalSearch` e, conforme a seção, a página correspondente.
 
@@ -236,7 +236,7 @@ Definidas em `App.jsx`:
 | `/` | `LoginPage` | Público | Tela inicial. |
 | `/login` | `LoginPage` | Público | Mesma tela. |
 | `/landing` | `LandingPage` | Público | Página institucional. |
-| `/dashboard` | `AuthenticatedLayout` → `DashboardPage` → `OverviewPage` | Autenticado | Visão geral. |
+| `/dashboard` | `AuthenticatedLayout` → `OverviewPage` | Autenticado | Visão geral. |
 | `/audit` | `AuthenticatedLayout` → `AuditPage` | Autenticado | Auditoria. |
 | `/repositories` | `AuthenticatedLayout` → `RepositoriesPage` | Autenticado | Repositórios. |
 | `/projects` | `AuthenticatedLayout` → `ProjectsPage` | Autenticado | Projetos. |
@@ -265,10 +265,8 @@ Página de vendas com seções com âncora (`#capabilities`, `#how-it-works`, `#
 
 É conteúdo estático. As menções a “API do GitHub” são texto de marketing; a integração **não existe no código**.
 
-### 8.3 `DashboardPage.jsx` — Casca antiga do painel
-Este arquivo guarda uma **segunda forma de navegar**: em vez de rotas, usa um estado `active` (texto como “Visão geral”, “Projetos”) e um `switch` para escolher a página. Ele também guarda projetos e configurações, aplica o tema e mostra o `Toast`.
-
-Hoje ele é usado **só** para renderizar a Visão geral dentro de `App.jsx` (ver §15, item 1).
+### 8.3 `DashboardPage.jsx` — removido
+Era uma segunda forma de navegar (estado `active` + `switch`) que duplicava a barra lateral, a lista de projetos e o tema. Foi apagado na limpeza de 31/10/2026; a Visão geral agora é renderizada direto pelo `App.jsx`.
 
 ### 8.4 `OverviewPage.jsx` — Visão geral
 Recebe `projectList` e mostra:
@@ -285,6 +283,7 @@ Recebe `projectList` e mostra:
 ### 8.5 `ProjectsPage.jsx` — Projetos
 É o módulo mais completo para o usuário final:
 - **Cards** de projeto com nome, responsável, prazo, barra de progresso e alerta se o status for `danger`.
+- **Status manual**: cada projeto tem um campo `status` escolhido no formulário (`success` = Saudável, `warning` = Atenção, `danger` = Risco). É diferente do semáforo de prazo (§11.2), que é calculado pela deadline.
 - **3 indicadores**: total, “em atenção” (`status === 'warning'`), “riscos críticos” (`status === 'danger'`).
 - **Novo projeto**: abre `ProjectFormModal` vazio.
 - **Clique em um card**: abre `ProjectDetailModal` (descrição, prazo formatado, status calculado, botões Editar e Excluir).
@@ -292,15 +291,13 @@ Recebe `projectList` e mostra:
 - **Excluir**: abre `DeleteProjectModal` pedindo confirmação; depois filtra o projeto da lista.
 - Os avisos (toast) aparecem ao criar, editar e excluir.
 
-> Atenção: há `console.log` de depuração no início do componente (linhas 53–58) e em `saveProject` (linha 88), além de uma constante `projectsMock` (linhas 9–37) que **nunca é usada**. Ver §15 e §16.
-
 ### 8.6 `RepositoriesPage.jsx` — Repositórios
 Três abas (estado `tab`):
 - **Repositórios** → `RepositoriesList`
 - **Pull Requests** → `PullRequestsList`
 - **Branches** → `BranchesList`
 
-Cada lista tem dados de exemplo fixos dentro do próprio componente (ex.: repositório `govtech-api`).
+Os dados de exemplo de cada lista ficam em `data/mockData.js` (`repositoryList`, `pullRequestList`, `branchList`).
 
 ### 8.7 `AuditPage.jsx` — Auditoria
 - Lista `auditEvents` (ação, serviço, autor, hash, horário, status).
@@ -309,7 +306,7 @@ Cada lista tem dados de exemplo fixos dentro do próprio componente (ex.: reposi
 
 ### 8.8 `RbacPage.jsx` — Acessos e RBAC
 - Quatro papéis (`accessRoles`): Admin, Developer, Stakeholder, Viewer. Clicar em um abre `RoleDetailModal`.
-- Tabela de usuários **fixa** no próprio arquivo (4 pessoas, com e-mail `@govtech.ms`).
+- Tabela de usuários de exemplo (`rbacUsers` em `data/mockData.js`, 4 pessoas com e-mail `@govtech.ms`).
 - Botões “Convidar usuário”, “Nova função”, “Filtrar” e “Adicionar” **não têm ação**.
 
 ### 8.9 `SettingsPage.jsx` — Configurações
@@ -332,8 +329,7 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 |---|---|---|
 | `Sidebar` | Menu lateral com logo, seletor de “workspace”, itens de menu e botão do chatbot. Usa `useNavigate` para trocar de rota. | `open`, `setOpen`, `settings` |
 | `Topbar` | Barra superior: botão de menu (mobile), breadcrumb “GOVTECH PLATFORM › SEÇÃO”, sino e menu da conta. | `active`, `setOpen`, `onNavigate` |
-| `GlobalSearch` | Busca em projetos, serviços, PRs e branches. Retorna `null` quando fechada (`open` falso). | `open`, `onClose`, `projects`, `onNavigate`, `setSelectedProject` |
-| `DashboardLayout` | Casca usada pelo `DashboardPage`: `Sidebar` + área de conteúdo + `GlobalSearch`. | `active`, `setActive`, `children`… |
+| `GlobalSearch` | Busca em projetos, serviços, PRs e branches. Retorna `null` quando fechada (`open` falso). **Hoje o `App.jsx` a renderiza sem props, então ela nunca abre.** | `open`, `onClose`, `projects`, `onNavigate`, `setSelectedProject` |
 
 ### 9.2 Comuns
 
@@ -372,7 +368,6 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 | `RepositoriesList` | Sim | Indicadores (repositórios ativos, branches, PRs abertas) e lista de repositórios. |
 | `PullRequestsList` | Sim | Indicadores (PRs abertas, tempo médio de revisão, aprovações pendentes) e lista de PRs com autor. |
 | `BranchesList` | Sim | Lista de branches. |
-| `BranchStat`, `BranchesTable`, `PullRequestsTable`, `RepositoriesTable`, `PullRequestDetailModal` | **Não** | Ver §16. |
 
 ### 9.6 RBAC
 
@@ -388,18 +383,18 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 
 | Arquivo | Conteúdo | Quem usa |
 |---|---|---|
-| `data/mockData.js` | `profile`, `services`, `repoStats`, `projects`, `pullRequests`, `branches`, `auditEvents`, `accessRoles` | Quase todas as telas. |
-| `data/projects.js` | Dois projetos antigos (“Plataforma de Gestão”, “Sistema de Auditoria”) | **Ninguém.** |
-| Dentro dos próprios componentes | Usuários do RBAC, listas de repositórios/PRs/branches, cartões de Auditoria | Cada tela. |
+| `data/mockData.js` | `profile`, `services`, `repoStats`, `projects`, `pullRequests`, `branches`, `auditEvents`, `accessRoles`, `repositoryList`, `pullRequestList`, `branchList`, `rbacUsers` | Todas as telas. |
+| Dentro dos próprios componentes | Só os números fixos dos cartões (ex.: “34” e “92%” na Auditoria) e a FAQ do chatbot | Cada tela. |
 
-Os projetos de exemplo em `mockData.js` (IDs 1–4) têm prazos em 2026. Como hoje é **30/10/2026**, três deles (“Plataforma de Pagamentos”, “Sistema de Notificações”, “Refatoração User Service”) aparecem como **atrasados**, e “Dashboard Analítico” (prazo 15/11) como **no prazo**. Por isso o semáforo da Visão geral mostra cores variadas.
+Os mocks são intencionais: o app continua usando dados de exemplo até o Supabase entrar.
+
+Os projetos de exemplo em `mockData.js` (IDs 1–4) têm status manual (Risco, Atenção, Saudável, Risco) e prazos em 2026. Como hoje é **31/10/2026**, três deles (“Plataforma de Pagamentos”, “Sistema de Notificações”, “Refatoração User Service”) aparecem como **atrasados**, e “Dashboard Analítico” (prazo 15/11) como **no prazo**. Por isso o semáforo da Visão geral mostra cores variadas.
 
 ### 10.2 Estado (memória da tela)
 
 O estado vive em componentes React com `useState`. Os principais:
 
-- `App.jsx` → `settings` (via `useLocalStorage`), `projectList`, `toastMessage`, `sidebarOpen`, `accountMenuOpen`, `isAuthenticated`.
-- `DashboardPage.jsx` → `active`, `projectList`, `settings`, `toast`, `selectedProjectFromSearch`.
+- `App.jsx` → `settings` (via `useLocalStorage`), `projectList`, `toastMessage`, `sidebarOpen`, `accountMenuOpen`.
 - `ProjectsPage.jsx` → `showForm`, `selectedProject`, `editingProject`, `showDeleteConfirm`.
 - `SettingsPage.jsx` → `tab` e `draft` (rascunho que só vira configuração ao clicar em “Salvar”).
 
@@ -407,14 +402,12 @@ O estado vive em componentes React com `useState`. Os principais:
 
 Chaves declaradas em `constants/storageKeys.js`:
 
-| Constante | Valor real da chave | Usada de fato? |
+| Constante | Valor real da chave | Onde é usada |
 |---|---|---|
-| `storageKeys.SETTINGS` | `govtech:settings` | Sim, em `App.jsx`. |
-| `storageKeys.THEME` | `govtech:theme` | **Não.** |
-| `storageKeys.PROJECTS` | `govtech:projects` | **Não** (ver abaixo). |
-| `storageKeys.TOKEN` | `govtech:token` | **Não.** |
+| `storageKeys.SETTINGS` | `govtech:settings` | `App.jsx`, via `useLocalStorage`. |
+| `storageKeys.PROJECTS` | `govtech:projects` | `utils/storageUtils.js` (`getStoredProjects` / `saveProjects`). |
 
-**Atenção:** `utils/storageUtils.js` usa `STORAGE_KEYS.projects` e `STORAGE_KEYS.settings` (minúsculas). Esses campos **não existem** no objeto, então valem `undefined`. Na prática, os projetos e as configurações são salvos na chave literal **`"undefined"`**. Funciona (leitura e gravação usam o mesmo nome), mas está errado e é confuso. Ver §15.
+> Até 31/10/2026 os projetos eram gravados por engano na chave `"undefined"` (nome de constante errado). Quem tinha dados salvos nessa chave volta a ver os projetos de exemplo; a chave antiga pode ser apagada pelo DevTools.
 
 ### 10.4 Como o `useLocalStorage` funciona
 
@@ -459,8 +452,7 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 
 - **Design tokens** em `tokens.css`: variáveis CSS como `--color-primary-500: #9370db` (roxo principal), `--color-success`, `--color-danger`, `--color-surface` etc. Se quiser mudar a cor da marca, comece por aqui.
 - **Tema claro** em `:root` e **tema escuro** em `:root[data-theme='dark']`.
-- **`useTheme`** (chamado no `DashboardPage`) coloca `data-theme="dark"` ou `"light"` no `<html>`. Com a opção “Sistema”, consulta `prefers-color-scheme` do computador.
-- **`App.jsx`** também altera o `data-theme` quando as configurações são salvas. Há duas lógicas para a mesma coisa (ver §15).
+- **`useTheme`** (chamado no `App.jsx`) coloca `data-theme="dark"` ou `"light"` no `<html>` conforme `settings.theme` (`Claro`, `Escuro` ou `Sistema`). Com “Sistema”, consulta `prefers-color-scheme` do computador. É o único lugar que aplica o tema.
 - `app.css` e `index.css` aplicam esses tokens nas telas. Classes como `.dashboard-content`, `.panel`, `.metric-card`, `.status-badge` são reutilizadas em várias páginas.
 - Os gráficos são desenhados com **SVG** manualmente, sem biblioteca de gráficos.
 
@@ -498,7 +490,6 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 
 | Vestígio | Onde | O que é de verdade |
 |---|---|---|
-| `TOKEN: 'govtech:token'` | `constants/storageKeys.js` | Uma chave de token de autenticação **nunca usada**. Sobra de um plano de login real. |
 | `.env`, `.env.local`, `.env.*.local` no `.gitignore` | `.gitignore` | Padrão para guardar segredos de servidor. Não há nenhum `.env` no projeto. |
 | `.vercel/` no `.gitignore` | `.gitignore` | Pasta da CLI da Vercel. Não é back-end. |
 | `vercel.json` | raiz | Configuração de **hospedagem estática** (só reescreve rotas). Não roda código no servidor. |
@@ -508,15 +499,12 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 | Integrações GitHub, SonarQube, Slack, Jira “Conectado” | `SettingsPage.jsx` | Cartões fixos. O botão só mostra um aviso. |
 | Usuários com e-mail `@govtech.ms` | `RbacPage.jsx` | Dados fixos no código. |
 | Hashes `a82f91c0…7d2e` | `mockData.js` (auditoria) | Strings inventadas, sem cálculo real. |
-| `ProjectsPage` com `projectsMock` | `pages/ProjectsPage.jsx` | Dados de exemplo não usados. |
-| `data/projects.js` | `data/` | Dados antigos, não importados. |
-| `console.log` de depuração | `pages/ProjectsPage.jsx` (linhas 53–58 e 88) | Logs de depuração esquecidos no código. Não são dados. |
-| `ProjectsPage`, `setProjectList` recebidos por *prop* | `App.jsx`, `DashboardPage.jsx` | Padrão de “estado elevado”, comum em apps com backend, mas aqui só mexe em memória e localStorage. |
+| `ProjectsPage`, `setProjectList` recebidos por *prop* | `App.jsx` | Padrão de “estado elevado”, comum em apps com backend, mas aqui só mexe em memória e localStorage. |
 
 ### Como seria a transição para back-end (se você quiser no futuro)
 Os pontos onde os dados seriam trocados por chamadas HTTP já estão bem claros:
 1. `utils/storageUtils.js` → `getStoredProjects` / `saveProjects` viram `GET /projects` / `POST /projects`.
-2. `pages/LoginPage.jsx` → `submit` viraria `POST /auth/login`, guardando o token na chave `TOKEN` que já existe.
+2. `pages/LoginPage.jsx` → `submit` viraria `POST /auth/login`, com a sessão gerenciada pelo Supabase Auth.
 3. `data/mockData.js` → cada array viraria uma resposta de API.
 4. `App.jsx` → `isAuthenticated` deixaria de ser `true` fixo e viraria uma verificação real de token.
 
@@ -524,80 +512,60 @@ Os pontos onde os dados seriam trocados por chamadas HTTP já estão bem claros:
 
 ## 15. Problemas e inconsistências encontrados
 
-Organizados por gravidade. Linhas conferidas no código atual.
+Organizados por gravidade. ✅ = resolvido na limpeza de 31/10/2026 (branch `chore/limpeza`). ⏳ = pendente.
 
 ### 15.1 Alta (afetam o funcionamento)
 
-1. **Layout duplicado na Visão geral.** `App.jsx` renderiza `Sidebar` e `Topbar` no `AuthenticatedLayout` e, para `/dashboard`, também renderiza `DashboardPage`, que chama `DashboardLayout` com outra `Sidebar`. O `DashboardLayout` nem usa a `Topbar` (a linha de `<Topbar>` foi removida; ver `components/layout/DashboardLayout.jsx` linhas 35–38). Resultado esperado: **duas barras laterais** na Visão geral. *Verificado pelo código; não confirmado visualmente no navegador.*
-
-2. **Duas formas de navegar convivem.** `App.jsx` usa rotas (`/projects`). `DashboardPage.jsx` usa estado (`active = 'Projetos'`). Há duas listas de projetos, duas de configurações e dois lugares que aplicam o tema.
-
-3. **Chaves de storage erradas.** `utils/storageUtils.js` linhas 13, 36, 44 e 68 usam `STORAGE_KEYS.projects` / `.settings` (minúsculo). O objeto exporta `STORAGE_KEYS` com nomes em maiúsculo, então valem `undefined` e tudo vai para a chave `"undefined"`.
-
-4. **Projetos sem status na página de Projetos.** `App.jsx` passa `projectList` vindo de `mockData.js`, que **não tem** os campos `status` nem `health`. `ProjectsPage` filtra e exibe por `status` (“em atenção” e “riscos críticos” ficam 0) e o selo fica sem texto. Os exemplos corretos com `status`/`health` estão em `projectsMock`, que não é usado.
-
-5. **Nenhuma proteção de rota.** `isAuthenticated` é `useState(true)` e nunca muda. Qualquer endereço protegido abre direto.
+1. ✅ **Layout duplicado na Visão geral.** O `DashboardPage` (com uma segunda `Sidebar`) foi removido; `/dashboard` renderiza o `OverviewPage` direto. Verificado no navegador: uma única barra lateral.
+2. ✅ **Duas formas de navegar.** Sobrou só a navegação por rotas do `App.jsx`, com uma lista de projetos, uma de configurações e um único lugar que aplica o tema.
+3. ✅ **Chaves de storage erradas.** Agora os projetos vão para `govtech:projects` e as configurações para `govtech:settings`. Os aliases duplicados (`STORAGE_KEYS`, `DEFAULT_SETTINGS`) foram removidos.
+4. ✅ **Projetos sem status.** Criado o status manual (`constants/projectStatus.js`), com campo no formulário; os contadores “Em atenção” e “Riscos críticos” passaram a funcionar.
+5. ✅ **Projetos não eram salvos.** O `App.jsx` não gravava a lista de projetos (só o `DashboardPage` gravava). Agora grava a cada mudança; verificado com reload.
+6. ⏳ **Nenhuma proteção de rota.** Adiado por decisão do time; entra com o Supabase Auth.
 
 ### 15.2 Média (comportamento enganoso)
 
-6. **Botões sem função:** “Exportar CSV” (Auditoria), “Filtrar” (Auditoria e RBAC), “Convidar usuário”, “Nova função”, “Adicionar” (RBAC). Não há ação ao clicar.
-
-7. **Respostas do chatbot descrevem funções que não existem.** `components/common/ChatbotModal.jsx`:
-   - Linhas 35 e 107: “Exportar Dados” na Auditoria (não existe).
-   - Linha 27: “seção Riscos” e “Adicionar Risco” em projetos (não existem).
-   - Linha 11: diz que o cadastro pede “repositório, branch, prazo”. O formulário real tem repositórios por checkbox e não tem campo de branch.
-
-8. **Valores fixos disfarçados de dados.** “4.2 dias” de lead time (`OverviewPage.jsx` linha 65), “3” alertas (linha 83), “34” aprovações e “92%” de conformidade (`AuditPage.jsx` linhas 31 e 37).
-
-9. **Login aceita qualquer coisa.** `LoginPage.jsx` linha 21: `setTimeout` com redirecionamento, sem validar campos.
-
-10. **Integrações e 2FA são demonstrativas.** Mostram “Conectado” ou “Ativar” mas só exibem um aviso.
+7. ⏳ **Botões sem função:** “Exportar CSV” e “Filtrar” (Auditoria e RBAC), “Convidar usuário”, “Nova função”, “Adicionar” (RBAC).
+8. ⏳ **Respostas do chatbot descrevem funções que não existem** (`ChatbotModal.jsx`: “Exportar Dados”, “seção Riscos”, campo “branch”).
+9. ⏳ **Valores fixos** (“4.2 dias”, “3” alertas, “34”, “92%”). Mantidos por decisão do time até haver dados reais.
+10. ⏳ **Login aceita qualquer coisa** (`LoginPage.jsx`). Entra com o Supabase Auth.
+11. ⏳ **Integrações e 2FA são demonstrativas.**
+12. ⏳ **Busca global nunca abre:** `App.jsx` renderiza `<GlobalSearch />` sem `open` e o botão da Topbar chama uma função vazia.
 
 ### 15.3 Baixa (qualidade de código)
 
-11. **`console.log` de depuração** em `ProjectsPage.jsx` (linhas 53–58 e 88). Imprime a lista inteira a cada renderização da página.
-
-12. **Código morto** (ver §16).
-
-13. **`useTheme` e `App.jsx` duplicam a lógica de tema**, e a opção “Sistema” só existe no `useTheme`. Em `App.jsx`, a opção “Sistema” cai no `else` e vira tema claro.
-
-14. **Constantes duplicadas com nomes diferentes:** `defaultSettings` e `DEFAULT_SETTINGS`, `storageKeys` e `STORAGE_KEYS` apontam para o mesmo objeto. Isso é a origem do erro do item 3.
-
-15. **Dados de exemplo misturados no código de tela:** RBAC, auditoria, repositórios e PRs têm listas inteiras dentro dos componentes, em vez de em `data/`.
-
-16. **Nomes de ícone em texto** (`icon: 'GitPullRequest'`) dependem de um mapa em `Icon.jsx`. Um nome errado não gera erro: aparece silenciosamente o ícone de fallback.
-
-17. **Imports não usados** em vários arquivos (ex.: `Check`, `Eye`, `UserRound` em `LoginPage.jsx`; `formatProjectDate` em `OverviewPage.jsx`). Não quebram o build, mas poluem.
+13. ✅ `console.log` de depuração em `ProjectsPage.jsx` removidos.
+14. ✅ Código morto removido (ver §16).
+15. ✅ Lógica de tema unificada no `useTheme`; o padrão passou de `light` para `Claro`, que é um valor que a tela de Configurações reconhece.
+16. ✅ Mocks que estavam dentro dos componentes (RBAC, repositórios, PRs, branches) movidos para `data/mockData.js`.
+17. ✅ Imports não usados removidos (`LandingPage`, `OverviewPage`).
+18. ⏳ **Nomes de ícone em texto** (`icon: 'GitPullRequest'`) com fallback silencioso em `Icon.jsx`.
+19. ⏳ **~330 estilos inline** e **10 breakpoints diferentes**: tratados na fase de nova estrutura/responsividade.
+20. ⏳ **Sem favicon**: o navegador registra um 404 de `/favicon.ico` (sem efeito visível).
 
 ---
 
-## 16. Código morto (arquivos que não são usados)
+## 16. Código morto
 
-Verificado pelo grafo de `import` (nenhum outro arquivo os importa):
+Removido na limpeza de 31/10/2026 (recuperável pelo histórico do git):
 
-| Arquivo | Situação |
+| Arquivo / trecho | Motivo |
 |---|---|
-| `data/projects.js` | Não importado. Dados antigos. |
-| `components/projects/ProjectCard.jsx` | Não importado. A página de Projetos desenha os cards inline. |
-| `components/projects/ProjectStatusSummary.jsx` | Não importado. Existe outro `ProjectStatusSummary` em `components/dashboard/`, que é o usado. |
-| `components/repositories/BranchStat.jsx` | Não importado. |
-| `components/repositories/BranchesTable.jsx` | Não importado. |
-| `components/repositories/PullRequestsTable.jsx` | Não importado. |
-| `components/repositories/RepositoriesTable.jsx` | Não importado. |
-| `components/repositories/PullRequestDetailModal.jsx` | Não importado. |
-| `pages/OverviewPage.jsx` | **Usado**, mas só via `DashboardPage`. Não é morto. |
-| `projectsMock` em `ProjectsPage.jsx` | Constante declarada e não usada. |
-| `TOKEN`, `THEME`, `PROJECTS` em `storageKeys.js` | Declarados, não usados (ver §10.3). |
-| `DEFAULT_SETTINGS` e `getStoredSettings` | Usados só pelo `DashboardPage`, que é parte da duplicação (§15.1). |
+| `pages/DashboardPage.jsx`, `components/layout/DashboardLayout.jsx` | Navegação duplicada (§15.1) |
+| `data/projects.js` | Não importado |
+| `components/projects/ProjectCard.jsx`, `components/projects/ProjectStatusSummary.jsx` | Não importados (o `ProjectStatusSummary` usado é o de `components/dashboard/`) |
+| `components/repositories/BranchStat.jsx`, `BranchesTable.jsx`, `PullRequestsTable.jsx`, `RepositoriesTable.jsx`, `PullRequestDetailModal.jsx` | Não importados (3 deles estavam vazios) |
+| `projectsMock` em `ProjectsPage.jsx` | Declarado e não usado |
+| `THEME`, `TOKEN` em `storageKeys.js`; `getStoredSettings`, `saveSettings` | Sem uso após a unificação |
 
-Remover esses arquivos não altera o comportamento atual. Recomendo fazer isso junto com a decisão sobre a duplicação de navegação.
+Ainda sem uso, mas **mantido de propósito**: `components/common/Toast.jsx`, que será a base do aviso global na nova estrutura.
 
 ---
 
 ## 17. Limitações desta documentação
 
-- Li por completo: `App.jsx`, `main.jsx`, `DashboardPage.jsx`, `ProjectsPage.jsx`, `AuditPage.jsx`, `RepositoriesPage.jsx`, `RbacPage.jsx`, `SettingsPage.jsx`, `DashboardLayout.jsx`, `ProjectFormModal.jsx`, `DeleteProjectModal.jsx`, `utils/`, `hooks/`, `constants/`, `data/mockData.js` e a configuração (`package.json`, `vite.config.js`, `vercel.json`, `index.html`).
+- Li por completo: `App.jsx`, `main.jsx`, `ProjectsPage.jsx`, `AuditPage.jsx`, `RepositoriesPage.jsx`, `RbacPage.jsx`, `SettingsPage.jsx`, `ProjectFormModal.jsx`, `DeleteProjectModal.jsx`, `utils/`, `hooks/`, `constants/`, `data/mockData.js` e a configuração (`package.json`, `vite.config.js`, `vercel.json`, `index.html`).
 - Li parcialmente: `LoginPage.jsx`, `OverviewPage.jsx`, `Sidebar.jsx`, `Topbar.jsx`, `GlobalSearch.jsx`, `ChatbotModal.jsx`, `ProjectDetailModal.jsx`, `Icon.jsx`. Os trechos não lidos não foram descritos em detalhe.
 - Não li linha a linha: `LandingPage.jsx`, `Toast`, `ModalShell`, `StatCard`, `StatusBadge`, `Brand`, `RoleDetailModal`, os componentes de gráfico (`PullRequestFlowChart`, `PullRequestDistribution`), `AutomatedAlerts`, `RecentActivityPanel`, `RepositoriesList`, `PullRequestsList`, `BranchesList`, e os arquivos CSS. Para eles, a descrição vem do nome, de títulos visíveis no código e de quem os importa.
 - Os itens da §15.1 marcados como “verificado pelo código” não foram observados no navegador. Vale abrir `npm run dev` e conferir, especialmente as duas barras laterais e os selos da página de Projetos.
-- Esta documentação descreve o estado do commit `8ed3a40` (branch `main`). Se o código mudar, ela precisa ser atualizada.
+- Esta documentação descreve o estado do commit `193c764` mais a limpeza da branch `chore/limpeza` (31/10/2026). Se o código mudar, ela precisa ser atualizada.

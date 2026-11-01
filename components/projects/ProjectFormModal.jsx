@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 
+import { PROJECT_STATUS } from '../../constants/projectStatus'
 import { services } from '../../data/mockData'
 
 export default function ProjectFormModal({ project, onClose, onSave }) {
@@ -10,10 +11,9 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
     deadline: project?.deadline || '',
     owner: project?.owner || '',
     priority: project?.priority || 'medium',
+    status: project?.status || 'success',
     progress: project?.progress ?? 0,
-    repositories: Array.isArray(project?.repositories)
-      ? project.repositories
-      : [],
+    repositories: Array.isArray(project?.repositories) ? project.repositories : [],
   })
 
   const toggleRepository = (repositoryName) => {
@@ -62,9 +62,7 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
         }}
       >
         <label>
-          <strong style={{ display: 'block', marginBottom: '6px' }}>
-            Nome do Projeto
-          </strong>
+          <strong style={{ display: 'block', marginBottom: '6px' }}>Nome do Projeto</strong>
 
           <input
             required
@@ -80,9 +78,7 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
         </label>
 
         <label>
-          <strong style={{ display: 'block', marginBottom: '6px' }}>
-            Objetivo do Projeto
-          </strong>
+          <strong style={{ display: 'block', marginBottom: '6px' }}>Objetivo do Projeto</strong>
 
           <textarea
             required
@@ -109,9 +105,7 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
           }}
         >
           <label>
-            <strong style={{ display: 'block', marginBottom: '6px' }}>
-              Deadline
-            </strong>
+            <strong style={{ display: 'block', marginBottom: '6px' }}>Deadline</strong>
 
             <input
               required
@@ -128,9 +122,7 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
           </label>
 
           <label>
-            <strong style={{ display: 'block', marginBottom: '6px' }}>
-              Prioridade
-            </strong>
+            <strong style={{ display: 'block', marginBottom: '6px' }}>Prioridade</strong>
 
             <select
               value={form.priority}
@@ -149,6 +141,27 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
           </label>
         </div>
 
+        <label>
+          <strong style={{ display: 'block', marginBottom: '6px' }}>Status</strong>
+
+          <select
+            value={form.status}
+            onChange={(event) =>
+              setForm({
+                ...form,
+                status: event.target.value,
+              })
+            }
+            style={inputStyle}
+          >
+            {Object.entries(PROJECT_STATUS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <div
           style={{
             display: 'grid',
@@ -157,9 +170,7 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
           }}
         >
           <label>
-            <strong style={{ display: 'block', marginBottom: '6px' }}>
-              Responsável
-            </strong>
+            <strong style={{ display: 'block', marginBottom: '6px' }}>Responsável</strong>
 
             <input
               required
@@ -175,9 +186,7 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
           </label>
 
           <label>
-            <strong style={{ display: 'block', marginBottom: '6px' }}>
-              Progresso (%)
-            </strong>
+            <strong style={{ display: 'block', marginBottom: '6px' }}>Progresso (%)</strong>
 
             <input
               required
@@ -247,11 +256,7 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
             {project ? 'Salvar Projeto' : 'Criar Projeto'}
           </button>
 
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={onClose}
-          >
+          <button className="secondary-button" type="button" onClick={onClose}>
             Cancelar
           </button>
         </div>

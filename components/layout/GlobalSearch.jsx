@@ -1,35 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  ChevronRight,
-  GitBranch,
-  GitPullRequest,
-  Search,
-  Server,
-  Target,
-  X,
-} from 'lucide-react'
+import { ChevronRight, GitBranch, GitPullRequest, Search, Server, Target, X } from 'lucide-react'
 
 import { branches, pullRequests, services } from '../../data/mockData'
 import { formatProjectDate } from '../../utils/projectUtils'
 
-export default function GlobalSearch({
-  open,
-  onClose,
-  projects,
-  onNavigate,
-  setSelectedProject,
-}) {
+export default function GlobalSearch({ open, ...props }) {
+  // O painel só é montado quando aberto, então a busca sempre começa vazia
+  if (!open) return null
+
+  return <SearchPanel {...props} />
+}
+
+function SearchPanel({ onClose, projects, onNavigate, setSelectedProject }) {
   const [query, setQuery] = useState('')
   const inputRef = useRef(null)
 
   useEffect(() => {
-    if (open) {
-      setQuery('')
-      window.setTimeout(() => inputRef.current?.focus(), 50)
-    }
-  }, [open])
-
-  if (!open) return null
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 50)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   const search = query.toLowerCase().trim()
 
@@ -41,7 +30,7 @@ export default function GlobalSearch({
             .filter((project) =>
               `${project.name} ${project.description} ${project.owner}`
                 .toLowerCase()
-                .includes(search)
+                .includes(search),
             )
             .slice(0, 4)
             .map((project) => ({
@@ -58,9 +47,7 @@ export default function GlobalSearch({
 
           ...services
             .filter((service) =>
-              `${service.name} ${service.team} ${service.language}`
-                .toLowerCase()
-                .includes(search)
+              `${service.name} ${service.team} ${service.language}`.toLowerCase().includes(search),
             )
             .slice(0, 4)
             .map((service) => ({
@@ -76,9 +63,7 @@ export default function GlobalSearch({
 
           ...pullRequests
             .filter((pr) =>
-              `${pr.id} ${pr.title} ${pr.author} ${pr.repository}`
-                .toLowerCase()
-                .includes(search)
+              `${pr.id} ${pr.title} ${pr.author} ${pr.repository}`.toLowerCase().includes(search),
             )
             .slice(0, 4)
             .map((pr) => ({
@@ -94,9 +79,7 @@ export default function GlobalSearch({
 
           ...branches
             .filter((branch) =>
-              `${branch.name} ${branch.repository} ${branch.author}`
-                .toLowerCase()
-                .includes(search)
+              `${branch.name} ${branch.repository} ${branch.author}`.toLowerCase().includes(search),
             )
             .slice(0, 4)
             .map((branch) => ({
@@ -152,11 +135,7 @@ export default function GlobalSearch({
             placeholder="Buscar projetos, repositórios, PRs e branches..."
           />
 
-          <button
-            type="button"
-            className="input-action"
-            onClick={onClose}
-          >
+          <button type="button" className="input-action" onClick={onClose}>
             <X size={17} />
           </button>
         </div>
@@ -247,9 +226,7 @@ export default function GlobalSearch({
                     {result.title}
                   </strong>
 
-                  <small style={{ color: 'var(--muted)' }}>
-                    {result.subtitle}
-                  </small>
+                  <small style={{ color: 'var(--muted)' }}>{result.subtitle}</small>
                 </span>
 
                 <ChevronRight size={16} />

@@ -4,36 +4,44 @@ import { X, Send, Bot, ChevronDown } from 'lucide-react'
 const faqs = [
   {
     question: 'O que é o GovTech?',
-    answer: 'O GovTech é uma plataforma de governança de TI para gestão de projetos, auditoria e controle de acessos em ambientes de desenvolvimento de software.'
+    answer:
+      'O GovTech é uma plataforma de governança de TI para gestão de projetos, auditoria e controle de acessos em ambientes de desenvolvimento de software.',
   },
   {
     question: 'Como criar um novo projeto?',
-    answer: 'Vá até a página de Projetos, clique em "Novo Projeto", preencha as informações básicas (nome, repositório, branch, prazo) e adicione os membros da equipe.'
+    answer:
+      'Vá até a página de Projetos, clique em "Novo Projeto", preencha as informações básicas (nome, repositório, branch, prazo) e adicione os membros da equipe.',
   },
   {
     question: 'O que são branches na governança?',
-    answer: 'Branches representam linhas de desenvolvimento no Git. A branch "main" é a principal e mais estável, enquanto "dev" e "feature" são usadas para desenvolvimento de novas funcionalidades.'
+    answer:
+      'Branches representam linhas de desenvolvimento no Git. A branch "main" é a principal e mais estável, enquanto "dev" e "feature" são usadas para desenvolvimento de novas funcionalidades.',
   },
   {
     question: 'Como funciona a auditoria de eventos?',
-    answer: 'A auditoria registra automaticamente todas as ações críticas: commits, pull requests, aprovações, acessos e mudanças de permissão. Esses registros são imutáveis e podem ser exportados.'
+    answer:
+      'A auditoria registra automaticamente todas as ações críticas: commits, pull requests, aprovações, acessos e mudanças de permissão. Esses registros são imutáveis e podem ser exportados.',
   },
   {
     question: 'O que é um semáforo de projeto?',
-    answer: 'O semáforo indica a saúde do projeto: 🟢 Verde (no prazo, sem riscos), 🟡 Amarelo (atenção necessária), 🔴 Vermelho (risco crítico ou atrasado).'
+    answer:
+      'O semáforo indica a saúde do projeto: 🟢 Verde (no prazo, sem riscos), 🟡 Amarelo (atenção necessária), 🔴 Vermelho (risco crítico ou atrasado).',
   },
   {
     question: 'Como adicionar riscos a um projeto?',
-    answer: 'Na página do projeto, vá até a seção "Riscos", clique em "Adicionar Risco", descreva o risco, classifique a probabilidade e impacto, e defina ações de mitigação.'
+    answer:
+      'Na página do projeto, vá até a seção "Riscos", clique em "Adicionar Risco", descreva o risco, classifique a probabilidade e impacto, e defina ações de mitigação.',
   },
   {
     question: 'O que é RBAC?',
-    answer: 'RBAC (Role-Based Access Control) é o sistema de controle de acesso baseado em funções. Cada usuário recebe um papel (Admin, Developer, Viewer, etc.) com permissões específicas.'
+    answer:
+      'RBAC (Role-Based Access Control) é o sistema de controle de acesso baseado em funções. Cada usuário recebe um papel (Admin, Developer, Viewer, etc.) com permissões específicas.',
   },
   {
     question: 'Como exportar dados de auditoria?',
-    answer: 'Na página de Auditoria, clique em "Exportar Dados" no topo da página. Um arquivo CSV com todos os eventos será baixado automaticamente.'
-  }
+    answer:
+      'Na página de Auditoria, clique em "Exportar Dados" no topo da página. Um arquivo CSV com todos os eventos será baixado automaticamente.',
+  },
 ]
 
 export default function ChatbotModal({ onClose }) {
@@ -41,8 +49,8 @@ export default function ChatbotModal({ onClose }) {
     {
       id: 1,
       type: 'bot',
-      text: 'Olá! Sou o assistente virtual do GovTech. Como posso ajudar você hoje?'
-    }
+      text: 'Olá! Sou o assistente virtual do GovTech. Como posso ajudar você hoje?',
+    },
   ])
   const [inputValue, setInputValue] = useState('')
   const [expandedFaq, setExpandedFaq] = useState(null)
@@ -53,73 +61,78 @@ export default function ChatbotModal({ onClose }) {
     const userMessage = {
       id: messages.length + 1,
       type: 'user',
-      text: inputValue
+      text: inputValue,
     }
 
-    setMessages(prev => [...prev, userMessage])
+    setMessages((prev) => [...prev, userMessage])
     setInputValue('')
 
     setTimeout(() => {
       const botResponse = getBotResponse(inputValue)
-      setMessages(prev => [...prev, botResponse])
+      setMessages((prev) => [...prev, botResponse])
     }, 500)
   }
 
   const getBotResponse = (userInput) => {
     const input = userInput.toLowerCase()
-    
+
     if (input.includes('projeto') && (input.includes('criar') || input.includes('novo'))) {
       return {
         id: messages.length + 2,
         type: 'bot',
-        text: 'Para criar um projeto: 1) Vá em Projetos, 2) Clique em "Novo Projeto", 3) Preencha nome, repositório e prazo, 4) Adicione a equipe.'
+        text: 'Para criar um projeto: 1) Vá em Projetos, 2) Clique em "Novo Projeto", 3) Preencha nome, repositório e prazo, 4) Adicione a equipe.',
       }
     }
-    
+
     if (input.includes('auditoria') || input.includes('audit') || input.includes('evento')) {
       return {
         id: messages.length + 2,
         type: 'bot',
-        text: 'A auditoria registra todas as ações do sistema. Você pode filtrar por status e exportar os dados em CSV.'
+        text: 'A auditoria registra todas as ações do sistema. Você pode filtrar por status e exportar os dados em CSV.',
       }
     }
-    
-    if (input.includes('acesso') || input.includes('permissão') || input.includes('rbac') || input.includes('papel')) {
+
+    if (
+      input.includes('acesso') ||
+      input.includes('permissão') ||
+      input.includes('rbac') ||
+      input.includes('papel')
+    ) {
       return {
         id: messages.length + 2,
         type: 'bot',
-        text: 'O controle de acesso (RBAC) permite gerenciar papéis como Admin, Developer, Viewer e Stakeholder, cada um com permissões específicas.'
+        text: 'O controle de acesso (RBAC) permite gerenciar papéis como Admin, Developer, Viewer e Stakeholder, cada um com permissões específicas.',
       }
     }
-    
+
     if (input.includes('risco') || input.includes('semáforo') || input.includes('saúde')) {
       return {
         id: messages.length + 2,
         type: 'bot',
-        text: 'Os riscos são classificados por probabilidade e impacto. O semáforo mostra a saúde: verde (ok), amarelo (atenção), vermelho (crítico).'
+        text: 'Os riscos são classificados por probabilidade e impacto. O semáforo mostra a saúde: verde (ok), amarelo (atenção), vermelho (crítico).',
       }
     }
-    
+
     if (input.includes('exportar') || input.includes('csv') || input.includes('dados')) {
       return {
         id: messages.length + 2,
         type: 'bot',
-        text: 'Clique em "Exportar Dados" na página de Auditoria para baixar um CSV com todos os eventos registrados.'
+        text: 'Clique em "Exportar Dados" na página de Auditoria para baixar um CSV com todos os eventos registrados.',
       }
     }
-    
+
     if (input.includes('branch') || input.includes('git') || input.includes('repositório')) {
       return {
         id: messages.length + 2,
         type: 'bot',
-        text: 'Branches são linhas de desenvolvimento no Git. Use "main" para produção, "dev" para desenvolvimento e "feature" para novas funcionalidades.'
+        text: 'Branches são linhas de desenvolvimento no Git. Use "main" para produção, "dev" para desenvolvimento e "feature" para novas funcionalidades.',
       }
     }
-    
+
     return {
       id: messages.length + 2,
       type: 'bot',
-      text: 'Entendi! Você pode consultar as perguntas frequentes abaixo ou me fazer uma pergunta específica sobre projetos, auditoria, acessos ou riscos.'
+      text: 'Entendi! Você pode consultar as perguntas frequentes abaixo ou me fazer uma pergunta específica sobre projetos, auditoria, acessos ou riscos.',
     }
   }
 
@@ -131,7 +144,7 @@ export default function ChatbotModal({ onClose }) {
   }
 
   return (
-    <div 
+    <div
       className="modal-overlay"
       onClick={onClose}
       style={{
@@ -145,10 +158,10 @@ export default function ChatbotModal({ onClose }) {
         alignItems: 'flex-end',
         justifyContent: 'flex-end',
         padding: '24px',
-        zIndex: 1000
+        zIndex: 1000,
       }}
     >
-      <div 
+      <div
         className="chatbot-container"
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -161,11 +174,11 @@ export default function ChatbotModal({ onClose }) {
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
         }}
       >
         {/* Header */}
-        <div 
+        <div
           style={{
             padding: '16px 20px',
             backgroundColor: 'var(--color-primary-600, #0066CC)',
@@ -173,21 +186,17 @@ export default function ChatbotModal({ onClose }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '12px'
+            gap: '12px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Bot size={24} />
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0 }}>
-                Assistente GovTech
-              </h3>
-              <p style={{ fontSize: '12px', margin: 0, opacity: 0.9 }}>
-                Guia de governança
-              </p>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0 }}>Assistente GovTech</h3>
+              <p style={{ fontSize: '12px', margin: 0, opacity: 0.9 }}>Guia de governança</p>
             </div>
           </div>
-          
+
           <button
             onClick={onClose}
             style={{
@@ -198,7 +207,7 @@ export default function ChatbotModal({ onClose }) {
               padding: '4px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
             }}
           >
             <X size={20} />
@@ -206,7 +215,7 @@ export default function ChatbotModal({ onClose }) {
         </div>
 
         {/* Messages */}
-        <div 
+        <div
           style={{
             flex: 1,
             overflowY: 'auto',
@@ -214,7 +223,7 @@ export default function ChatbotModal({ onClose }) {
             display: 'flex',
             flexDirection: 'column',
             gap: '16px',
-            backgroundColor: 'var(--bg-secondary, #f8f9fa)'
+            backgroundColor: 'var(--bg-secondary, #f8f9fa)',
           }}
         >
           {messages.map((message) => (
@@ -223,11 +232,11 @@ export default function ChatbotModal({ onClose }) {
               style={{
                 display: 'flex',
                 justifyContent: message.type === 'user' ? 'flex-end' : 'flex-start',
-                maxWidth: '85%'
+                maxWidth: '85%',
               }}
             >
               {message.type === 'bot' && (
-                <div 
+                <div
                   style={{
                     width: '32px',
                     height: '32px',
@@ -237,22 +246,25 @@ export default function ChatbotModal({ onClose }) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginRight: '8px',
-                    flexShrink: 0
+                    flexShrink: 0,
                   }}
                 >
                   <Bot size={18} color="white" />
                 </div>
               )}
-              
+
               <div
                 style={{
                   padding: '12px 16px',
                   borderRadius: '12px',
-                  backgroundColor: message.type === 'user' ? 'var(--color-primary-600, #0066CC)' : 'var(--surface, white)',
+                  backgroundColor:
+                    message.type === 'user'
+                      ? 'var(--color-primary-600, #0066CC)'
+                      : 'var(--surface, white)',
                   color: message.type === 'user' ? 'white' : 'var(--text-primary, #1a1a1a)',
                   fontSize: '14px',
                   lineHeight: '1.5',
-                  boxShadow: message.type === 'user' ? 'none' : '0 1px 2px rgba(0,0,0,0.1)'
+                  boxShadow: message.type === 'user' ? 'none' : '0 1px 2px rgba(0,0,0,0.1)',
                 }}
               >
                 {message.text}
@@ -262,24 +274,28 @@ export default function ChatbotModal({ onClose }) {
         </div>
 
         {/* FAQ Section */}
-        <div 
+        <div
           style={{
             padding: '16px 20px',
             backgroundColor: 'var(--surface, white)',
             borderTop: '1px solid var(--border, #e5e7eb)',
             maxHeight: '200px',
-            overflowY: 'auto'
+            overflowY: 'auto',
           }}
         >
-          <h4 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '12px', color: 'var(--muted, #6b7280)' }}>
+          <h4
+            style={{
+              fontSize: '13px',
+              fontWeight: '600',
+              marginBottom: '12px',
+              color: 'var(--muted, #6b7280)',
+            }}
+          >
             PERGUNTAS FREQUENTES
           </h4>
-          
+
           {faqs.map((faq, index) => (
-            <div 
-              key={index}
-              style={{ marginBottom: '8px' }}
-            >
+            <div key={index} style={{ marginBottom: '8px' }}>
               <button
                 onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                 style={{
@@ -297,7 +313,7 @@ export default function ChatbotModal({ onClose }) {
                   fontSize: '13px',
                   fontWeight: '500',
                   color: 'var(--text-secondary, #374151)',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--bg-tertiary, #f3f4f6)'
@@ -309,17 +325,17 @@ export default function ChatbotModal({ onClose }) {
                 }}
               >
                 <span style={{ flex: 1 }}>{faq.question}</span>
-                <ChevronDown 
-                  size={16} 
-                  style={{ 
+                <ChevronDown
+                  size={16}
+                  style={{
                     transform: expandedFaq === index ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.2s'
-                  }} 
+                    transition: 'transform 0.2s',
+                  }}
                 />
               </button>
-              
+
               {expandedFaq === index && (
-                <div 
+                <div
                   style={{
                     padding: '12px',
                     marginTop: '4px',
@@ -327,7 +343,7 @@ export default function ChatbotModal({ onClose }) {
                     borderRadius: '8px',
                     fontSize: '13px',
                     lineHeight: '1.6',
-                    color: 'var(--text-secondary, #4b5563)'
+                    color: 'var(--text-secondary, #4b5563)',
                   }}
                 >
                   {faq.answer}
@@ -338,14 +354,14 @@ export default function ChatbotModal({ onClose }) {
         </div>
 
         {/* Input */}
-        <div 
+        <div
           style={{
             padding: '16px 20px',
             backgroundColor: 'var(--surface, white)',
             borderTop: '1px solid var(--border, #e5e7eb)',
             display: 'flex',
             gap: '12px',
-            alignItems: 'flex-end'
+            alignItems: 'flex-end',
           }}
         >
           <textarea
@@ -365,18 +381,20 @@ export default function ChatbotModal({ onClose }) {
               outline: 'none',
               transition: 'border-color 0.2s',
               backgroundColor: 'var(--surface, white)',
-              color: 'var(--text-primary, #1a1a1a)'
+              color: 'var(--text-primary, #1a1a1a)',
             }}
-            onFocus={(e) => e.target.style.borderColor = 'var(--color-primary-600, #0066CC)'}
-            onBlur={(e) => e.target.style.borderColor = 'var(--border, #d1d5db)'}
+            onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary-600, #0066CC)')}
+            onBlur={(e) => (e.target.style.borderColor = 'var(--border, #d1d5db)')}
           />
-          
+
           <button
             onClick={handleSend}
             disabled={!inputValue.trim()}
             style={{
               padding: '12px 16px',
-              backgroundColor: inputValue.trim() ? 'var(--color-primary-600, #0066CC)' : 'var(--muted, #9ca3af)',
+              backgroundColor: inputValue.trim()
+                ? 'var(--color-primary-600, #0066CC)'
+                : 'var(--muted, #9ca3af)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -384,7 +402,7 @@ export default function ChatbotModal({ onClose }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'background-color 0.2s'
+              transition: 'background-color 0.2s',
             }}
           >
             <Send size={18} />

@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react'
-import {
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-} from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 
 import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
@@ -15,14 +9,15 @@ import RepositoriesPage from './pages/RepositoriesPage'
 import ProjectsPage from './pages/ProjectsPage'
 import RbacPage from './pages/RbacPage'
 import SettingsPage from './pages/SettingsPage'
-import DashboardPage from './pages/DashboardPage'
+import OverviewPage from './pages/OverviewPage'
 import LoginPage from './pages/LoginPage'
 import LandingPage from './pages/LandingPage'
 
 import { defaultSettings } from './constants/defaultSettings'
 import { useLocalStorage } from './hooks/useLocalStorage'
+import { useTheme } from './hooks/useTheme'
 import { storageKeys } from './constants/storageKeys'
-import { getStoredProjects } from './utils/storageUtils'
+import { getStoredProjects, saveProjects } from './utils/storageUtils'
 import { projects as initialProjects } from './data/mockData'
 
 import { Check } from 'lucide-react'
@@ -54,22 +49,27 @@ function AuthenticatedLayout() {
   const [toastMessage, setToastMessage] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(true)
 
-  const [settings, setSettings] = useLocalStorage(
-    storageKeys.SETTINGS,
-    defaultSettings,
-  )
+  const [settings, setSettings] = useLocalStorage(storageKeys.SETTINGS, defaultSettings)
 
   const [projectList, setProjectList] = useState(() => getStoredProjects(initialProjects))
 
-  const activeSection =
-    routeSections[location.pathname] || 'Visão geral'
+  useTheme(settings.theme)
+
+  const activeSection = routeSections[location.pathname] || 'Visão geral'
 
   useEffect(() => {
+    saveProjects(projectList)
+  }, [projectList])
+
+  // Fecha os menus ao trocar de rota (ajuste de estado na renderização, sem useEffect)
+  const [lastPathname, setLastPathname] = useState(location.pathname)
+
+  if (location.pathname !== lastPathname) {
+    setLastPathname(location.pathname)
     setSidebarOpen(false)
     setAccountMenuOpen(false)
-  }, [location.pathname])
+  }
 
   function handleNavigate(section) {
     const route = sectionRoutes[section]
@@ -88,11 +88,6 @@ function AuthenticatedLayout() {
         ...nextSettings.notifications,
       },
     }))
-
-    if (nextSettings.theme) {
-      document.documentElement.dataset.theme =
-        nextSettings.theme === 'Escuro' ? 'dark' : 'light'
-    }
   }
 
   function handleToast(message) {
@@ -118,7 +113,7 @@ function AuthenticatedLayout() {
         <Topbar
           active={activeSection}
           setOpen={setSidebarOpen}
-          onOpenSearch={() => { }}
+          onOpenSearch={() => {}}
           accountMenuOpen={accountMenuOpen}
           setAccountMenuOpen={setAccountMenuOpen}
           onNavigate={handleNavigate}
@@ -126,16 +121,7 @@ function AuthenticatedLayout() {
 
         <GlobalSearch />
 
-        {activeSection === 'Visão geral' && (
-          <DashboardPage
-            activeSection={activeSection}
-            setActiveSection={handleNavigate}
-            settings={settings}
-            setSettings={setSettings}
-            isAuthenticated={isAuthenticated}
-            setIsAuthenticated={setIsAuthenticated}
-          />
-        )}
+        {activeSection === 'Visão geral' && <OverviewPage projectList={projectList} />}
 
         {activeSection === 'Auditoria' && <AuditPage />}
 

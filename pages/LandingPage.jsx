@@ -4,12 +4,10 @@ import {
   Bell,
   Check,
   ChevronRight,
-  FileCheck,
   Gauge,
   GitBranch,
   RefreshCw,
   Shield,
-  Users,
   Workflow,
 } from 'lucide-react'
 
@@ -58,9 +56,8 @@ export default function LandingPage() {
           </h1>
 
           <p className="hero-description">
-            Transforme os dados das Pull Requests em informações claras para
-            acompanhar entregas, identificar riscos e apoiar decisões de
-            Governança de Tecnologia da Informação.
+            Transforme os dados das Pull Requests em informações claras para acompanhar entregas,
+            identificar riscos e apoiar decisões de Governança de Tecnologia da Informação.
           </p>
 
           <div className="hero-cta">
@@ -101,9 +98,7 @@ export default function LandingPage() {
                 <span className="dot" />
               </div>
 
-              <span className="preview-title">
-                Governança de Projetos de TI
-              </span>
+              <span className="preview-title">Governança de Projetos de TI</span>
             </div>
 
             <div className="preview-content">
@@ -170,23 +165,19 @@ export default function LandingPage() {
           </div>
 
           <div className="context-text">
-            <h2>
-              Informações técnicas nem sempre são acessíveis para a gestão
-            </h2>
+            <h2>Informações técnicas nem sempre são acessíveis para a gestão</h2>
 
             <p>
-              As equipes de desenvolvimento produzem informações importantes
-              durante o ciclo de vida dos projetos. Pull Requests, revisões,
-              aprovações, branches e pipelines registram o andamento das
-              entregas, mas esses dados normalmente ficam dispersos em
-              ferramentas técnicas.
+              As equipes de desenvolvimento produzem informações importantes durante o ciclo de vida
+              dos projetos. Pull Requests, revisões, aprovações, branches e pipelines registram o
+              andamento das entregas, mas esses dados normalmente ficam dispersos em ferramentas
+              técnicas.
             </p>
 
             <p>
-              A solução centraliza essas informações e apresenta indicadores
-              mais simples para profissionais de gestão e Governança de TI,
-              mesmo quando não possuem conhecimento aprofundado em
-              desenvolvimento de software.
+              A solução centraliza essas informações e apresenta indicadores mais simples para
+              profissionais de gestão e Governança de TI, mesmo quando não possuem conhecimento
+              aprofundado em desenvolvimento de software.
             </p>
           </div>
         </div>
@@ -201,9 +192,8 @@ export default function LandingPage() {
             <h2>Uma visão consolidada do progresso dos projetos</h2>
 
             <p className="section-subtitle">
-              A plataforma organiza dados técnicos e transforma registros do
-              desenvolvimento em informações úteis para acompanhamento,
-              controle e tomada de decisão.
+              A plataforma organiza dados técnicos e transforma registros do desenvolvimento em
+              informações úteis para acompanhamento, controle e tomada de decisão.
             </p>
           </div>
 
@@ -216,8 +206,8 @@ export default function LandingPage() {
               <h3>Monitoramento de Pull Requests</h3>
 
               <p>
-                Acompanhe solicitações de integração, revisões, aprovações e
-                estados das entregas realizadas pelas equipes.
+                Acompanhe solicitações de integração, revisões, aprovações e estados das entregas
+                realizadas pelas equipes.
               </p>
 
               <ul className="capability-list">
@@ -248,8 +238,8 @@ export default function LandingPage() {
               <h3>Integração com GitHub</h3>
 
               <p>
-                Consulte informações dos repositórios monitorados por meio da
-                API do GitHub e acompanhe o fluxo de desenvolvimento.
+                Consulte informações dos repositórios monitorados por meio da API do GitHub e
+                acompanhe o fluxo de desenvolvimento.
               </p>
 
               <ul className="capability-list">
@@ -280,8 +270,8 @@ export default function LandingPage() {
               <h3>Automação com GitHub Actions</h3>
 
               <p>
-                Automatize verificações e análises para reduzir a necessidade de
-                acompanhamento manual das informações.
+                Automatize verificações e análises para reduzir a necessidade de acompanhamento
+                manual das informações.
               </p>
 
               <ul className="capability-list">
@@ -312,8 +302,8 @@ export default function LandingPage() {
               <h3>Indicadores de Governança</h3>
 
               <p>
-                Visualize métricas que ajudam a compreender o andamento dos
-                projetos e a identificar tendências ou desvios.
+                Visualize métricas que ajudam a compreender o andamento dos projetos e a identificar
+                tendências ou desvios.
               </p>
 
               <ul className="capability-list">
@@ -344,8 +334,8 @@ export default function LandingPage() {
               <h3>Alertas e Pontos de Atenção</h3>
 
               <p>
-                Identifique situações que podem impactar prazos, entregas ou a
-                conformidade dos processos de desenvolvimento.
+                Identifique situações que podem impactar prazos, entregas ou a conformidade dos
+                processos de desenvolvimento.
               </p>
 
               <ul className="capability-list">
@@ -376,8 +366,8 @@ export default function LandingPage() {
               <h3>Rastreabilidade e Auditoria</h3>
 
               <p>
-                Mantenha o histórico dos eventos relevantes para apoiar
-                auditorias, controles internos e a melhoria dos processos.
+                Mantenha o histórico dos eventos relevantes para apoiar auditorias, controles
+                internos e a melhoria dos processos.
               </p>
 
               <ul className="capability-list">
@@ -412,9 +402,8 @@ export default function LandingPage() {
             <h2>Do registro técnico ao indicador de gestão</h2>
 
             <p className="section-subtitle">
-              A solução conecta as atividades realizadas pelas equipes de
-              desenvolvimento às necessidades de acompanhamento da Governança
-              de TI.
+              A solução conecta as atividades realizadas pelas equipes de desenvolvimento às
+              necessidades de acompanhamento da Governança de TI.
             </p>
           </div>
 
@@ -429,8 +418,8 @@ export default function LandingPage() {
               <h3>Coleta</h3>
 
               <p>
-                As informações das Pull Requests e dos repositórios são
-                consultadas por meio da API do GitHub.
+                As informações das Pull Requests e dos repositórios são consultadas por meio da API
+                do GitHub.
               </p>
             </article>
 
@@ -444,8 +433,8 @@ export default function LandingPage() {
               <h3>Automação</h3>
 
               <p>
-                O GitHub Actions executa as rotinas de verificação e análise
-                conforme as condições definidas.
+                O GitHub Actions executa as rotinas de verificação e análise conforme as condições
+                definidas.
               </p>
             </article>
 
@@ -459,8 +448,8 @@ export default function LandingPage() {
               <h3>Análise</h3>
 
               <p>
-                Os dados são organizados em indicadores, classificações e
-                situações que merecem acompanhamento.
+                Os dados são organizados em indicadores, classificações e situações que merecem
+                acompanhamento.
               </p>
             </article>
 
@@ -474,8 +463,8 @@ export default function LandingPage() {
               <h3>Acompanhamento</h3>
 
               <p>
-                Gestores e profissionais de Governança visualizam alertas e
-                informações para apoiar a tomada de decisão.
+                Gestores e profissionais de Governança visualizam alertas e informações para apoiar
+                a tomada de decisão.
               </p>
             </article>
           </div>
@@ -491,16 +480,15 @@ export default function LandingPage() {
             <h2>Evidências do desenvolvimento para apoiar a gestão</h2>
 
             <p>
-              As atividades registradas durante o desenvolvimento podem ser
-              utilizadas como evidências para o acompanhamento dos processos,
-              identificação de pontos de melhoria e controle dos riscos.
+              As atividades registradas durante o desenvolvimento podem ser utilizadas como
+              evidências para o acompanhamento dos processos, identificação de pontos de melhoria e
+              controle dos riscos.
             </p>
 
             <p>
-              A proposta também busca aproximar os registros técnicos dos
-              critérios de avaliação de processos relacionados ao SPICE/MMI,
-              contribuindo para uma visão mais estruturada da evolução dos
-              projetos.
+              A proposta também busca aproximar os registros técnicos dos critérios de avaliação de
+              processos relacionados ao SPICE/MMI, contribuindo para uma visão mais estruturada da
+              evolução dos projetos.
             </p>
 
             <div className="governance-points">
@@ -581,14 +569,11 @@ export default function LandingPage() {
           <div className="section-header">
             <span className="section-tag">REFERENCIAIS</span>
 
-            <h2>
-              Baseado em práticas de governança, processos e segurança
-            </h2>
+            <h2>Baseado em práticas de governança, processos e segurança</h2>
 
             <p className="section-subtitle">
-              A proposta considera referências utilizadas para estruturar a
-              governança, o gerenciamento de serviços, a segurança da
-              informação e a avaliação dos processos.
+              A proposta considera referências utilizadas para estruturar a governança, o
+              gerenciamento de serviços, a segurança da informação e a avaliação dos processos.
             </p>
           </div>
 
@@ -599,8 +584,8 @@ export default function LandingPage() {
               <h3>SPICE/MMI</h3>
 
               <p>
-                Referencial para avaliação, acompanhamento e melhoria dos
-                processos de desenvolvimento.
+                Referencial para avaliação, acompanhamento e melhoria dos processos de
+                desenvolvimento.
               </p>
 
               <ul className="standard-list">
@@ -616,8 +601,8 @@ export default function LandingPage() {
               <h3>COBIT</h3>
 
               <p>
-                Referência para governança e gestão de Tecnologia da Informação
-                alinhada aos objetivos organizacionais.
+                Referência para governança e gestão de Tecnologia da Informação alinhada aos
+                objetivos organizacionais.
               </p>
 
               <ul className="standard-list">
@@ -633,8 +618,8 @@ export default function LandingPage() {
               <h3>ITIL</h3>
 
               <p>
-                Práticas para gerenciamento de serviços, mudanças e melhoria
-                contínua no ambiente de TI.
+                Práticas para gerenciamento de serviços, mudanças e melhoria contínua no ambiente de
+                TI.
               </p>
 
               <ul className="standard-list">
@@ -649,10 +634,7 @@ export default function LandingPage() {
 
               <h3>ISO/IEC 38500</h3>
 
-              <p>
-                Referência para a governança corporativa da Tecnologia da
-                Informação.
-              </p>
+              <p>Referência para a governança corporativa da Tecnologia da Informação.</p>
 
               <ul className="standard-list">
                 <li>Uso responsável da TI</li>
@@ -674,9 +656,8 @@ export default function LandingPage() {
               <h2>Acompanhe seus projetos com mais clareza</h2>
 
               <p>
-                Acesse a plataforma e visualize como os dados das atividades de
-                desenvolvimento podem ser apresentados para a gestão e a
-                Governança de TI.
+                Acesse a plataforma e visualize como os dados das atividades de desenvolvimento
+                podem ser apresentados para a gestão e a Governança de TI.
               </p>
 
               <div className="demo-features">
@@ -740,8 +721,8 @@ export default function LandingPage() {
             <Brand />
 
             <p>
-              Plataforma para governança e monitoramento do progresso de
-              projetos de Tecnologia da Informação.
+              Plataforma para governança e monitoramento do progresso de projetos de Tecnologia da
+              Informação.
             </p>
           </div>
 
@@ -773,8 +754,7 @@ export default function LandingPage() {
         <div className="footer-bottom">
           <div className="container">
             <p>
-              © 2026 GovTech MS. Projeto acadêmico de Governança e
-              Monitoramento de Projetos de TI.
+              © 2026 GovTech MS. Projeto acadêmico de Governança e Monitoramento de Projetos de TI.
             </p>
           </div>
         </div>

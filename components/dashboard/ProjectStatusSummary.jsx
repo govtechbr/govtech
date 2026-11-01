@@ -38,15 +38,9 @@ export default function ProjectStatusSummary({ projectList = [] }) {
   }))
 
   const counts = {
-    onTrack: projectsWithStatus.filter(
-      ({ status }) => status.semanticKey === 'on_track'
-    ).length,
-    atRisk: projectsWithStatus.filter(
-      ({ status }) => status.semanticKey === 'at_risk'
-    ).length,
-    delayed: projectsWithStatus.filter(
-      ({ status }) => status.semanticKey === 'delayed'
-    ).length,
+    onTrack: projectsWithStatus.filter(({ status }) => status.semanticKey === 'on_track').length,
+    atRisk: projectsWithStatus.filter(({ status }) => status.semanticKey === 'at_risk').length,
+    delayed: projectsWithStatus.filter(({ status }) => status.semanticKey === 'delayed').length,
   }
 
   let overall = {
@@ -84,9 +78,7 @@ export default function ProjectStatusSummary({ projectList = [] }) {
     <section className="panel elevation-1" style={{ marginBottom: '24px' }}>
       <div className="panel-heading">
         <div>
-          <span className="section-kicker">
-            VISÃO DE NEGÓCIO · PADRÃO SEMÁFORO
-          </span>
+          <span className="section-kicker">VISÃO DE NEGÓCIO · PADRÃO SEMÁFORO</span>
 
           <h2>Status dos Projetos</h2>
         </div>

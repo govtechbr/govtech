@@ -1,77 +1,19 @@
 import { CalendarClock, CircleAlert, FolderKanban, Plus, Users } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 import DeleteProjectModal from '../components/projects/DeleteProjectModal'
 import ProjectDetailModal from '../components/projects/ProjectDetailModal'
 import ProjectFormModal from '../components/projects/ProjectFormModal'
+import { PROJECT_STATUS } from '../constants/projectStatus'
 import { normalizeProject } from '../utils/projectUtils'
 
-const projectsMock = [
-  {
-    id: 1,
-    name: 'Plataforma GovTech MS',
-    owner: 'Marina Costa',
-    deadline: '18 out. 2026',
-    progress: 78,
-    health: 'Saudável',
-    status: 'success',
-    description: 'Sistema de governança e monitoramento de projetos de TI.',
-    repositories: ['govtech-ms-frontend', 'govtech-ms-api'],
-  },
-  {
-    id: 2,
-    name: 'Portal de Indicadores',
-    owner: 'Lucas Ferreira',
-    deadline: '04 nov. 2026',
-    progress: 56,
-    health: 'Atenção',
-    status: 'warning',
-    description: 'Dashboard de indicadores de desempenho e métricas.',
-    repositories: ['portal-indicadores-web'],
-  },
-  {
-    id: 3,
-    name: 'Integração GitHub Actions',
-    owner: 'Rafael Mendes',
-    deadline: '12 out. 2026',
-    progress: 42,
-    health: 'Risco',
-    status: 'danger',
-    description: 'Automação de CI/CD com GitHub Actions.',
-    repositories: [],
-  },
-]
-
-export default function ProjectsPage({
-  projectList = [],
-  setProjectList,
-  onToast,
-  externalSelectedProject,
-  onClearExternalSelectedProject,
-}) {
-  // DEBUG
-  console.log('=== ProjectsPage recebeu ===')
-  console.log('projectList:', projectList)
-  console.log('setProjectList:', setProjectList)
-  console.log('onToast:', onToast)
-  console.log('typeof setProjectList:', typeof setProjectList)
-  console.log('========================')
-
+export default function ProjectsPage({ projectList = [], setProjectList, onToast }) {
   const [showForm, setShowForm] = useState(false)
   const [selectedProject, setSelectedProject] = useState(null)
   const [editingProject, setEditingProject] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const safeProjects = Array.isArray(projectList) && projectList.length > 0
-    ? projectList
-    : []
-
-  useEffect(() => {
-    if (externalSelectedProject) {
-      setSelectedProject(externalSelectedProject)
-      onClearExternalSelectedProject()
-    }
-  }, [externalSelectedProject, onClearExternalSelectedProject])
+  const safeProjects = Array.isArray(projectList) && projectList.length > 0 ? projectList : []
 
   const openCreateForm = () => {
     setEditingProject(null)
@@ -85,24 +27,16 @@ export default function ProjectsPage({
   }
 
   const saveProject = (formData) => {
-    console.log('saveProject chamado', { editingProject, setProjectList, formData })
-
-    if (!setProjectList || typeof setProjectList !== 'function') {
-      console.error('setProjectList não é função!', setProjectList)
-      onToast('Erro: setProjectList não disponível', 'warning')
-      return
-    }
-
     if (editingProject) {
       setProjectList((current) =>
         current.map((project) =>
           project.id === editingProject.id
             ? normalizeProject({
-              ...project,
-              ...formData,
-            })
-            : project
-        )
+                ...project,
+                ...formData,
+              })
+            : project,
+        ),
       )
 
       onToast('Projeto atualizado com sucesso.')
@@ -125,9 +59,7 @@ export default function ProjectsPage({
   const deleteProject = () => {
     if (!selectedProject) return
 
-    setProjectList((current) =>
-      current.filter((project) => project.id !== selectedProject.id)
-    )
+    setProjectList((current) => current.filter((project) => project.id !== selectedProject.id))
 
     setSelectedProject(null)
     setShowDeleteConfirm(false)
@@ -145,8 +77,8 @@ export default function ProjectsPage({
           <span className="page-eyebrow">PORTFÓLIO E ACOMPANHAMENTO</span>
 
           <p>
-            Acompanhe prazos, responsáveis, progresso e sinais de risco dos
-            projetos monitorados pela plataforma.
+            Acompanhe prazos, responsáveis, progresso e sinais de risco dos projetos monitorados
+            pela plataforma.
           </p>
         </div>
 
@@ -190,7 +122,7 @@ export default function ProjectsPage({
               </div>
 
               <span className={`status-badge ${project.status}`}>
-                {project.health}
+                {PROJECT_STATUS[project.status]}
               </span>
             </div>
 

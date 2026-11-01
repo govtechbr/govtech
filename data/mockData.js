@@ -50,44 +50,44 @@ export const projects = [
   {
     id: 1,
     name: 'Plataforma de Pagamentos',
-    description:
-      'Implementação de um novo gateway de pagamentos para e-commerce.',
+    description: 'Implementação de um novo gateway de pagamentos para e-commerce.',
     deadline: '2026-10-25',
     owner: 'Marina Costa',
     priority: 'high',
+    status: 'danger',
     progress: 68,
     repositories: ['identity-gateway', 'billing-orchestrator'],
   },
   {
     id: 2,
     name: 'Sistema de Notificações',
-    description:
-      'Central de notificações push e e-mail para usuários da plataforma.',
+    description: 'Central de notificações push e e-mail para usuários da plataforma.',
     deadline: '2026-10-04',
     owner: 'Carlos Melo',
     priority: 'medium',
+    status: 'warning',
     progress: 45,
     repositories: ['notification-hub'],
   },
   {
     id: 3,
     name: 'Dashboard Analítico',
-    description:
-      'Painel de métricas operacionais, indicadores de negócio e KPIs.',
+    description: 'Painel de métricas operacionais, indicadores de negócio e KPIs.',
     deadline: '2026-11-15',
     owner: 'Ana Silva',
     priority: 'medium',
+    status: 'success',
     progress: 82,
     repositories: ['observability-api'],
   },
   {
     id: 4,
     name: 'Refatoração User Service',
-    description:
-      'Melhoria de performance, segurança e escalabilidade do serviço.',
+    description: 'Melhoria de performance, segurança e escalabilidade do serviço.',
     deadline: '2026-09-10',
     owner: 'João Santos',
     priority: 'low',
+    status: 'danger',
     progress: 35,
     repositories: ['identity-gateway'],
   },
@@ -104,8 +104,7 @@ export const pullRequests = [
     commits: 3,
     reviewers: ['carlos.melo', 'marina.costa'],
     labels: ['feature', 'backend'],
-    description:
-      'Implementa integração inicial para o gateway externo de pagamentos.',
+    description: 'Implementa integração inicial para o gateway externo de pagamentos.',
   },
   {
     id: 842,
@@ -117,8 +116,7 @@ export const pullRequests = [
     commits: 5,
     reviewers: ['marina.costa'],
     labels: ['bugfix', 'billing'],
-    description:
-      'Corrige inconsistências identificadas no cálculo de faturamento.',
+    description: 'Corrige inconsistências identificadas no cálculo de faturamento.',
   },
   {
     id: 838,
@@ -130,8 +128,7 @@ export const pullRequests = [
     commits: 4,
     reviewers: ['carlos.melo'],
     labels: ['feature', 'notifications'],
-    description:
-      'Cria preferências de notificação para usuários da plataforma.',
+    description: 'Cria preferências de notificação para usuários da plataforma.',
   },
   {
     id: 830,
@@ -143,8 +140,7 @@ export const pullRequests = [
     commits: 2,
     reviewers: ['ana.silva'],
     labels: ['refactor', 'observability'],
-    description:
-      'Refatora endpoints responsáveis pela consulta de métricas operacionais.',
+    description: 'Refatora endpoints responsáveis pela consulta de métricas operacionais.',
   },
 ]
 
@@ -262,5 +258,161 @@ export const accessRoles = [
     label: 'Viewer',
     icon: 'Eye',
     description: 'Consulta de status e auditoria.',
+  },
+]
+
+export const repositoryList = [
+  {
+    name: 'govtech-api',
+    language: 'Node.js',
+    branch: 'main',
+    pullRequests: 4,
+    pipeline: 'Aprovada',
+    status: 'success',
+  },
+  {
+    name: 'govtech-dashboard',
+    language: 'React',
+    branch: 'develop',
+    pullRequests: 3,
+    pipeline: 'Em análise',
+    status: 'warning',
+  },
+  {
+    name: 'governance-engine',
+    language: 'Python',
+    branch: 'main',
+    pullRequests: 1,
+    pipeline: 'Aprovada',
+    status: 'success',
+  },
+  {
+    name: 'notification-service',
+    language: 'Java',
+    branch: 'release',
+    pullRequests: 2,
+    pipeline: 'Atenção',
+    status: 'danger',
+  },
+]
+
+export const pullRequestList = [
+  {
+    id: '#482',
+    title: 'Implementa indicadores de governança',
+    repository: 'govtech-dashboard',
+    author: 'Ana Silva',
+    reviewers: 2,
+    age: '2h',
+    status: 'Em revisão',
+    variant: 'warning',
+  },
+  {
+    id: '#479',
+    title: 'Adiciona trilha de auditoria',
+    repository: 'govtech-api',
+    author: 'Carlos Melo',
+    reviewers: 3,
+    age: '5h',
+    status: 'Aprovada',
+    variant: 'success',
+  },
+  {
+    id: '#476',
+    title: 'Ajusta alerta de pipeline',
+    repository: 'notification-service',
+    author: 'João Santos',
+    reviewers: 1,
+    age: '2 dias',
+    status: 'Atenção',
+    variant: 'danger',
+  },
+  {
+    id: '#471',
+    title: 'Refatora integração com GitHub',
+    repository: 'governance-engine',
+    author: 'Marina Costa',
+    reviewers: 2,
+    age: '1 dia',
+    status: 'Em revisão',
+    variant: 'warning',
+  },
+]
+
+export const branchList = [
+  {
+    name: 'main',
+    repository: 'govtech-api',
+    author: 'Marina Costa',
+    lastCommit: 'a8f42c1',
+    updated: '12 min atrás',
+    protection: 'Protegida',
+    status: 'success',
+  },
+  {
+    name: 'develop',
+    repository: 'govtech-dashboard',
+    author: 'Ana Silva',
+    lastCommit: 'b21d4e9',
+    updated: '28 min atrás',
+    protection: 'Protegida',
+    status: 'success',
+  },
+  {
+    name: 'feature/audit-trail',
+    repository: 'governance-engine',
+    author: 'Carlos Melo',
+    lastCommit: 'c91f7d2',
+    updated: '3h atrás',
+    protection: 'Em revisão',
+    status: 'warning',
+  },
+  {
+    name: 'release/2.4',
+    repository: 'notification-service',
+    author: 'João Santos',
+    lastCommit: 'd65aa10',
+    updated: '1 dia atrás',
+    protection: 'Atenção',
+    status: 'danger',
+  },
+]
+
+export const rbacUsers = [
+  {
+    initials: 'MC',
+    name: 'Marina Costa',
+    email: 'marina.costa@govtech.ms',
+    role: 'Admin',
+    team: 'Plataforma',
+    status: 'Ativo',
+    lastAccess: 'Agora',
+  },
+  {
+    initials: 'AS',
+    name: 'Ana Silva',
+    email: 'ana.silva@govtech.ms',
+    role: 'Dev Lead',
+    team: 'Backend',
+    status: 'Ativo',
+    lastAccess: '8 min atrás',
+  },
+  {
+    initials: 'CM',
+    name: 'Carlos Melo',
+    email: 'carlos.melo@govtech.ms',
+    role: 'Dev',
+    team: 'Frontend',
+    status: 'Ativo',
+    lastAccess: '21 min atrás',
+  },
+  {
+    initials: 'JS',
+    name: 'João Santos',
+    email: 'joao.santos@govtech.ms',
+    role: 'Auditor',
+    team: 'Compliance',
+    status: 'Ausente',
+    lastAccess: '2h atrás',
   },
 ]

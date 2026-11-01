@@ -1,4 +1,5 @@
 import { COLORS } from '../constants/colors'
+import { PROJECT_STATUS } from '../constants/projectStatus'
 
 export function formatProjectDate(date) {
   if (!date) return '-'
@@ -19,31 +20,17 @@ export function normalizeProject(project, index = 0) {
   return {
     id: project?.id ?? Date.now() + index,
     name:
-      typeof project?.name === 'string' && project.name.trim()
-        ? project.name
-        : 'Projeto sem nome',
+      typeof project?.name === 'string' && project.name.trim() ? project.name : 'Projeto sem nome',
     description:
-      typeof project?.description === 'string'
-        ? project.description
-        : 'Sem descrição cadastrada.',
-    deadline:
-      typeof project?.deadline === 'string'
-        ? project.deadline
-        : '',
+      typeof project?.description === 'string' ? project.description : 'Sem descrição cadastrada.',
+    deadline: typeof project?.deadline === 'string' ? project.deadline : '',
     owner:
-      typeof project?.owner === 'string' && project.owner.trim()
-        ? project.owner
-        : 'Não definido',
-    priority: validPriorities.includes(project?.priority)
-      ? project.priority
-      : 'medium',
-    progress: Number.isFinite(parsedProgress)
-      ? Math.max(0, Math.min(100, parsedProgress))
-      : 0,
+      typeof project?.owner === 'string' && project.owner.trim() ? project.owner : 'Não definido',
+    priority: validPriorities.includes(project?.priority) ? project.priority : 'medium',
+    status: Object.hasOwn(PROJECT_STATUS, project?.status ?? '') ? project.status : 'success',
+    progress: Number.isFinite(parsedProgress) ? Math.max(0, Math.min(100, parsedProgress)) : 0,
     repositories: Array.isArray(project?.repositories)
-      ? project.repositories.filter(
-          (repository) => typeof repository === 'string'
-        )
+      ? project.repositories.filter((repository) => typeof repository === 'string')
       : [],
   }
 }
@@ -64,7 +51,7 @@ export function getProjectStatus(project) {
   }
 
   const today = new Date()
-  const deadline = new Date(`${safeProject.deadline}T23:59:59`)
+  const deadline = new Date(`${safeProject.deadline}T00:00:00`)
 
   today.setHours(0, 0, 0, 0)
 
@@ -81,7 +68,8 @@ export function getProjectStatus(project) {
   }
 
   const difference = deadline.getTime() - today.getTime()
-  const daysRemaining = Math.ceil(difference / (1000 * 60 * 60 * 24))
+  // Both dates are at midnight; round absorbs the 1h shift of daylight saving time
+  const daysRemaining = Math.round(difference / (1000 * 60 * 60 * 24))
 
   if (daysRemaining < 0) {
     return {
@@ -103,10 +91,7 @@ export function getProjectStatus(project) {
       color: COLORS.warning,
       icon: '🟡',
       daysRemaining,
-      message:
-        daysRemaining === 0
-          ? 'Deadline vence hoje'
-          : `${daysRemaining} dia(s) restante(s)`,
+      message: daysRemaining === 0 ? 'Deadline vence hoje' : `${daysRemaining} dia(s) restante(s)`,
     }
   }
 

@@ -8,8 +8,8 @@ export default function AuditPage() {
         <div>
           <span className="page-eyebrow">RASTREABILIDADE E COMPLIANCE</span>
           <p>
-            Acompanhe os eventos relevantes registrados nos repositórios,
-            pipelines e atividades de governança.
+            Acompanhe os eventos relevantes registrados nos repositórios, pipelines e atividades de
+            governança.
           </p>
         </div>
 

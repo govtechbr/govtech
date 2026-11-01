@@ -11,11 +11,7 @@ export default function PullRequestFlowChart({ data = weeklyFlow }) {
   const safeData = Array.isArray(data) && data.length > 0 ? data : weeklyFlow
 
   const maxValue = Math.max(
-    ...safeData.flatMap((week) => [
-      week.created || 0,
-      week.merged || 0,
-      week.closed || 0,
-    ])
+    ...safeData.flatMap((week) => [week.created || 0, week.merged || 0, week.closed || 0]),
   )
 
   return (
@@ -176,8 +172,7 @@ export default function PullRequestFlowChart({ data = weeklyFlow }) {
           fontSize: '12px',
         }}
       >
-        A última semana registrou <strong>16 PRs criadas</strong> e{' '}
-        <strong>12 integradas</strong>.
+        A última semana registrou <strong>16 PRs criadas</strong> e <strong>12 integradas</strong>.
       </p>
     </div>
   )

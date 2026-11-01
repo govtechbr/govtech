@@ -1,9 +1,7 @@
 export const defaultSettings = {
   organizationName: 'govtech-ms',
-  theme: 'light',
+  theme: 'Claro',
   notifications: true,
   emailDigest: 'weekly',
   timezone: 'America/Sao_Paulo',
 }
-
-export const DEFAULT_SETTINGS = defaultSettings

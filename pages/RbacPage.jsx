@@ -1,57 +1,13 @@
 import { useState } from 'react'
-import {
-  Search,
-  Shield,
-  UserRound,
-  Users,
-} from 'lucide-react'
+import { Search, Shield, UserRound, Users } from 'lucide-react'
 
 import RoleDetailModal from '../components/rbac/RoleDetailModal'
-import { accessRoles } from '../data/mockData'
+import { accessRoles, rbacUsers as users } from '../data/mockData'
 import Icon from '../components/common/Icon'
 import StatusBadge from '../components/common/StatusBadge'
 
 export default function RbacPage() {
   const [selectedRole, setSelectedRole] = useState(null)
-
-  const users = [
-    {
-      initials: 'MC',
-      name: 'Marina Costa',
-      email: 'marina.costa@govtech.ms',
-      role: 'Admin',
-      team: 'Plataforma',
-      status: 'Ativo',
-      lastAccess: 'Agora',
-    },
-    {
-      initials: 'AS',
-      name: 'Ana Silva',
-      email: 'ana.silva@govtech.ms',
-      role: 'Dev Lead',
-      team: 'Backend',
-      status: 'Ativo',
-      lastAccess: '8 min atrás',
-    },
-    {
-      initials: 'CM',
-      name: 'Carlos Melo',
-      email: 'carlos.melo@govtech.ms',
-      role: 'Dev',
-      team: 'Frontend',
-      status: 'Ativo',
-      lastAccess: '21 min atrás',
-    },
-    {
-      initials: 'JS',
-      name: 'João Santos',
-      email: 'joao.santos@govtech.ms',
-      role: 'Auditor',
-      team: 'Compliance',
-      status: 'Ausente',
-      lastAccess: '2h atrás',
-    },
-  ]
 
   return (
     <main className="dashboard-content">
@@ -176,21 +132,13 @@ export default function RbacPage() {
                   <td className="mono">{user.email}</td>
 
                   <td>
-                    <StatusBadge status="success">
-                      {user.role}
-                    </StatusBadge>
+                    <StatusBadge status="success">{user.role}</StatusBadge>
                   </td>
 
                   <td>{user.team}</td>
 
                   <td>
-                    <StatusBadge
-                      status={
-                        user.status === 'Ativo'
-                          ? 'success'
-                          : 'warning'
-                      }
-                    >
+                    <StatusBadge status={user.status === 'Ativo' ? 'success' : 'warning'}>
                       {user.status}
                     </StatusBadge>
                   </td>
@@ -204,10 +152,7 @@ export default function RbacPage() {
       </section>
 
       {selectedRole && (
-        <RoleDetailModal
-          role={selectedRole}
-          onClose={() => setSelectedRole(null)}
-        />
+        <RoleDetailModal role={selectedRole} onClose={() => setSelectedRole(null)} />
       )}
     </main>
   )

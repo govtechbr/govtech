@@ -61,4 +61,4 @@ export default function Icon({ name, size = 18, ...props }) {
   const Component = iconMap[name] || CircleHelp
 
   return <Component size={size} strokeWidth={1.8} {...props} />
-}   
+}

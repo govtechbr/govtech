@@ -58,12 +58,7 @@ const workspaces = [
   { id: 3, name: 'govtech-ti', logo: 'T' },
 ]
 
-export default function Sidebar({
-  open,
-  setOpen,
-  settings,
-  setSettings,
-}) {
+export default function Sidebar({ open, setOpen, settings, setSettings }) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -71,9 +66,7 @@ export default function Sidebar({
   const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false)
 
   const selectedWorkspace =
-    workspaces.find(
-      (workspace) => workspace.name === settings?.organizationName,
-    ) || workspaces[0]
+    workspaces.find((workspace) => workspace.name === settings?.organizationName) || workspaces[0]
 
   function isActive(path) {
     return location.pathname === path
@@ -130,8 +123,7 @@ export default function Sidebar({
                 transition: 'background-color 0.2s',
               }}
               onMouseOver={(event) => {
-                event.currentTarget.style.backgroundColor =
-                  'var(--bg-secondary, #f5f5f5)'
+                event.currentTarget.style.backgroundColor = 'var(--bg-secondary, #f5f5f5)'
               }}
               onMouseOut={(event) => {
                 event.currentTarget.style.backgroundColor = 'transparent'
@@ -228,13 +220,11 @@ export default function Sidebar({
                     transition: 'all 0.2s',
                   }}
                   onMouseOver={(event) => {
-                    event.currentTarget.style.backgroundColor =
-                      'var(--color-primary-700, #5F429D)'
+                    event.currentTarget.style.backgroundColor = 'var(--color-primary-700, #5F429D)'
                     event.currentTarget.style.transform = 'scale(1.05)'
                   }}
                   onMouseOut={(event) => {
-                    event.currentTarget.style.backgroundColor =
-                      'var(--color-primary-600, #7A58C4)'
+                    event.currentTarget.style.backgroundColor = 'var(--color-primary-600, #7A58C4)'
                     event.currentTarget.style.transform = 'scale(1)'
                   }}
                 >
@@ -243,8 +233,7 @@ export default function Sidebar({
               </div>
 
               {workspaces.map((workspace) => {
-                const selected =
-                  selectedWorkspace.name === workspace.name
+                const selected = selectedWorkspace.name === workspace.name
 
                 return (
                   <button
@@ -258,9 +247,7 @@ export default function Sidebar({
                       gap: '10px',
                       marginBottom: '4px',
                       padding: '8px 10px',
-                      backgroundColor: selected
-                        ? 'var(--surface, white)'
-                        : 'transparent',
+                      backgroundColor: selected ? 'var(--surface, white)' : 'transparent',
                       border: '1px solid transparent',
                       borderRadius: '6px',
                       cursor: 'pointer',
@@ -269,18 +256,14 @@ export default function Sidebar({
                     }}
                     onMouseOver={(event) => {
                       if (!selected) {
-                        event.currentTarget.style.backgroundColor =
-                          'var(--surface, white)'
-                        event.currentTarget.style.borderColor =
-                          'var(--border, #e5e7eb)'
+                        event.currentTarget.style.backgroundColor = 'var(--surface, white)'
+                        event.currentTarget.style.borderColor = 'var(--border, #e5e7eb)'
                       }
                     }}
                     onMouseOut={(event) => {
                       if (!selected) {
-                        event.currentTarget.style.backgroundColor =
-                          'transparent'
-                        event.currentTarget.style.borderColor =
-                          'transparent'
+                        event.currentTarget.style.backgroundColor = 'transparent'
+                        event.currentTarget.style.borderColor = 'transparent'
                       }
                     }}
                   >
@@ -292,9 +275,7 @@ export default function Sidebar({
                         backgroundColor: selected
                           ? 'var(--color-primary-600, #7A58C4)'
                           : 'var(--bg-tertiary, #e5e7eb)',
-                        color: selected
-                          ? 'white'
-                          : 'var(--text-secondary)',
+                        color: selected ? 'white' : 'var(--text-secondary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -309,9 +290,7 @@ export default function Sidebar({
                     <span
                       style={{
                         flex: 1,
-                        color: selected
-                          ? 'var(--text-primary)'
-                          : 'var(--text-secondary)',
+                        color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
                         fontSize: '12px',
                         fontWeight: selected ? '600' : '500',
                       }}
@@ -354,9 +333,7 @@ export default function Sidebar({
             </button>
           ))}
 
-          <span className="nav-label nav-label-spaced">
-            ADMINISTRAÇÃO
-          </span>
+          <span className="nav-label nav-label-spaced">ADMINISTRAÇÃO</span>
 
           {adminItems.map((item) => (
             <button
@@ -365,11 +342,7 @@ export default function Sidebar({
               className={isActive(item.path) ? 'active' : ''}
               onClick={() => handleNavigate(item.path)}
             >
-              {item.icon === 'Users' ? (
-                <Users size={18} />
-              ) : (
-                <Settings2 size={18} />
-              )}
+              {item.icon === 'Users' ? <Users size={18} /> : <Settings2 size={18} />}
 
               <span>{item.label}</span>
             </button>
@@ -419,9 +392,7 @@ export default function Sidebar({
         />
       )}
 
-      {showChatbot && (
-        <ChatbotModal onClose={() => setShowChatbot(false)} />
-      )}
+      {showChatbot && <ChatbotModal onClose={() => setShowChatbot(false)} />}
     </>
   )
 }

@@ -1,47 +1,5 @@
-import {
-  GitBranch,
-  GitCommitHorizontal,
-  ShieldCheck,
-} from 'lucide-react'
-
-const branches = [
-  {
-    name: 'main',
-    repository: 'govtech-api',
-    author: 'Marina Costa',
-    lastCommit: 'a8f42c1',
-    updated: '12 min atrás',
-    protection: 'Protegida',
-    status: 'success',
-  },
-  {
-    name: 'develop',
-    repository: 'govtech-dashboard',
-    author: 'Ana Silva',
-    lastCommit: 'b21d4e9',
-    updated: '28 min atrás',
-    protection: 'Protegida',
-    status: 'success',
-  },
-  {
-    name: 'feature/audit-trail',
-    repository: 'governance-engine',
-    author: 'Carlos Melo',
-    lastCommit: 'c91f7d2',
-    updated: '3h atrás',
-    protection: 'Em revisão',
-    status: 'warning',
-  },
-  {
-    name: 'release/2.4',
-    repository: 'notification-service',
-    author: 'João Santos',
-    lastCommit: 'd65aa10',
-    updated: '1 dia atrás',
-    protection: 'Atenção',
-    status: 'danger',
-  },
-]
+import { GitBranch, GitCommitHorizontal, ShieldCheck } from 'lucide-react'
+import { branchList as branches } from '../../data/mockData'
 
 export default function BranchesList() {
   return (
@@ -87,16 +45,11 @@ export default function BranchesList() {
       <section className="panel elevation-1">
         <div className="panel-heading">
           <div>
-            <span className="section-kicker">
-              FLUXO DE DESENVOLVIMENTO
-            </span>
+            <span className="section-kicker">FLUXO DE DESENVOLVIMENTO</span>
 
             <h2>Branches acompanhadas</h2>
 
-            <p>
-              Acompanhe branches ativas, proteção de fluxo e atualizações dos
-              repositórios.
-            </p>
+            <p>Acompanhe branches ativas, proteção de fluxo e atualizações dos repositórios.</p>
           </div>
         </div>
 
@@ -128,17 +81,13 @@ export default function BranchesList() {
                   <td>{branch.author}</td>
 
                   <td>
-                    <span className="mono">
-                      {branch.lastCommit}
-                    </span>
+                    <span className="mono">{branch.lastCommit}</span>
                   </td>
 
                   <td>{branch.updated}</td>
 
                   <td>
-                    <span className={`status-badge ${branch.status}`}>
-                      {branch.protection}
-                    </span>
+                    <span className={`status-badge ${branch.status}`}>{branch.protection}</span>
                   </td>
                 </tr>
               ))}

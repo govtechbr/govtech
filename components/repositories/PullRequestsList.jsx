@@ -1,52 +1,5 @@
-import {
-  Clock3,
-  GitPullRequest,
-  MessageSquareText,
-  UserRound,
-} from 'lucide-react'
-
-const pullRequests = [
-  {
-    id: '#482',
-    title: 'Implementa indicadores de governança',
-    repository: 'govtech-dashboard',
-    author: 'Ana Silva',
-    reviewers: 2,
-    age: '2h',
-    status: 'Em revisão',
-    variant: 'warning',
-  },
-  {
-    id: '#479',
-    title: 'Adiciona trilha de auditoria',
-    repository: 'govtech-api',
-    author: 'Carlos Melo',
-    reviewers: 3,
-    age: '5h',
-    status: 'Aprovada',
-    variant: 'success',
-  },
-  {
-    id: '#476',
-    title: 'Ajusta alerta de pipeline',
-    repository: 'notification-service',
-    author: 'João Santos',
-    reviewers: 1,
-    age: '2 dias',
-    status: 'Atenção',
-    variant: 'danger',
-  },
-  {
-    id: '#471',
-    title: 'Refatora integração com GitHub',
-    repository: 'governance-engine',
-    author: 'Marina Costa',
-    reviewers: 2,
-    age: '1 dia',
-    status: 'Em revisão',
-    variant: 'warning',
-  },
-]
+import { Clock3, GitPullRequest, MessageSquareText, UserRound } from 'lucide-react'
+import { pullRequestList as pullRequests } from '../../data/mockData'
 
 export default function PullRequestsList() {
   return (
@@ -92,15 +45,12 @@ export default function PullRequestsList() {
       <section className="panel elevation-1">
         <div className="panel-heading">
           <div>
-            <span className="section-kicker">
-              MONITORAMENTO DE ENTREGAS
-            </span>
+            <span className="section-kicker">MONITORAMENTO DE ENTREGAS</span>
 
             <h2>Pull Requests</h2>
 
             <p>
-              Solicitações de integração que exigem revisão, aprovação ou
-              acompanhamento da gestão.
+              Solicitações de integração que exigem revisão, aprovação ou acompanhamento da gestão.
             </p>
           </div>
         </div>
@@ -135,9 +85,7 @@ export default function PullRequestsList() {
                     </div>
                   </td>
 
-                  <td className="mono">
-                    {pullRequest.repository}
-                  </td>
+                  <td className="mono">{pullRequest.repository}</td>
 
                   <td>{pullRequest.author}</td>
 
@@ -151,9 +99,7 @@ export default function PullRequestsList() {
                   <td>{pullRequest.age}</td>
 
                   <td>
-                    <span
-                      className={`status-badge ${pullRequest.variant}`}
-                    >
+                    <span className={`status-badge ${pullRequest.variant}`}>
                       {pullRequest.status}
                     </span>
                   </td>

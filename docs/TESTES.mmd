@@ -1,0 +1,216 @@
+%% GovTech MS — Mapa completo de testes (PROPOSTA, aguardando aprovação)
+%% Abrir em: VS Code (extensão "Markdown Preview Mermaid Support" ou "Mermaid Chart"), mermaid.live ou GitHub.
+%% Modelo: Testing Trophy — estática > unit > INTEGRAÇÃO (maior peso) > E2E
+%% Legenda de prioridade: P0 = antes de refatorar (caracterização) | P1 = junto da fase | P2 = desejável
+
+flowchart TB
+  classDef p0 fill:#fde2e1,stroke:#dc3545,color:#111
+  classDef p1 fill:#fff4d6,stroke:#e0a800,color:#111
+  classDef p2 fill:#e3f4e8,stroke:#28a745,color:#111
+  classDef tool fill:#ece6fa,stroke:#9370db,color:#111
+  classDef layer fill:#f4f4f5,stroke:#71717a,color:#111
+
+  ROOT(["Estratégia de testes GovTech MS"])
+
+  %% ───────── FERRAMENTAS ─────────
+  subgraph TOOLS["Ferramentas"]
+    direction LR
+    T1["ESLint + Prettier<br/>react-hooks, jsx-a11y"]:::tool
+    T2["Vitest<br/>runner + coverage v8"]:::tool
+    T3["React Testing Library<br/>+ user-event + jest-dom"]:::tool
+    T4["MSW v2<br/>mock da API REST do Supabase"]:::tool
+    T5["pgTAP<br/>supabase test db"]:::tool
+    T6["Playwright<br/>E2E + 3 viewports"]:::tool
+    T7["axe-core<br/>vitest-axe / @axe-core/playwright"]:::tool
+  end
+
+  %% ───────── TROFÉU ─────────
+  subgraph TROPHY["Camadas e metas"]
+    direction TB
+    L0["0 · Estática — 0 erros de lint no CI"]:::layer
+    L1["1 · Unitário — ≥90% em utils/ e api/"]:::layer
+    L2["2 · Integração de componente — fluxos de usuário, MAIOR VOLUME"]:::layer
+    L3["3 · Banco / RLS — 1 teste por papel × operação × tabela"]:::layer
+    L4["4 · E2E — no máximo 10 cenários críticos"]:::layer
+    L5["Transversal · Acessibilidade WCAG 2.2 AA + responsivo"]:::layer
+    L0 --> L1 --> L2 --> L3 --> L4
+  end
+
+  ROOT --> TOOLS
+  ROOT --> TROPHY
+  ROOT --> CONV
+
+  subgraph CONV["Convenções"]
+    direction TB
+    C1["Buscar por role/label, nunca por classe CSS"]
+    C2["Datas: vi.useFakeTimers + vi.setSystemTime"]
+    C3["renderWithProviders: Router + QueryClient + Auth fake + Toast"]
+    C4["MSW com onUnhandledRequest = error"]
+    C5["Teste ao lado do código: features/x/__tests__"]
+    C6["1 comportamento por teste; nome em pt-BR: deve ... quando ..."]
+  end
+
+  %% ───────── UNITÁRIOS ─────────
+  L1 --> U
+  subgraph U["Unitários — Vitest"]
+    direction TB
+
+    subgraph U_PS["projectUtils · getProjectStatus"]
+      U1["sem deadline → warning 'Deadline não configurada'"]:::p0
+      U2["deadline inválida → warning 'Deadline inválida'"]:::p0
+      U3["ontem → danger 'Atrasado há 1 dia(s)'"]:::p0
+      U4["hoje → warning 'Deadline vence hoje'"]:::p0
+      U5["em 7 dias → warning; em 8 dias → success (limite)"]:::p0
+      U6["virada de fuso/horário de verão não muda o dia"]:::p1
+    end
+
+    subgraph U_NP["projectUtils · normalizeProject"]
+      U7["nome vazio/espaços → 'Projeto sem nome'"]:::p0
+      U8["priority inválida → medium"]:::p0
+      U9["progress: -5→0, 150→100, 'abc'→0, '42'→42"]:::p0
+      U10["repositories filtra não-strings; não-array → []"]:::p0
+      U11["id ausente → gera id; null/undefined não quebram"]:::p0
+    end
+
+    subgraph U_FD["projectUtils · formatProjectDate"]
+      U12["'' → '-'; inválida → devolve original"]:::p0
+      U13["2026-10-25 → 25/10/2026 sem recuar 1 dia"]:::p0
+    end
+
+    subgraph U_ST["storageUtils"]
+      U14["vazio → fallback normalizado"]:::p0
+      U15["JSON corrompido → fallback + console.error"]:::p0
+      U16["não-array → fallback"]:::p0
+      U17["REGRESSÃO: grava em 'govtech:projects', nunca em 'undefined'"]:::p0
+      U18["settings: merge profundo de notifications"]:::p1
+      U19["localStorage.setItem lança QuotaExceeded → não quebra"]:::p1
+    end
+
+    subgraph U_HK["Hooks"]
+      U20["useLocalStorage: lê inicial, persiste, JSON inválido"]:::p1
+      U21["useTheme / ThemeProvider: Claro, Escuro, Sistema via matchMedia"]:::p1
+      U22["useMediaQuery: reage a resize"]:::p1
+      U23["useProjects: loading → sucesso → erro, com MSW"]:::p1
+      U24["useAuth: sessão, logout, onAuthStateChange"]:::p1
+    end
+
+    subgraph U_API["Camada api/ e mappers"]
+      U25["toProject: snake_case → camelCase, owner e repos"]:::p1
+      U26["listProjects: filtra por organization_id e ordena"]:::p1
+      U27["erro do Supabase é propagado, não engolido"]:::p1
+      U28["views de KPI: lead time, taxa de aprovação"]:::p1
+    end
+
+    subgraph U_ZOD["Validação — zod"]
+      U29["schema de projeto: nome 1–120, progress 0–100, prazo ISO"]:::p1
+    end
+  end
+
+  %% ───────── INTEGRAÇÃO DE COMPONENTE ─────────
+  L2 --> I
+  subgraph I["Integração de componente — RTL + MSW"]
+    direction TB
+
+    subgraph I_UI["shared/ui"]
+      I1["Button: variants, disabled, loading"]:::p1
+      I2["Modal: abre, Esc fecha, clique fora fecha, foco preso, devolve foco"]:::p1
+      I3["Toast: aparece e some após 3s com fake timers"]:::p1
+      I4["Badge/StatusBadge: texto e cor por status"]:::p1
+      I5["StatCard: trend positivo/negativo"]:::p1
+      I6["Tabs: teclado ← → e aria-selected"]:::p1
+      I7["ResponsiveList: tabela no desktop, cards no mobile"]:::p2
+    end
+
+    subgraph I_PRJ["Projetos — fluxo crítico"]
+      I8["lista renderiza cards a partir da API"]:::p0
+      I9["criar: preencher form → salvar → card aparece + toast"]:::p0
+      I10["validação: nome vazio bloqueia, progress fora de 0–100"]:::p0
+      I11["editar: abre preenchido → salva → card atualizado"]:::p0
+      I12["excluir: confirmação → some da lista; cancelar mantém"]:::p0
+      I13["contadores 'Em atenção' e 'Riscos críticos' batem com o status derivado"]:::p0
+      I14["estados: loading/skeleton, vazio, erro com retry"]:::p1
+      I15["viewer não vê botões Novo/Editar/Excluir"]:::p1
+    end
+
+    subgraph I_DASH["Visão geral"]
+      I16["KPIs: PRs integradas e taxa de aprovação calculadas"]:::p1
+      I17["projetos ordenados: atrasado → atenção → no prazo"]:::p1
+      I18["gráficos renderizam com dados vazios sem quebrar"]:::p2
+    end
+
+    subgraph I_OTH["Demais telas"]
+      I19["Repositórios: troca de abas Repos/PRs/Branches"]:::p1
+      I20["Configurações: rascunho só aplica ao Salvar; tema muda data-theme"]:::p1
+      I21["Auditoria: lista eventos; export CSV gera arquivo"]:::p2
+      I22["RBAC: clicar papel abre modal; admin convida usuário"]:::p2
+      I23["GlobalSearch: filtra projetos/PRs/branches; Esc fecha"]:::p1
+      I24["Chatbot: pergunta da FAQ mostra resposta correta"]:::p2
+    end
+
+    subgraph I_SHELL["Shell, rotas e auth"]
+      I25["Sidebar navega para a rota certa e marca item ativo"]:::p0
+      I26["só 1 Sidebar renderizada na Visão geral (regressão bug #1)"]:::p0
+      I27["rota protegida sem sessão → /login"]:::p1
+      I28["login: credencial inválida mostra erro; válida → /dashboard"]:::p1
+      I29["rota desconhecida → redireciona"]:::p1
+      I30["drawer mobile: abre, fecha com Esc e ao navegar"]:::p1
+    end
+  end
+
+  %% ───────── BANCO / RLS ─────────
+  L3 --> D
+  subgraph D["Banco — pgTAP"]
+    direction TB
+    D1["RLS habilitada em TODAS as tabelas public"]:::p1
+    D2["viewer: SELECT ok; INSERT/UPDATE/DELETE negados"]:::p1
+    D3["developer: cria/edita projeto; não exclui"]:::p1
+    D4["admin: CRUD completo; gerencia membros"]:::p1
+    D5["usuário de OUTRA org não enxerga nada — isolamento"]:::p1
+    D6["anon não lê nenhuma tabela"]:::p1
+    D7["audit_events: trigger grava em insert/update/delete"]:::p1
+    D8["audit_events: UPDATE/DELETE negados a todos os papéis"]:::p1
+    D9["cadeia de hash: adulterar 1 linha quebra a verificação"]:::p2
+    D10["constraints: progress 0–100, priority válida, nome 1–120"]:::p1
+    D11["trigger cria profile ao criar auth.users"]:::p1
+  end
+
+  %% ───────── EDGE FUNCTIONS ─────────
+  D --> EF
+  subgraph EF["Edge Functions — Deno test"]
+    direction TB
+    E1["github-webhook: assinatura inválida → 401"]:::p2
+    E2["github-webhook: evento pull_request faz upsert"]:::p2
+    E3["invite-member: só admin pode convidar"]:::p2
+  end
+
+  %% ───────── E2E ─────────
+  L4 --> E
+  subgraph E["E2E — Playwright"]
+    direction TB
+    X1["login → dashboard → logout"]:::p1
+    X2["CRUD de projeto ponta a ponta com Supabase local"]:::p1
+    X3["viewer vs admin: ações visíveis/ocultas e bloqueadas"]:::p1
+    X4["deep link /projects recarregado funciona — rewrite Vercel"]:::p1
+    X5["tema escuro persiste após reload"]:::p2
+    X6["smoke responsivo: 390×844, 768×1024, 1440×900 sem scroll horizontal"]:::p1
+    X7["screenshot visual por viewport nas telas principais"]:::p2
+  end
+
+  %% ───────── ACESSIBILIDADE / RESPONSIVO ─────────
+  L5 --> A
+  subgraph A["Acessibilidade e responsivo"]
+    direction TB
+    A1["axe: 0 violações sérias em cada página"]:::p1
+    A2["navegação completa só por teclado"]:::p1
+    A3["contraste AA nos temas claro e escuro"]:::p1
+    A4["alvos de toque ≥ 44px no mobile"]:::p2
+    A5["Lighthouse mobile ≥ 90: Performance e Acessibilidade"]:::p2
+  end
+
+  %% ───────── CI ─────────
+  E --> CI
+  A --> CI
+  subgraph CI["Pipeline de CI — GitHub Actions, todo PR"]
+    direction LR
+    S1["lint"] --> S2["vitest run --coverage<br/>barra < 70% global / < 90% utils"] --> S3["vite build"] --> S4["supabase db reset<br/>+ test db"] --> S5["playwright<br/>no preview Vercel"]
+  end
