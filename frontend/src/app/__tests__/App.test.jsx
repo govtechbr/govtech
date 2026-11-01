@@ -122,6 +122,15 @@ describe('App', () => {
     })
   })
 
+  it('points the GitHub integration in settings to the projects page', async () => {
+    const { user } = await renderApp('/settings')
+
+    await user.click(screen.getByRole('button', { name: 'Integrações' }))
+    await user.click(screen.getByRole('link', { name: 'Abrir Projetos' }))
+
+    expect(await screen.findByRole('button', { name: /novo projeto/i })).toBeInTheDocument()
+  })
+
   describe('invite code', () => {
     it('shows the organization code to the admin and copies it', async () => {
       const { user } = await renderApp('/dashboard')

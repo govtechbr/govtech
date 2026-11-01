@@ -14,6 +14,8 @@ import {
   TimerReset,
 } from 'lucide-react'
 
+import { Link } from 'react-router-dom'
+
 import { useToast } from '@/shared/hooks/useToast'
 import StatusBadge from '@/shared/ui/StatusBadge'
 
@@ -66,9 +68,11 @@ export default function SettingsPage({ settings, onSaveSettings }) {
   const integrations = [
     {
       name: 'GitHub',
-      description: 'Sincronização de repositórios, PRs e commits.',
+      description:
+        'A conexão é feita em cada projeto: abra o projeto em Projetos e use a seção GitHub.',
       icon: GitFork,
-      connected: true,
+      // Integração real (desde 02/11/2026): leva para onde ela é configurada
+      to: '/projects',
     },
     {
       name: 'SonarQube',
@@ -331,17 +335,29 @@ export default function SettingsPage({ settings, onSaveSettings }) {
                     </small>
                   </div>
 
-                  <StatusBadge status={integration.connected ? 'success' : 'warning'}>
-                    {integration.connected ? 'Conectado' : 'Desconectado'}
-                  </StatusBadge>
+                  {integration.to ? (
+                    <>
+                      <StatusBadge status="info">Por projeto</StatusBadge>
 
-                  <button
-                    type="button"
-                    className="secondary-button small"
-                    onClick={() => onToast(`${integration.name}: ação demonstrativa.`)}
-                  >
-                    {integration.connected ? 'Configurar' : 'Conectar'}
-                  </button>
+                      <Link className="secondary-button small" to={integration.to}>
+                        Abrir Projetos
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <StatusBadge status={integration.connected ? 'success' : 'warning'}>
+                        {integration.connected ? 'Conectado' : 'Desconectado'}
+                      </StatusBadge>
+
+                      <button
+                        type="button"
+                        className="secondary-button small"
+                        onClick={() => onToast(`${integration.name}: ação demonstrativa.`)}
+                      >
+                        {integration.connected ? 'Configurar' : 'Conectar'}
+                      </button>
+                    </>
+                  )}
                 </article>
               )
             })}
