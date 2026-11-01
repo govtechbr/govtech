@@ -41,6 +41,7 @@ function linkRepository(repo, ...projectIndexes) {
 
   db.repositories.push({
     id,
+    organization_id: db.projects[projectIndexes[0]].organization_id,
     github_id: repo.id,
     full_name: repo.full_name,
     name: repo.name,
@@ -237,6 +238,7 @@ describe('Repositories page', () => {
     db.pullRequests.push({
       id: 'pr-shared',
       repository_id: `repo-${privateRepo.id}`,
+      organization_id: db.projects[0].organization_id,
       number: 3,
       title: 'Compartilhado',
       state: 'open',

@@ -1,22 +1,16 @@
 import { useLocation, useOutletContext } from 'react-router-dom'
 
-import { useMyOrganizations, useSession } from '@/features/auth/hooks/useAuth'
+import { useSession } from '@/features/auth/hooks/useAuth'
 import OverviewPage from '@/features/dashboard/OverviewPage'
 import { useProjects } from '@/features/projects/hooks/useProjects'
 import ProjectsPage from '@/features/projects/ProjectsPage'
 import RbacPage from '@/features/rbac/RbacPage'
 import RepositoriesPage from '@/features/repositories/RepositoriesPage'
 import SettingsPage from '@/features/settings/SettingsPage'
+import { useCurrentOrganization } from '@/shared/hooks/useCurrentOrganization'
 
 // Adaptadores entre rotas e páginas. Uma feature não importa de outra, então o
 // que vem de outra feature (projetos, sessão, papel) chega às páginas por prop.
-
-// Organização atual: a primeira do usuário (o ProtectedRoute garante que existe)
-function useCurrentOrganization() {
-  const { data: organizations = [] } = useMyOrganizations()
-
-  return organizations[0]
-}
 
 // Espelha as regras do banco (core_schema): esconder o botão é conveniência; o RLS bloqueia
 const projectPermissions = {
@@ -39,7 +33,7 @@ export function OverviewRoute() {
 
 export function ProjectsRoute() {
   const location = useLocation()
-  const organization = useCurrentOrganization()
+  const { organization } = useCurrentOrganization()
 
   // A key remonta a página a cada navegação, para abrir o projeto escolhido na busca global
   return (
@@ -58,7 +52,7 @@ export function RepositoriesRoute() {
 }
 
 export function AccessRoute() {
-  const organization = useCurrentOrganization()
+  const { organization } = useCurrentOrganization()
   const currentUserId = useSession().user.id
 
   return <RbacPage organization={organization} currentUserId={currentUserId} />

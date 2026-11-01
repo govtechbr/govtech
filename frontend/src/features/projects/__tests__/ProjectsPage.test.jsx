@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import ProjectsPage from '@/features/projects/ProjectsPage'
+import { CurrentOrganizationContext } from '@/shared/hooks/useCurrentOrganization'
 import ToastProvider from '@/shared/ui/ToastProvider'
 
 // A API de projetos é trocada por uma versão em memória: o teste não depende de
@@ -12,7 +13,7 @@ const db = vi.hoisted(() => ({ projects: [] }))
 
 vi.mock('@/features/projects/api/projectsApi', () => ({
   listProjects: async () => db.projects,
-  createProject: async (data) => {
+  createProject: async (_organizationId, data) => {
     const project = { ...data, id: db.projects.length + 100 }
     db.projects = [...db.projects, project]
     return project
@@ -26,6 +27,8 @@ vi.mock('@/features/projects/api/projectsApi', () => ({
     db.projects = db.projects.filter((project) => project.id !== id)
   },
 }))
+
+const currentOrganization = { organization: { id: 'org-a', name: 'Org A', role: 'admin' } }
 
 const initialProjects = [
   {
@@ -59,9 +62,11 @@ async function renderPage({ initialProjectId } = {}) {
 
   const view = render(
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <ProjectsPage initialProjectId={initialProjectId} />
-      </ToastProvider>
+      <CurrentOrganizationContext.Provider value={currentOrganization}>
+        <ToastProvider>
+          <ProjectsPage initialProjectId={initialProjectId} />
+        </ToastProvider>
+      </CurrentOrganizationContext.Provider>
     </QueryClientProvider>,
   )
 
@@ -177,9 +182,11 @@ describe('ProjectsPage loading and errors', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <ProjectsPage />
-        </ToastProvider>
+        <CurrentOrganizationContext.Provider value={currentOrganization}>
+          <ToastProvider>
+            <ProjectsPage />
+          </ToastProvider>
+        </CurrentOrganizationContext.Provider>
       </QueryClientProvider>,
     )
 

@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { signOut } from '@/features/auth/api/authApi'
-import { useMyOrganizations, useSession } from '@/features/auth/hooks/useAuth'
+import { useSession } from '@/features/auth/hooks/useAuth'
 import { useProjects } from '@/features/projects/hooks/useProjects'
 import { defaultSettings } from '@/shared/constants/defaultSettings'
 import { storageKeys } from '@/shared/constants/storageKeys'
+import { useCurrentOrganization } from '@/shared/hooks/useCurrentOrganization'
 import { useLocalStorage } from '@/shared/hooks/useLocalStorage'
 import { useTheme } from '@/shared/hooks/useTheme'
 import { useToast } from '@/shared/hooks/useToast'
@@ -31,7 +32,7 @@ const roleLabels = {
 // Nome, iniciais e papel de quem está logado, para a barra lateral e o menu da conta
 function useAccount() {
   const user = useSession()?.user
-  const { data: organizations = [] } = useMyOrganizations()
+  const { organization } = useCurrentOrganization()
   const name = user?.user_metadata?.full_name || user?.email || ''
   const initials = name
     .split(/\s+/)
@@ -39,14 +40,13 @@ function useAccount() {
     .slice(0, 2)
     .map((word) => word[0].toUpperCase())
     .join('')
-  const [organization] = organizations
 
   return {
     name,
     initials,
-    role: organization ? `${roleLabels[organization.role]} · ${organization.name}` : '',
+    role: `${roleLabels[organization.role]} · ${organization.name}`,
     // Só o admin vê o código de convite (é quem chama a equipe)
-    joinCode: organization?.role === 'admin' ? organization.joinCode : null,
+    joinCode: organization.role === 'admin' ? organization.joinCode : null,
   }
 }
 
@@ -118,8 +118,6 @@ export default function AppLayout() {
         onNavigate={handleNavigate}
         open={sidebarOpen}
         setOpen={setSidebarOpen}
-        settings={settings}
-        setSettings={setSettings}
         account={account}
       />
 

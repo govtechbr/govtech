@@ -100,6 +100,13 @@ function withRepository(request, rowsList) {
     )
 }
 
+// Filtro ?organization_id=eq.<valor> (a tela pede só a empresa escolhida)
+function byOrganizationParam(request, list) {
+  const organizationId = eqParam(request, 'organization_id')
+
+  return organizationId ? list.filter((row) => row.organization_id === organizationId) : list
+}
+
 function byProjectParam(request, list) {
   const projectId = eqParam(request, 'project_id')
 
@@ -110,6 +117,7 @@ const githubError = (message) => HttpResponse.json({ error: message }, { status:
 
 // Sincroniza os repositórios ligados ao projeto: 1 PR e 1 branch "main" por repositório
 function syncProject(projectId) {
+  const organizationId = db.projects.find(({ id }) => id === projectId).organization_id
   const linked = db.projectRepositories.filter((link) => link.project_id === projectId)
 
   if (linked.length === 0) {
@@ -124,6 +132,7 @@ function syncProject(projectId) {
       {
         id: `pr-${repositoryId}`,
         repository_id: repositoryId,
+        organization_id: organizationId,
         number: 12,
         title: `Integração com o GitHub (${repository.name})`,
         state: 'open',
@@ -139,6 +148,7 @@ function syncProject(projectId) {
       {
         id: `branch-${repositoryId}`,
         repository_id: repositoryId,
+        organization_id: organizationId,
         name: 'main',
         last_commit_sha: 'abc1234def',
         protected: true,
@@ -210,6 +220,7 @@ function githubFunction({ action, projectId, token, githubIds }) {
       if (!db.repositories.some((repository) => repository.id === id)) {
         db.repositories.push({
           id,
+          organization_id: db.projects.find((project) => project.id === projectId).organization_id,
           github_id: repo.id,
           full_name: repo.full_name,
           name: repo.name,
@@ -255,7 +266,7 @@ export const handlers = [
 
     return rows(
       request,
-      db.repositories
+      byOrganizationParam(request, db.repositories)
         .map((repository) => ({ ...repository, project_repositories: linksOf(repository.id) }))
         .filter(
           (repository) =>
@@ -283,10 +294,12 @@ export const handlers = [
   ),
 
   http.get(rest('pull_requests'), ({ request }) =>
-    rows(request, withRepository(request, db.pullRequests)),
+    rows(request, withRepository(request, byOrganizationParam(request, db.pullRequests))),
   ),
 
-  http.get(rest('branches'), ({ request }) => rows(request, withRepository(request, db.branches))),
+  http.get(rest('branches'), ({ request }) =>
+    rows(request, withRepository(request, byOrganizationParam(request, db.branches))),
+  ),
 
   http.post(`${url}/auth/v1/token`, async ({ request }) => {
     const { email, password } = await request.json()
@@ -414,7 +427,9 @@ export const handlers = [
     return HttpResponse.json(otherOrganization.id)
   }),
 
-  http.get(rest('projects'), ({ request }) => rows(request, db.projects)),
+  http.get(rest('projects'), ({ request }) =>
+    rows(request, byOrganizationParam(request, db.projects)),
+  ),
 
   http.post(rest('projects'), async ({ request }) => {
     const project = { id: crypto.randomUUID(), ...(await request.json()) }

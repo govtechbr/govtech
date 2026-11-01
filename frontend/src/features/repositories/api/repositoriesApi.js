@@ -6,6 +6,7 @@ import { supabase } from '@/shared/lib/supabase'
 // Cada repositório existe uma vez por empresa e se liga a projetos pela tabela
 // project_repositories. Sem filtro de projeto, nada se repete (regra G4). Com
 // filtro, entram os repositórios do projeto, inclusive os compartilhados.
+// Sempre só da empresa escolhida (quem está em várias enxerga todas pelo RLS).
 
 function fail() {
   throw new Error('Não foi possível carregar os dados do GitHub. Tente de novo.')
@@ -21,10 +22,11 @@ function inProject(projectId, embed) {
   return projectId ? `${embed}!inner (project_id)` : `${embed} (project_id)`
 }
 
-export async function listRepositoryData(projectId) {
+export async function listRepositoryData(organizationId, projectId) {
   let repositories = supabase
     .from('repositories')
     .select(`${repositoryColumns}, ${inProject(projectId, 'project_repositories')}`)
+    .eq('organization_id', organizationId)
     .order('pushed_at', { ascending: false, nullsFirst: false })
 
   let pullRequests = supabase
@@ -32,6 +34,7 @@ export async function listRepositoryData(projectId) {
     .select(
       `${pullRequestColumns}, repository:repositories!inner (name, ${inProject(projectId, 'project_repositories')})`,
     )
+    .eq('organization_id', organizationId)
     .order('updated_at_github', { ascending: false })
 
   let branches = supabase
@@ -39,6 +42,7 @@ export async function listRepositoryData(projectId) {
     .select(
       `${branchColumns}, repository:repositories!inner (name, default_branch, ${inProject(projectId, 'project_repositories')})`,
     )
+    .eq('organization_id', organizationId)
     .order('name')
 
   if (projectId) {

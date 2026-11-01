@@ -6,11 +6,17 @@ import {
   listProjects,
   updateProject,
 } from '@/features/projects/api/projectsApi'
+import { useCurrentOrganization } from '@/shared/hooks/useCurrentOrganization'
 
 export const projectsKey = ['projects']
 
 export function useProjects() {
-  return useQuery({ queryKey: projectsKey, queryFn: listProjects })
+  const organizationId = useCurrentOrganization().organization.id
+
+  return useQuery({
+    queryKey: [...projectsKey, organizationId],
+    queryFn: () => listProjects(organizationId),
+  })
 }
 
 function useProjectMutation(mutationFn) {
@@ -22,8 +28,11 @@ function useProjectMutation(mutationFn) {
   })
 }
 
+// O projeto novo nasce na empresa escolhida
 export function useCreateProject() {
-  return useProjectMutation(createProject)
+  const organizationId = useCurrentOrganization().organization.id
+
+  return useProjectMutation((data) => createProject(organizationId, data))
 }
 
 export function useUpdateProject() {

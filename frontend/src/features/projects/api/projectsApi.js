@@ -37,32 +37,20 @@ function fail(error) {
   throw new Error('Não foi possível falar com o servidor. Tente de novo.')
 }
 
-async function currentOrganizationId() {
-  const { data: sessionData } = await supabase.auth.getSession()
-  const userId = sessionData.session?.user.id
+// Quem está em várias empresas enxerga (pelo RLS) os projetos de todas; a tela
+// mostra só os da empresa escolhida
+export async function listProjects(organizationId) {
   const { data, error } = await supabase
-    .from('organization_members')
-    .select('organization_id')
-    .eq('user_id', userId)
+    .from('projects')
+    .select(selectColumns)
+    .eq('organization_id', organizationId)
     .order('created_at')
-    .limit(1)
-    .maybeSingle()
-
-  if (error) fail(error)
-  if (!data) throw new Error('Você ainda não faz parte de uma organização.')
-
-  return data.organization_id
-}
-
-export async function listProjects() {
-  const { data, error } = await supabase.from('projects').select(selectColumns).order('created_at')
 
   if (error) fail(error)
   return data.map((project) => normalizeProject(project))
 }
 
-export async function createProject(data) {
-  const organizationId = await currentOrganizationId()
+export async function createProject(organizationId, data) {
   const { data: created, error } = await supabase
     .from('projects')
     .insert({ ...toRow(normalizeProject(data)), organization_id: organizationId })

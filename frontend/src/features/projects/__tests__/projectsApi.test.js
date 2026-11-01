@@ -8,9 +8,10 @@ import {
   updateProject,
 } from '@/features/projects/api/projectsApi'
 import { projects as mockProjects } from '@/mocks/mockData'
-import { db, signInAs, testOrganization } from '@/test/msw/db'
+import { db, otherOrganization, signInAs, testOrganization } from '@/test/msw/db'
 import { server } from '@/test/msw/server'
 
+const orgId = testOrganization.id
 const projectsUrl = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/projects`
 
 // Contrato da camada de dados, contra o Supabase simulado pelo MSW (src/test/msw)
@@ -20,34 +21,30 @@ describe('projectsApi', () => {
   })
 
   it('lists the projects returned by the database', async () => {
-    const projects = await listProjects()
+    const projects = await listProjects(orgId)
 
     expect(projects.map((project) => project.name)).toEqual(
       mockProjects.map((project) => project.name),
     )
   })
 
-  it('creates a normalized project in the user organization', async () => {
-    const created = await createProject({ name: 'Portal', progress: 150, status: 'invalid' })
+  it('creates a normalized project in the given organization', async () => {
+    const created = await createProject(orgId, { name: 'Portal', progress: 150, status: 'invalid' })
 
     expect(created).toMatchObject({ name: 'Portal', progress: 100, status: 'success' })
     expect(db.projects.at(-1)).toMatchObject({
       name: 'Portal',
       organization_id: testOrganization.id,
     })
-    expect((await listProjects()).at(-1)).toEqual(created)
+    expect((await listProjects(orgId)).at(-1)).toEqual(created)
   })
 
-  it('refuses to create a project without an organization', async () => {
-    db.members = []
-
-    await expect(createProject({ name: 'Portal' })).rejects.toThrow(
-      'Você ainda não faz parte de uma organização.',
-    )
+  it('lists only the projects of the given organization', async () => {
+    expect(await listProjects(otherOrganization.id)).toEqual([])
   })
 
   it('updates only the fields that were sent', async () => {
-    const [first] = await listProjects()
+    const [first] = await listProjects(orgId)
 
     const updated = await updateProject(first.id, { name: 'Renomeado' })
 
@@ -61,11 +58,11 @@ describe('projectsApi', () => {
   })
 
   it('deletes a project', async () => {
-    const [first] = await listProjects()
+    const [first] = await listProjects(orgId)
 
     await deleteProject(first.id)
 
-    expect((await listProjects()).some((project) => project.id === first.id)).toBe(false)
+    expect((await listProjects(orgId)).some((project) => project.id === first.id)).toBe(false)
   })
 
   it('reports a delete that removed nothing (RLS blocked it)', async () => {
@@ -84,7 +81,7 @@ describe('projectsApi', () => {
       ),
     )
 
-    await expect(createProject({ name: 'Portal' })).rejects.toThrow(
+    await expect(createProject(orgId, { name: 'Portal' })).rejects.toThrow(
       'Você não tem permissão para esta ação.',
     )
   })
