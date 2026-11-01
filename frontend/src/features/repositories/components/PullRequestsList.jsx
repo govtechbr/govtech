@@ -1,57 +1,49 @@
-import { Clock3, GitPullRequest, MessageSquareText, UserRound } from 'lucide-react'
-import { pullRequestList as pullRequests } from '@/mocks/mockData'
+import { Clock3, GitMerge, GitPullRequest } from 'lucide-react'
 
-export default function PullRequestsList() {
+import MetricCard from '@/features/repositories/components/MetricCard'
+import styles from '@/features/repositories/RepositoriesPage.module.css'
+import { pullRequestMetrics } from '@/features/repositories/utils/metrics'
+import { formatDuration, timeAgo } from '@/shared/lib/date'
+import StatusBadge from '@/shared/ui/StatusBadge'
+
+const states = {
+  open: { label: 'Aberto', status: 'warning' },
+  merged: { label: 'Mergeado', status: 'success' },
+  closed: { label: 'Fechado', status: 'default' },
+}
+
+export default function PullRequestsList({ pullRequests }) {
+  const metrics = pullRequestMetrics(pullRequests)
+
   return (
     <>
       <section className="metrics-grid">
-        <article className="metric-card elevation-1">
-          <div className="metric-icon">
-            <GitPullRequest size={19} />
-          </div>
-
-          <div className="metric-content">
-            <span>PRs abertas</span>
-            <strong>10</strong>
-            <small>Demandam acompanhamento</small>
-          </div>
-        </article>
-
-        <article className="metric-card elevation-1">
-          <div className="metric-icon">
-            <Clock3 size={19} />
-          </div>
-
-          <div className="metric-content">
-            <span>Tempo médio de revisão</span>
-            <strong>8h</strong>
-            <small>Últimos 30 dias</small>
-          </div>
-        </article>
-
-        <article className="metric-card elevation-1">
-          <div className="metric-icon">
-            <MessageSquareText size={19} />
-          </div>
-
-          <div className="metric-content">
-            <span>Aprovações pendentes</span>
-            <strong>4</strong>
-            <small>Requerem revisão</small>
-          </div>
-        </article>
+        <MetricCard
+          icon={GitPullRequest}
+          label="PRs abertos"
+          value={metrics.open}
+          hint="Demandam acompanhamento"
+        />
+        <MetricCard
+          icon={GitMerge}
+          label="Mergeados"
+          value={metrics.mergedLast30Days}
+          hint="Últimos 30 dias"
+        />
+        <MetricCard
+          icon={Clock3}
+          label="Tempo médio até o merge"
+          value={formatDuration(metrics.averageMergeHours)}
+          hint="PRs mergeados nos últimos 30 dias"
+        />
       </section>
 
       <section className="panel elevation-1">
         <div className="panel-heading">
           <div>
             <span className="section-kicker">MONITORAMENTO DE ENTREGAS</span>
-
             <h2>Pull Requests</h2>
-
-            <p>
-              Solicitações de integração que exigem revisão, aprovação ou acompanhamento da gestão.
-            </p>
+            <p>Os 100 mais recentes de cada repositório, na última sincronização.</p>
           </div>
         </div>
 
@@ -62,46 +54,38 @@ export default function PullRequestsList() {
                 <th>PULL REQUEST</th>
                 <th>REPOSITÓRIO</th>
                 <th>AUTOR</th>
-                <th>REVISORES</th>
-                <th>ABERTA HÁ</th>
+                <th>ABERTO</th>
                 <th>STATUS</th>
               </tr>
             </thead>
 
             <tbody>
-              {pullRequests.map((pullRequest) => (
-                <tr key={pullRequest.id}>
+              {pullRequests.map((pr) => (
+                <tr key={pr.id}>
                   <td>
                     <div className="service-name">
                       <span className="avatar">
                         <GitPullRequest size={15} />
                       </span>
 
-                      <div>
-                        <b>
-                          {pullRequest.id} — {pullRequest.title}
-                        </b>
-                      </div>
+                      <a
+                        className={styles.link}
+                        href={pr.html_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        #{pr.number} — {pr.title}
+                      </a>
                     </div>
                   </td>
 
-                  <td className="mono">{pullRequest.repository}</td>
-
-                  <td>{pullRequest.author}</td>
-
+                  <td className="mono">{pr.repository.name}</td>
+                  <td>{pr.author_login ?? '—'}</td>
+                  <td className="muted-cell">{timeAgo(pr.created_at_github)}</td>
                   <td>
-                    <span className="inline-icon-text">
-                      <UserRound size={15} />
-                      {pullRequest.reviewers}
-                    </span>
-                  </td>
-
-                  <td>{pullRequest.age}</td>
-
-                  <td>
-                    <span className={`status-badge ${pullRequest.variant}`}>
-                      {pullRequest.status}
-                    </span>
+                    <StatusBadge status={states[pr.state].status}>
+                      {pr.draft && pr.state === 'open' ? 'Rascunho' : states[pr.state].label}
+                    </StatusBadge>
                   </td>
                 </tr>
               ))}

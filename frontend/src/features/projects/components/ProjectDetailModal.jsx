@@ -1,11 +1,13 @@
-import { Edit3, Server, Trash2 } from 'lucide-react'
+import { Edit3, Trash2 } from 'lucide-react'
 
+import GitHubPanel from '@/features/projects/components/GitHubPanel'
 import { formatProjectDate, getProjectStatus } from '@/shared/lib/projectUtils'
 import Modal from '@/shared/ui/Modal'
 import StatusBadge from '@/shared/ui/StatusBadge'
 import styles from './ProjectModals.module.css'
 
-export default function ProjectDetailModal({ project, onClose, onEdit, onDelete }) {
+// github: { canManage, canSync }, conforme o papel (ver app/routes.jsx)
+export default function ProjectDetailModal({ project, github, onClose, onEdit, onDelete }) {
   const status = getProjectStatus(project)
 
   return (
@@ -43,22 +45,13 @@ export default function ProjectDetailModal({ project, onClose, onEdit, onDelete 
         </div>
       </dl>
 
-      <div className={styles.section}>
-        <strong className={styles.sectionTitle}>Repositórios vinculados</strong>
+      <section className={styles.section} aria-labelledby="project-github-title">
+        <h3 id="project-github-title" className={styles.sectionTitle}>
+          GitHub
+        </h3>
 
-        {project.repositories.length > 0 ? (
-          <ul className={styles.repoList}>
-            {project.repositories.map((repository) => (
-              <li key={repository} className={styles.repoTag}>
-                <Server size={13} />
-                {repository}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className={styles.muted}>Nenhum repositório vinculado.</p>
-        )}
-      </div>
+        <GitHubPanel projectId={project.id} canManage={github.canManage} canSync={github.canSync} />
+      </section>
 
       {(onEdit || onDelete) && (
         <div className={styles.actions}>

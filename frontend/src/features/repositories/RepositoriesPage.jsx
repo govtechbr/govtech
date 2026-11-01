@@ -1,50 +1,49 @@
 import { useState } from 'react'
 import { Folder, GitBranch, GitPullRequest } from 'lucide-react'
 
-import BranchesList from './components/BranchesList'
-import PullRequestsList from './components/PullRequestsList'
-import RepositoriesList from './components/RepositoriesList'
+import BranchesList from '@/features/repositories/components/BranchesList'
+import PullRequestsList from '@/features/repositories/components/PullRequestsList'
+import RepositoriesList from '@/features/repositories/components/RepositoriesList'
+import { useRepositoryData } from '@/features/repositories/hooks/useRepositoryData'
+import styles from '@/features/repositories/RepositoriesPage.module.css'
 
-export default function RepositoriesPage() {
+const tabs = [
+  { id: 'repositorios', label: 'Repositórios', icon: Folder },
+  { id: 'pull-requests', label: 'Pull Requests', icon: GitPullRequest },
+  { id: 'branches', label: 'Branches', icon: GitBranch },
+]
+
+// projects: projetos da organização (vêm do adaptador em app/routes.jsx), para o filtro
+export default function RepositoriesPage({ projects = [] }) {
   const [tab, setTab] = useState('repositorios')
+  const [projectId, setProjectId] = useState('')
+  const data = useRepositoryData(projectId)
 
-  const tabs = [
-    {
-      id: 'repositorios',
-      label: 'Repositórios',
-      icon: Folder,
-    },
-    {
-      id: 'pull-requests',
-      label: 'Pull Requests',
-      icon: GitPullRequest,
-    },
-    {
-      id: 'branches',
-      label: 'Branches',
-      icon: GitBranch,
-    },
-  ]
+  const projectNames = Object.fromEntries(projects.map((project) => [project.id, project.name]))
 
   return (
     <main className="dashboard-content">
       <div className="dashboard-intro">
         <div>
           <span className="eyebrow">MONITORAMENTO DE DESENVOLVIMENTO</span>
-          <p>
-            Acompanhe repositórios, Pull Requests e branches para apoiar a governança dos projetos.
-          </p>
+          <p>Repositórios, Pull Requests e branches sincronizados do GitHub.</p>
         </div>
+
+        <label className={styles.filter}>
+          <span>Projeto</span>
+          <select value={projectId} onChange={(event) => setProjectId(event.target.value)}>
+            <option value="">Todos os projetos</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
-      <section className="panel elevation-1" style={{ marginBottom: '24px' }}>
-        <div
-          className="section-tabs"
-          style={{
-            padding: '0 16px',
-            borderBottom: 'none',
-          }}
-        >
+      <section className={`panel elevation-1 ${styles.tabsPanel}`}>
+        <div className={`section-tabs ${styles.tabs}`}>
           <div>
             {tabs.map((item) => {
               const TabIcon = item.icon
@@ -54,6 +53,7 @@ export default function RepositoriesPage() {
                   key={item.id}
                   type="button"
                   className={tab === item.id ? 'active' : ''}
+                  aria-pressed={tab === item.id}
                   onClick={() => setTab(item.id)}
                 >
                   <TabIcon size={16} />
@@ -65,11 +65,44 @@ export default function RepositoriesPage() {
         </div>
       </section>
 
-      {tab === 'repositorios' && <RepositoriesList />}
+      {data.isPending && (
+        <p role="status" className={styles.state}>
+          Carregando dados do GitHub…
+        </p>
+      )}
 
-      {tab === 'pull-requests' && <PullRequestsList />}
+      {data.isError && (
+        <p role="alert" className={styles.state}>
+          {data.error.message}
+        </p>
+      )}
 
-      {tab === 'branches' && <BranchesList />}
+      {data.isSuccess && data.data.repositories.length === 0 && (
+        <section className={`panel elevation-1 ${styles.empty}`}>
+          <h2>Nenhum repositório sincronizado</h2>
+          <p>
+            Para trazer os dados, o admin abre um projeto em <strong>Projetos</strong>, conecta a
+            chave do GitHub na seção GitHub e clica em <strong>Sincronizar</strong>.
+          </p>
+        </section>
+      )}
+
+      {data.isSuccess && data.data.repositories.length > 0 && (
+        <>
+          {tab === 'repositorios' && (
+            <RepositoriesList
+              repositories={data.data.repositories}
+              pullRequests={data.data.pullRequests}
+              branches={data.data.branches}
+              projectNames={projectNames}
+            />
+          )}
+
+          {tab === 'pull-requests' && <PullRequestsList pullRequests={data.data.pullRequests} />}
+
+          {tab === 'branches' && <BranchesList branches={data.data.branches} />}
+        </>
+      )}
     </main>
   )
 }

@@ -1112,3 +1112,89 @@ Segunda entrega da fase Supabase (item 3 da §16.6). Registro de execução em �
 **Ajuste antes de aplicar:** o trigger `keep_one_admin` devolvia `coalesce(new, old)`; virou um retorno explícito por operação (`old` no DELETE, `new` no UPDATE), mais claro de ler.
 
 **Ocorrência (registro para o TCC):** entre a criação da Porto e a aplicação da migration, a conta de visualizador saiu da organização. Os logs da API não mostram nenhuma exclusão feita pelo app. Os logs do Postgres mostram a tabela `organization_members` aberta no Table Editor do painel, então a hipótese mais provável é uma remoção manual por engano (as duas contas aparecem com o mesmo nome). Não houve perda de dados: a conta entra de novo com o código. Isso reforça duas coisas: a regra de **não editar o banco pelo painel** (AGENTS.md) e a próxima entrega, **auditoria**, que registraria quem removeu e quando.
+
+---
+
+## 18. Integração com o GitHub (✅ aprovada e aplicada em 02/11/2026)
+
+Terceira entrega da fase Supabase. Detalha a §4.7 e passa na frente da auditoria por decisão de 02/11/2026. Decisões G1–G4 aprovadas como recomendado (G5 segue a regra de não inventar dados). Registro em §18.8.
+
+### 18.1 Como funciona para o usuário
+1. O **admin** abre um projeto e, na seção **GitHub**, cola uma chave do GitHub (*fine-grained token*, só leitura).
+2. O sistema testa a chave no GitHub antes de guardar. Se for inválida, avisa na hora. Se funcionar, guarda no cofre (Vault) e mostra só os 4 últimos caracteres.
+3. **Quais repositórios:** os que a própria chave libera. Quem cria a chave escolhe os repositórios no GitHub, e o sistema não pede nomes.
+4. **Sincronizar:** um botão traz do GitHub os repositórios, os PRs (os 100 mais recentes por repositório) e as branches. Não há atualização automática (sem webhook, como na §4.7).
+5. A página **Repositórios** passa a mostrar esses dados reais, com filtro por projeto. Todos os membros veem.
+
+### 18.2 Decisões para aprovar
+
+| # | Pergunta | Recomendação | Motivo |
+|---|---|---|---|
+| G1 | Quais repositórios entram | **Os que a chave libera** | Não precisa digitar nomes nem tratar nome errado; a permissão fica no GitHub |
+| G2 | Quem pode sincronizar | **Admin e developer** | O developer mantém os projetos (já edita); o viewer só lê |
+| G3 | Campo "Repositórios" (texto livre) do formulário de projeto | **Sai**, e a coluna `projects.repositories` é removida | Os repositórios passam a vir do GitHub; dois lugares para a mesma informação confundem |
+| G4 | Repositório de demonstração | **O próprio `oguilhermekenzo/govtech`** | Tem PRs e branches reais deste TCC; a banca vê o sistema monitorando o próprio desenvolvimento |
+| G5 | Colunas que o GitHub não fornece fácil ("Pipeline", "Revisores", "Proteção") | **Saem** desta entrega | Regra de não inventar dados; o status do CI pode voltar depois |
+
+### 18.3 Banco (migration `github`)
+
+| Tabela | Colunas principais | Quem lê | Quem escreve |
+|---|---|---|---|
+| `github_credentials` | `project_id` (PK), `organization_id`, `secret_id` (Vault), `token_last4`, `github_login`, `last_synced_at`, `created_by` | Membros (sem o segredo) | **Só a Edge Function** |
+| `repositories` | `project_id`, `organization_id`, `github_id`, `full_name`, `description`, `language`, `default_branch`, `html_url`, `private`, `pushed_at` | Membros | **Só a Edge Function** |
+| `pull_requests` | `repository_id`, `organization_id`, `number`, `title`, `state` (open/closed/merged), `draft`, `author_login`, `html_url`, `created_at_github`, `updated_at_github`, `merged_at` | Membros | **Só a Edge Function** |
+| `branches` | `repository_id`, `organization_id`, `name`, `last_commit_sha`, `protected` | Membros | **Só a Edge Function** |
+
+- **RLS:** select para membros da organização (com índice em `organization_id`). **Nenhuma** policy de escrita para o front. Quem escreve é a Edge Function, com a chave de serviço, que só existe no servidor.
+- **Segredo:** fica no `vault.secrets`, criptografado. As funções que gravam e leem do Vault ficam em `private` e só a chave de serviço executa. **Nenhum caminho devolve a chave ao navegador.**
+- **Remover a chave** apaga o segredo do Vault e os dados sincronizados do projeto.
+- **pgTAP:** membro lê os dados da própria organização e não lê os de outra; ninguém logado escreve nas 4 tabelas; ninguém logado lê o segredo nem chama as funções do Vault.
+
+### 18.4 Edge Function `github` (JavaScript, sem TypeScript)
+Uma função com três ações. Todas conferem o login (JWT) e o papel do usuário **no banco** antes de agir:
+
+| Ação | Quem | O que faz |
+|---|---|---|
+| `connect` | Admin | Testa a chave (`GET /user` e lista de repositórios). Se funcionar, grava no Vault e salva o `token_last4` |
+| `sync` | Admin e developer | Lê a chave do Vault e busca repositórios, PRs e branches. Grava (upsert) e apaga o que não existe mais no GitHub. Atualiza `last_synced_at` |
+| `disconnect` | Admin | Apaga o segredo e os dados sincronizados do projeto |
+
+- **Limites:** 100 repositórios por chave, 100 PRs e 100 branches por repositório (uma página da API). Dá umas 200 chamadas por sincronização, longe do limite do GitHub (5.000 por hora).
+- **Erros em pt-BR:** chave inválida ou expirada, sem permissão, GitHub fora do ar, limite atingido.
+- **Testes:** a lógica de conversão (resposta do GitHub → linhas do banco) fica num módulo separado, testado com `node --test`, que já vem no Node 22 (sem dependência nova). O CI roda esses testes.
+- **Deploy:** pelo MCP do Supabase (`deploy_edge_function`), **com aprovação**, como as migrations.
+
+### 18.5 Front
+- `features/repositories/api/githubApi.js`: conectar, sincronizar e desconectar (pela Edge Function), além de listar repositórios, PRs e branches (pelo banco).
+- **Projeto (detalhe):** seção GitHub com a situação (conectada `••••abcd` por `login`, última sincronização) e os botões Conectar, Trocar, Remover e Sincronizar, conforme o papel.
+- **Repositórios:** as três listas com dados reais, filtro por projeto e um aviso quando nada estiver conectado.
+- **Testes com MSW:** a Edge Function e as tabelas simuladas, cobrindo a chave inválida, a sincronização e os botões por papel.
+- Os gráficos de PR do painel (Visão geral) **continuam com dados de exemplo** nesta entrega; passam para dados reais na entrega seguinte, se der tempo.
+
+### 18.6 Fora desta entrega
+- Webhook ou GitHub App (atualização automática).
+- Status do CI e revisores dos PRs.
+- Gráficos do painel com dados reais (próxima entrega).
+
+### 18.7 Estimativa e o que preciso de você
+3 a 4 dias: migration e pgTAP (1 dia), Edge Function (1 dia), front (1 a 2 dias). Termina por volta de 06/11, deixando folga até 18/11.
+
+**De você:** criar uma chave *fine-grained* no GitHub para o repositório de demonstração (passo a passo na hora) e colar **na tela do sistema**. A chave **nunca** deve ser colada no chat nem no código.
+
+### 18.8 Registro de execução
+
+| Passo | Resultado |
+|---|---|
+| Migration `github` | O MCP **recusou** aplicar (a confirmação de SQL com `delete` é recusada automaticamente). O dono do projeto rodou o arquivo versionado no SQL Editor ("Success"); a versão foi registrada no histórico pelo MCP. Security Advisor: sem alertas novos |
+| Migration `drop_project_repositories` | **Separada de propósito** e ainda **não aplicada**: o site em produção lê `projects.repositories` até o merge do front. Aplicar logo depois do merge |
+| pgTAP | `github.test.sql` **15/15 ok**. Banco conferido depois: Vault vazio, sem usuários de teste, sem `pgtap` |
+| Edge Function | `github` publicada pelo MCP (versão 1, `verify_jwt` ligado). Lógica do GitHub com 9 testes `node --test`, que entraram no CI (job `edge-functions`) |
+| Front | Seção GitHub no detalhe do projeto, página Repositórios com dados reais, filtro por projeto e métricas calculadas. **86 testes** (+12, −1 do campo removido), lint e build verdes |
+
+**Decisões tomadas na execução:**
+- **Ordem do deploy:** a remoção da coluna `projects.repositories` virou uma migration à parte, para não quebrar o site em produção entre a migration e o merge.
+- **Casamento repositório ↔ id:** o upsert não garante a ordem das linhas devolvidas, então a sincronização casa cada repositório pelo `github_id`.
+- **Erro de chave = HTTP 400**, não 401: o front poderia confundir com sessão expirada.
+- **Sem `@supabase/server`:** a Edge Function usa o mesmo `supabase-js` 2.118.0 do front, para não trazer dependência nova.
+- **`shared/lib/date.js`** criado (o AGENTS.md já pedia): `timeAgo`, `formatDuration`.
+- **Ainda com dados de exemplo:** gráficos de PR da Visão geral e a busca global (repositórios e branches), por estarem fora do escopo desta entrega.

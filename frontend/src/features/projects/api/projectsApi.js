@@ -4,16 +4,7 @@ import { supabase } from '@/shared/lib/supabase'
 // Único ponto de acesso aos dados de projeto. As regras de quem vê e quem
 // altera ficam no banco (RLS): aqui só se pede, e o banco decide.
 
-const columns = [
-  'name',
-  'description',
-  'deadline',
-  'owner',
-  'priority',
-  'status',
-  'progress',
-  'repositories',
-]
+const columns = ['name', 'description', 'deadline', 'owner', 'priority', 'status', 'progress']
 const selectColumns = ['id', ...columns].join(', ')
 
 // Normaliza só os campos enviados, para uma edição parcial não sobrescrever o resto

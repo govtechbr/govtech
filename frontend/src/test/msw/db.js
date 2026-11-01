@@ -48,7 +48,15 @@ export function resetDb({ withOrganization = true } = {}) {
     id: `20000000-0000-0000-0000-${String(index).padStart(12, '0')}`,
     organization_id: testOrganization.id,
   }))
+  // GitHub: nada conectado no começo de cada teste
+  db.githubCredentials = []
+  db.repositories = []
+  db.pullRequests = []
+  db.branches = []
 }
+
+// Chave que a Edge Function simulada aceita
+export const validGitHubToken = 'github_pat_valida_1234567890abcd'
 
 resetDb()
 

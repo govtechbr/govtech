@@ -2,7 +2,7 @@
 
 Plataforma web de **governança e monitoramento de projetos de TI**: painel com indicadores, lista de projetos com prazo e progresso, visão de repositórios/Pull Requests/branches, auditoria, controle de acesso (RBAC) e configurações.
 
-> **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações, membros e projetos são reais** e ficam no banco. As outras telas (repositórios, auditoria, indicadores) ainda mostram dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
+> **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações, membros, projetos e os dados do GitHub (repositórios, PRs e branches) são reais** e ficam no banco. As outras telas (auditoria, gráficos da Visão geral) ainda mostram dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
 
 ---
 
@@ -167,7 +167,7 @@ govtech/
         │   ├── auth/          Login, cadastro e escolha de organização; AuthProvider, ProtectedRoute, api/authApi.js.
         │   ├── dashboard/     OverviewPage.jsx + components/ (gráficos e painéis da Visão geral).
         │   ├── projects/      ProjectsPage.jsx + components/ (modais) + api/projectsApi.js (Supabase).
-        │   ├── repositories/  RepositoriesPage.jsx + components/ (repositórios, PRs, branches).
+        │   ├── repositories/  RepositoriesPage.jsx (dados sincronizados do GitHub) + api/ + components/ + utils/metrics.js.
         │   ├── audit/         AuditPage.jsx (eventos de auditoria).
         │   ├── rbac/          RbacPage.jsx (membros reais) + api/membersApi.js + components/ (papel, convite, remover).
         │   └── settings/      SettingsPage.jsx.
@@ -302,18 +302,18 @@ Recebe `projectList` e mostra:
 - **Status manual**: cada projeto tem um campo `status` escolhido no formulário (`success` = Saudável, `warning` = Atenção, `danger` = Risco). É diferente do semáforo de prazo (§11.2), que é calculado pela deadline.
 - **3 indicadores**: total, “em atenção” (`status === 'warning'`), “riscos críticos” (`status === 'danger'`).
 - **Novo projeto**: abre `ProjectFormModal` vazio.
-- **Clique em um card**: abre `ProjectDetailModal` (descrição, prazo formatado, status calculado, botões Editar e Excluir).
+- **Clique em um card**: abre `ProjectDetailModal` (descrição, prazo formatado, status calculado, botões Editar e Excluir conforme o papel, e a seção **GitHub**).
+- **Seção GitHub** (`GitHubPanel`, desde 02/11/2026): o admin cola a chave *fine-grained* do GitHub (só leitura). A chave é testada no GitHub, guardada criptografada no Vault e nunca volta para o navegador; a tela mostra só `••••` + os 4 últimos caracteres e o login. Admin e developer clicam em **Sincronizar**; o admin também troca e remove a chave. Viewer e stakeholder só veem a situação.
 - **Editar**: mesmo formulário, preenchido. Ao salvar, o projeto é substituído pelo mesmo `id`.
 - **Excluir**: abre `DeleteProjectModal` pedindo confirmação; depois filtra o projeto da lista.
 - Os avisos (toast) aparecem ao criar, editar e excluir.
 
-### 8.6 `RepositoriesPage.jsx` — Repositórios
-Três abas (estado `tab`):
-- **Repositórios** → `RepositoriesList`
-- **Pull Requests** → `PullRequestsList`
-- **Branches** → `BranchesList`
-
-Os dados de exemplo de cada lista ficam em `data/mockData.js` (`repositoryList`, `pullRequestList`, `branchList`).
+### 8.6 `RepositoriesPage.jsx` — Repositórios (dados reais do GitHub desde 02/11/2026)
+- **Filtro por projeto** (“Todos os projetos” ou um projeto) e três abas: **Repositórios**, **Pull Requests** e **Branches**.
+- Os dados vêm das tabelas `repositories`, `pull_requests` e `branches`, preenchidas pela Edge Function `github` quando alguém clica em **Sincronizar** no projeto. Não há atualização automática.
+- **Números calculados**, nada fixo (`utils/metrics.js`): PRs abertos, PRs mergeados nos últimos 30 dias e tempo médio até o merge.
+- Limites por sincronização: 100 repositórios por chave; 100 PRs (os mais recentes) e 100 branches por repositório.
+- Sem nada sincronizado, a página explica como conectar.
 
 ### 8.7 `AuditPage.jsx` — Auditoria
 - Lista `auditEvents` (ação, serviço, autor, hash, horário, status).

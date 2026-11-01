@@ -22,7 +22,7 @@ body = body.replace('rollback;\n', '')
 body = re.sub(r'select plan\((\d+)\);', r'r := array[plan(\1)];', body)
 asserts = r'(results_eq|is_empty|isnt_empty|lives_ok|throws_ok|isnt|is|ok)\('
 body = re.sub(r'(?m)^select ' + asserts, r'r := r || \1(', body)
-body = re.sub(r'(?m)^select (public\.\w+\()', r'perform \1', body)
+body = re.sub(r'(?m)^select ((?:public|private)\.\w+\()', r'perform \1', body)
 body = body.replace('select * from finish();', 'r := r || array(select * from finish());')
 leftover = re.search(r'(?m)^select .*', body)
 if leftover:

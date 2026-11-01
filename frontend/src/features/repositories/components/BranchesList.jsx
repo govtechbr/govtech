@@ -1,55 +1,33 @@
-import { GitBranch, GitCommitHorizontal, ShieldCheck } from 'lucide-react'
-import { branchList as branches } from '@/mocks/mockData'
+import { GitBranch, ShieldCheck } from 'lucide-react'
 
-export default function BranchesList() {
+import MetricCard from '@/features/repositories/components/MetricCard'
+import StatusBadge from '@/shared/ui/StatusBadge'
+
+export default function BranchesList({ branches }) {
+  const protectedCount = branches.filter((branch) => branch.protected).length
+
   return (
     <>
       <section className="metrics-grid">
-        <article className="metric-card elevation-1">
-          <div className="metric-icon">
-            <GitBranch size={19} />
-          </div>
-
-          <div className="metric-content">
-            <span>Branches ativas</span>
-            <strong>31</strong>
-            <small>Em todos os repositórios</small>
-          </div>
-        </article>
-
-        <article className="metric-card elevation-1">
-          <div className="metric-icon">
-            <ShieldCheck size={19} />
-          </div>
-
-          <div className="metric-content">
-            <span>Branches protegidas</span>
-            <strong>14</strong>
-            <small>Com regras de aprovação</small>
-          </div>
-        </article>
-
-        <article className="metric-card elevation-1">
-          <div className="metric-icon">
-            <GitCommitHorizontal size={19} />
-          </div>
-
-          <div className="metric-content">
-            <span>Commits no período</span>
-            <strong>186</strong>
-            <small>Últimos 7 dias</small>
-          </div>
-        </article>
+        <MetricCard
+          icon={GitBranch}
+          label="Branches"
+          value={branches.length}
+          hint="Ativas no GitHub"
+        />
+        <MetricCard
+          icon={ShieldCheck}
+          label="Protegidas"
+          value={protectedCount}
+          hint="Exigem revisão para mudar"
+        />
       </section>
 
       <section className="panel elevation-1">
         <div className="panel-heading">
           <div>
             <span className="section-kicker">FLUXO DE DESENVOLVIMENTO</span>
-
-            <h2>Branches acompanhadas</h2>
-
-            <p>Acompanhe branches ativas, proteção de fluxo e atualizações dos repositórios.</p>
+            <h2>Branches</h2>
           </div>
         </div>
 
@@ -59,35 +37,33 @@ export default function BranchesList() {
               <tr>
                 <th>BRANCH</th>
                 <th>REPOSITÓRIO</th>
-                <th>RESPONSÁVEL</th>
                 <th>ÚLTIMO COMMIT</th>
-                <th>ATUALIZADA</th>
-                <th>STATUS</th>
+                <th>PROTEÇÃO</th>
               </tr>
             </thead>
 
             <tbody>
               {branches.map((branch) => (
-                <tr key={`${branch.repository}-${branch.name}`}>
+                <tr key={branch.id}>
                   <td>
-                    <span className="inline-icon-text">
-                      <GitBranch size={15} />
-                      <strong>{branch.name}</strong>
-                    </span>
+                    <div className="service-name">
+                      <span className="avatar">
+                        <GitBranch size={15} />
+                      </span>
+
+                      <b>
+                        {branch.name}
+                        {branch.name === branch.repository.default_branch && ' (padrão)'}
+                      </b>
+                    </div>
                   </td>
 
-                  <td>{branch.repository}</td>
-
-                  <td>{branch.author}</td>
-
+                  <td className="mono">{branch.repository.name}</td>
+                  <td className="mono">{branch.last_commit_sha.slice(0, 7)}</td>
                   <td>
-                    <span className="mono">{branch.lastCommit}</span>
-                  </td>
-
-                  <td>{branch.updated}</td>
-
-                  <td>
-                    <span className={`status-badge ${branch.status}`}>{branch.protection}</span>
+                    <StatusBadge status={branch.protected ? 'success' : 'default'}>
+                      {branch.protected ? 'Protegida' : 'Livre'}
+                    </StatusBadge>
                   </td>
                 </tr>
               ))}
