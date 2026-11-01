@@ -38,6 +38,7 @@ Ao rodar testes ou build, mostre só o resumo/erros (`| tail -30`), não o log i
 - Status do projeto é **manual** (`success`/`warning`/`danger`); o semáforo de prazo é outra informação, calculada.
 - Uma feature **não importa** de outra; compartilhado vai para `shared/`.
 - Só `features/*/api/` importa o client Supabase. Componentes nunca chamam `supabase` direto.
+- Exemplo pronto: `features/projects/api/projectsApi.js` + `hooks/useProjects.js` (TanStack Query, chave `['projects']`). Novas features seguem o mesmo formato.
 
 ## Convenções de código
 - Componentes funcionais, um por arquivo, `PascalCase.jsx`; hooks `useAlgo.js`.
