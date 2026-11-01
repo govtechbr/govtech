@@ -48,9 +48,9 @@ export async function githubGet(token, path, fetchImpl = fetch) {
   return response.json()
 }
 
-export function toRepositoryRow(repo, { projectId, organizationId }) {
+// Repositório é guardado uma vez por empresa (o vínculo com projetos é outra tabela)
+export function toRepositoryRow(repo, { organizationId }) {
   return {
-    project_id: projectId,
     organization_id: organizationId,
     github_id: repo.id,
     full_name: repo.full_name,
@@ -98,19 +98,33 @@ export function toBranchRow(branch, { repositoryId, organizationId }) {
   }
 }
 
+// Tudo o que a chave consegue ler (até 100). Atenção: inclui TODOS os repositórios
+// públicos, não só os escolhidos ao criar a chave; por isso o admin seleciona (G2)
+export function listRepositories(token, fetchImpl = fetch) {
+  return githubGet(token, `/user/repos?${PAGE}&sort=pushed`, fetchImpl)
+}
+
+// O que a tela de seleção mostra de cada repositório
+export function toAvailableRepository(repo, selectedIds) {
+  return {
+    githubId: repo.id,
+    fullName: repo.full_name,
+    description: repo.description ?? null,
+    private: Boolean(repo.private),
+    selected: selectedIds.has(repo.id),
+  }
+}
+
 // Confere a chave antes de guardar: quem é o dono e quantos repositórios ela libera
 export async function checkToken(token, fetchImpl = fetch) {
   const user = await githubGet(token, '/user', fetchImpl)
-  const repos = await githubGet(token, `/user/repos?${PAGE}&sort=pushed`, fetchImpl)
+  const repos = await listRepositories(token, fetchImpl)
 
   return { login: user.login, repositoryCount: repos.length }
 }
 
-// Busca tudo o que a sincronização grava: até 100 repositórios, e até 100 PRs
-// (os mais recentes) e 100 branches de cada um
-export async function fetchProjectData(token, fetchImpl = fetch) {
-  const repos = await githubGet(token, `/user/repos?${PAGE}&sort=pushed`, fetchImpl)
-
+// PRs (os 100 mais recentes) e branches (até 100) de cada repositório escolhido
+export function fetchRepositoryData(token, repos, fetchImpl = fetch) {
   return Promise.all(
     repos.map(async (repo) => {
       const [pulls, branches] = await Promise.all([
