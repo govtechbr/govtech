@@ -223,13 +223,13 @@ Ele usa `<Routes>` para comparar o endereço atual com a lista de rotas (ver §7
 O `App.jsx` envolve tudo em `ToastProvider` (avisos) e declara as rotas. O `src/app/AppLayout.jsx`:
 1. Guarda estados de tela: menu lateral aberto, menu da conta e busca global aberta.
 2. Carrega as configurações com `useLocalStorage('govtech:settings', defaultSettings)` e aplica o tema com `useTheme`.
-3. Carrega a lista de projetos com `getStoredProjects(projetosDoMock)` e grava cada mudança em `govtech:projects` com `saveProjects`.
+3. Busca a lista de projetos com o hook `useProjects()` (TanStack Query) só para a busca global; cada página busca o que precisa pelo mesmo hook, e o cache evita ler duas vezes.
 4. Descobre a seção atual pelo endereço, usando `routeSections` (ex.: `/projects` → “Projetos”).
 5. Desenha `Sidebar`, `Topbar`, `GlobalSearch` e um `<Outlet>`: o React Router coloca ali a página da rota atual.
-6. Repassa projetos e configurações às páginas pelo `context` do `<Outlet>`; os adaptadores em `src/app/routes.jsx` leem esse contexto e passam como props (saem na etapa 5, com o TanStack Query).
+6. Repassa as configurações às páginas pelo `context` do `<Outlet>`. Os adaptadores em `src/app/routes.jsx` ligam rota e página: a Visão geral recebe os projetos por prop porque uma feature (dashboard) não importa de outra (projects).
 
 **Passo 6 — Ações do usuário mudam o estado.**
-Exemplo: ao criar um projeto, `ProjectsPage` chama `setProjectList(...)`. Como `projectList` é estado do React, a tela é redesenhada. O `useLocalStorage`/`saveProjects` grava a nova lista no navegador.
+Exemplo: ao criar um projeto, `ProjectsPage` chama `useCreateProject().mutateAsync(dados)`. Isso executa `createProject` em `features/projects/api/projectsApi.js` (que grava no localStorage) e invalida a query `['projects']`; o TanStack Query busca a lista de novo e todas as telas que usam `useProjects()` são redesenhadas.
 
 **Passo 7 — Redirecionamentos.**
 Qualquer endereço desconhecido cai em `<Navigate to="/" />`, ou seja, volta para o login.
@@ -403,8 +403,10 @@ Os projetos de exemplo em `mockData.js` (IDs 1–4) têm status manual (Risco, A
 
 O estado vive em componentes React com `useState`. Os principais:
 
-- `App.jsx` → `settings` (via `useLocalStorage`), `projectList`, `toastMessage`, `sidebarOpen`, `accountMenuOpen`.
-- `ProjectsPage.jsx` → `showForm`, `selectedProject`, `editingProject`, `showDeleteConfirm`.
+- **Dados de projeto** (estado de servidor): TanStack Query, chave `['projects']`, hooks em `features/projects/hooks/useProjects.js`. Nenhum componente guarda a lista em `useState`.
+- `AppLayout.jsx` → `settings` (via `useLocalStorage`), `sidebarOpen`, `accountMenuOpen`, `searchOpen`.
+- `ToastProvider` → o aviso visível no momento.
+- `ProjectsPage.jsx` → `showForm`, `selectedProjectId` (o id, para o detalhe sempre mostrar o dado atual), `editingProject`, `showDeleteConfirm`.
 - `SettingsPage.jsx` → `tab` e `draft` (rascunho que só vira configuração ao clicar em “Salvar”).
 
 ### 10.3 Persistência no navegador (`localStorage`)
@@ -414,7 +416,7 @@ Chaves declaradas em `constants/storageKeys.js`:
 | Constante | Valor real da chave | Onde é usada |
 |---|---|---|
 | `storageKeys.SETTINGS` | `govtech:settings` | `App.jsx`, via `useLocalStorage`. |
-| `storageKeys.PROJECTS` | `govtech:projects` | `utils/storageUtils.js` (`getStoredProjects` / `saveProjects`). |
+| `storageKeys.PROJECTS` | `govtech:projects` | `features/projects/utils/storageUtils.js`, chamado **só** por `features/projects/api/projectsApi.js`. |
 
 > Até 31/10/2026 os projetos eram gravados por engano na chave `"undefined"` (nome de constante errado). Quem tinha dados salvos nessa chave volta a ver os projetos de exemplo; a chave antiga pode ser apagada pelo DevTools.
 
@@ -508,11 +510,10 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 | Integrações GitHub, SonarQube, Slack, Jira “Conectado” | `SettingsPage.jsx` | Cartões fixos. O botão só mostra um aviso. |
 | Usuários com e-mail `@govtech.ms` | `RbacPage.jsx` | Dados fixos no código. |
 | Hashes `a82f91c0…7d2e` | `mockData.js` (auditoria) | Strings inventadas, sem cálculo real. |
-| `ProjectsPage`, `setProjectList` recebidos por *prop* | `App.jsx` | Padrão de “estado elevado”, comum em apps com backend, mas aqui só mexe em memória e localStorage. |
 
 ### Como seria a transição para back-end (se você quiser no futuro)
 Os pontos onde os dados seriam trocados por chamadas HTTP já estão bem claros:
-1. `utils/storageUtils.js` → `getStoredProjects` / `saveProjects` viram `GET /projects` / `POST /projects`.
+1. `features/projects/api/projectsApi.js` → `listProjects`, `createProject`, `updateProject` e `deleteProject` passam a chamar o Supabase. Telas, hooks e testes de tela não mudam (os testes de tela já trocam essa API por uma versão em memória; `__tests__/projectsApi.test.js` é o contrato que a versão Supabase precisa cumprir).
 2. `pages/LoginPage.jsx` → `submit` viraria `POST /auth/login`, com a sessão gerenciada pelo Supabase Auth.
 3. `data/mockData.js` → cada array viraria uma resposta de API.
 4. `App.jsx` → `isAuthenticated` deixaria de ser `true` fixo e viraria uma verificação real de token.

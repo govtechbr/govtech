@@ -1,6 +1,6 @@
 # GovTech MS — Plano Técnico (Back-end Supabase, Refatoração, Testes, Responsividade)
 
-> **Status (01/11/2026):** ✅ Limpeza (branch `chore/limpeza`) · ✅ Qualidade: ESLint, Prettier e Husky (branch `chore/qualidade`) · ✅ Skills instaladas · ✅ Testes P0 (branch `test/setup`, §14) · Supabase `govtech-br` em São Paulo, vazio · 🚧 **Nova estrutura em execução** (§15).
+> **Status (01/11/2026):** ✅ Limpeza (branch `chore/limpeza`) · ✅ Qualidade: ESLint, Prettier e Husky (branch `chore/qualidade`) · ✅ Skills instaladas · ✅ Testes P0 (branch `test/setup`, §14) · Supabase `govtech-br` em São Paulo, vazio · ✅ **Nova estrutura concluída** (§15) · próxima fase: **Supabase**.
 >
 > Autor: Tech Lead (IA) · Data: 31/10/2026 · Base: commit `193c764` (branch `main`)
 
@@ -20,7 +20,7 @@
 12. [Referências](#12-referências)
 13. [Qualidade: lint e formatação](#13-qualidade-lint-e-formatação--aprovado-e-aplicado-em-31102026)
 14. [Testes](#14-testes--aprovado-e-aplicado-em-01112026)
-15. [Nova estrutura](#15-nova-estrutura--aprovada-em-01112026-em-execução)
+15. [Nova estrutura](#15-nova-estrutura--concluída-em-01112026)
 
 ---
 
@@ -827,7 +827,7 @@ Os 4 casos estão em `utils/__tests__/projectUtils.test.js` marcados com `it.fai
 
 ---
 
-## 15. Nova estrutura (✅ aprovada em 01/11/2026, em execução)
+## 15. Nova estrutura (✅ concluída em 01/11/2026)
 
 **Aprovada integralmente em 01/11**, com as recomendações da 15.7. O andamento fica registrado na 15.9. Detalha os passos 3 a 6 da §5.4 para a janela de 04 a 10/11 (Dev A). Como a fase Testes terminou antes, dá para começar já em 02/11.
 
@@ -925,6 +925,8 @@ Commits: (1) `git mv` + correção dos caminhos relativos; (2) alias `@/` → `s
 | 01/11 | 4a | Escala `--space-1…8` e `--font-size-*` em `tokens.css`. Visão geral migrada para `OverviewPage.module.css`, mobile-first (1 coluna; 2 colunas a partir de 1024 px; linha de projeto em grade que se reorganiza a partir de 768 px). A linha de projeto deixou de herdar `.metric-card` (o `strong` global com 28 px deixava nomes gigantes sem o inline). Cor do status por classe (`success/warning/danger`) com tokens, sem `style={{}}`. Landing: abaixo de 640 px o menu mostra só "Acessar plataforma". Primeiro teste da Visão geral (ordem por urgência e rótulos de prazo) | 39 testes, lint 0 erros, build ok. Largura em 390 px: Login, Visão geral, Projetos e Landing = 390 (antes 429 e 485). Capturas em 390 e 1440 px conferidas |
 
 | 01/11 | 4b | **`Modal` acessível** em `shared/ui` (foco preso, `Esc`, foco volta, folha no celular) usado pelos 3 modais de Projeto e pelo de RBAC; `ModalShell` removido. Modais de Projeto em `ProjectModals.module.css`, sem `style={{}}`; o detalhe fecha enquanto a confirmação de exclusão está aberta. **Cartão de projeto acessível por teclado** (título é um botão que cobre o cartão). Seletor de workspace da Sidebar em `Sidebar.module.css` (`:hover` no lugar de `onMouseOver`), com `aria-label`/`aria-expanded`/`aria-pressed`. Topbar: `stopPropagation` morto removido, avatar e notificações com nome acessível. Chatbot: `role="dialog"`, `Esc` fecha, hover no CSS. **17 → 0 avisos**; as 4 regras de interação do `jsx-a11y` voltaram a `error` e o lint usa `--max-warnings 0` | 49 testes (novos: Modal ×5, teclado no cartão, RBAC, menu da conta, workspace, Chatbot), lint 0 avisos, build ok. Navegador: foco dentro do modal e `Esc` fecham em 390 e 1440 px; Login, Visão geral, Projetos e Landing com 390 px; 0 erros no console |
+
+| 01/11 | 5 | `@tanstack/react-query` **5.104.5** (versão exata; a 5.105.0 tinha 6 dias de publicada). `features/projects/api/projectsApi.js` é o **único** lugar que lê/grava projetos (localStorage hoje). Hooks `useProjects`/`useCreateProject`/`useUpdateProject`/`useDeleteProject`; o `projectList` deixou de passar pelo `AppLayout`. `ProjectsPage` com estados de carregamento e erro (`role="alert"`). Testes de tela trocam a API por uma versão em memória; `projectsApi.test.js` é o contrato para a versão Supabase. Divisor da "Distribuição atual" fica em cima no celular | 55 testes, lint 0 avisos, build ok. Navegador: criar e excluir persistem após recarregar (mesma chave `govtech:projects`, dados antigos preservados); busca, modais e 390 px ok; 0 erros no console |
 
 **Escopo da etapa 4, decisão de 01/11:** `Button`, `Badge` e `Card` **não** foram extraídos. As classes globais (`primary-button`, `status-badge`, `panel`) já padronizam o visual, e trocar dezenas de usos agora não muda nada na demo nem na nota; o `Modal` era o componente que resolvia acessibilidade e celular. Continuam com `style={{}}` (pendência pós-18/11): links da Sidebar, menu da conta da Topbar, Configurações, RBAC, Auditoria, Repositórios e o corpo do Chatbot. **Pendências visuais que já existiam:** o selo de status do detalhe mostra a bolinha duas vezes; os cartões de métrica de Projetos ficam com o texto lado a lado no desktop.
 

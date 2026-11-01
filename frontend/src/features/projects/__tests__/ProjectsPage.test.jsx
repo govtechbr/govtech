@@ -1,10 +1,31 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useState } from 'react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import ProjectsPage from '@/features/projects/ProjectsPage'
 import ToastProvider from '@/shared/ui/ToastProvider'
+
+// A API de projetos é trocada por uma versão em memória: o teste não depende de
+// onde os dados moram (localStorage hoje, Supabase depois).
+const db = vi.hoisted(() => ({ projects: [] }))
+
+vi.mock('@/features/projects/api/projectsApi', () => ({
+  listProjects: async () => db.projects,
+  createProject: async (data) => {
+    const project = { repositories: [], ...data, id: db.projects.length + 100 }
+    db.projects = [...db.projects, project]
+    return project
+  },
+  updateProject: async (id, data) => {
+    db.projects = db.projects.map((project) =>
+      project.id === id ? { ...project, ...data } : project,
+    )
+  },
+  deleteProject: async (id) => {
+    db.projects = db.projects.filter((project) => project.id !== id)
+  },
+}))
 
 const initialProjects = [
   {
@@ -31,22 +52,25 @@ const initialProjects = [
   },
 ]
 
-function Harness({ initialProjectId }) {
-  const [projectList, setProjectList] = useState(initialProjects)
+beforeEach(() => {
+  db.projects = structuredClone(initialProjects)
+})
 
-  return (
-    <ToastProvider>
-      <ProjectsPage
-        projectList={projectList}
-        setProjectList={setProjectList}
-        initialProjectId={initialProjectId}
-      />
-    </ToastProvider>
+async function renderPage({ initialProjectId } = {}) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+  const view = render(
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <ProjectsPage initialProjectId={initialProjectId} />
+      </ToastProvider>
+    </QueryClientProvider>,
   )
-}
 
-function renderPage(props = {}) {
-  return { user: userEvent.setup(), ...render(<Harness {...props} />) }
+  // espera a primeira carga da lista
+  await screen.findByRole('heading', { name: 'Plataforma de Pagamentos' })
+
+  return { user: userEvent.setup(), ...view }
 }
 
 function metric(label) {
@@ -54,8 +78,8 @@ function metric(label) {
 }
 
 describe('ProjectsPage', () => {
-  it('lists projects with their manual status and counters', () => {
-    renderPage()
+  it('lists projects with their manual status and counters', async () => {
+    await renderPage()
 
     expect(screen.getByRole('heading', { name: 'Plataforma de Pagamentos' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Sistema de Notificações' })).toBeInTheDocument()
@@ -67,7 +91,7 @@ describe('ProjectsPage', () => {
   })
 
   it('creates a project with the chosen status', async () => {
-    const { user } = renderPage()
+    const { user } = await renderPage()
 
     await user.click(screen.getByRole('button', { name: /novo projeto/i }))
     await user.type(screen.getByLabelText('Nome do Projeto'), 'Portal do Cidadão')
@@ -77,14 +101,14 @@ describe('ProjectsPage', () => {
     await user.selectOptions(screen.getByLabelText('Status'), 'Atenção')
     await user.click(screen.getByRole('button', { name: /criar projeto/i }))
 
-    expect(screen.getByRole('heading', { name: 'Portal do Cidadão' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Portal do Cidadão' })).toBeInTheDocument()
     expect(metric('Projetos ativos')).toHaveTextContent('3')
     expect(metric('Em atenção')).toHaveTextContent('2')
     expect(screen.getByRole('status')).toHaveTextContent('Projeto criado com sucesso.')
   })
 
   it('edits an existing project', async () => {
-    const { user } = renderPage()
+    const { user } = await renderPage()
 
     await user.click(screen.getByRole('button', { name: 'Sistema de Notificações' }))
     await user.click(screen.getByRole('button', { name: /editar/i }))
@@ -96,7 +120,7 @@ describe('ProjectsPage', () => {
     await user.type(nameInput, 'Central de Avisos')
     await user.click(screen.getByRole('button', { name: /salvar projeto/i }))
 
-    expect(screen.getByRole('heading', { name: 'Central de Avisos' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Central de Avisos' })).toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: 'Sistema de Notificações' }),
     ).not.toBeInTheDocument()
@@ -104,12 +128,13 @@ describe('ProjectsPage', () => {
   })
 
   it('deletes a project after confirmation', async () => {
-    const { user } = renderPage()
+    const { user } = await renderPage()
 
     await user.click(screen.getByRole('button', { name: 'Plataforma de Pagamentos' }))
     await user.click(screen.getByRole('button', { name: 'Excluir' }))
     await user.click(screen.getByRole('button', { name: /excluir projeto/i }))
 
+    expect(await screen.findByRole('status')).toHaveTextContent('Projeto excluído com sucesso.')
     expect(
       screen.queryByRole('heading', { name: 'Plataforma de Pagamentos' }),
     ).not.toBeInTheDocument()
@@ -117,7 +142,7 @@ describe('ProjectsPage', () => {
   })
 
   it('opens a project card with the keyboard and closes it with Escape', async () => {
-    const { user } = renderPage()
+    const { user } = await renderPage()
 
     screen.getByRole('button', { name: 'Sistema de Notificações' }).focus()
     await user.keyboard('{Enter}')
@@ -127,15 +152,15 @@ describe('ProjectsPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('opens the project given by initialProjectId', () => {
-    renderPage({ initialProjectId: 2 })
+  it('opens the project given by initialProjectId', async () => {
+    await renderPage({ initialProjectId: 2 })
 
     expect(screen.getByRole('button', { name: /editar/i })).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { name: 'Sistema de Notificações' })).toHaveLength(2)
   })
 
   it('keeps the project when deletion is cancelled', async () => {
-    const { user } = renderPage()
+    const { user } = await renderPage()
 
     await user.click(screen.getByRole('button', { name: 'Plataforma de Pagamentos' }))
     await user.click(screen.getByRole('button', { name: 'Excluir' }))
@@ -143,5 +168,25 @@ describe('ProjectsPage', () => {
 
     expect(screen.queryByRole('button', { name: /excluir projeto/i })).not.toBeInTheDocument()
     expect(metric('Projetos ativos')).toHaveTextContent('2')
+  })
+})
+
+describe('ProjectsPage loading and errors', () => {
+  it('shows an error message when the projects cannot be loaded', async () => {
+    const api = await import('@/features/projects/api/projectsApi')
+    vi.spyOn(api, 'listProjects').mockRejectedValueOnce(new Error('offline'))
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <ProjectsPage />
+        </ToastProvider>
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível carregar os projetos',
+    )
   })
 })

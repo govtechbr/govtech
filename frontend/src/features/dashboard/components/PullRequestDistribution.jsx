@@ -1,4 +1,5 @@
 import { COLORS } from '@/shared/constants/colors'
+import styles from './PullRequestDistribution.module.css'
 
 export default function PullRequestDistribution({
   open = 2,
@@ -38,12 +39,7 @@ export default function PullRequestDistribution({
   }, 0)
 
   return (
-    <div
-      style={{
-        paddingLeft: '24px',
-        borderLeft: '1px solid var(--border)',
-      }}
-    >
+    <div className={styles.root}>
       <small className="section-kicker">DISTRIBUIÇÃO ATUAL</small>
 
       <div

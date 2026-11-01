@@ -32,11 +32,12 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Deadline'), '2026-12-20')
     await user.type(screen.getByLabelText('Responsável'), 'Dev')
     await user.click(screen.getByRole('button', { name: /criar projeto/i }))
+    await screen.findByText('Projeto criado com sucesso.')
     unmount()
 
     renderWithRouter(<App />, { route: '/projects' })
 
-    expect(screen.getByRole('heading', { name: 'Projeto Persistido' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Projeto Persistido' })).toBeInTheDocument()
   })
 
   it('shows a toast after creating a project', async () => {

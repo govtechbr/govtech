@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
-import { getStoredProjects, saveProjects } from '@/features/projects/utils/storageUtils'
-import { projects as initialProjects } from '@/mocks/mockData'
+import { useProjects } from '@/features/projects/hooks/useProjects'
 import { defaultSettings } from '@/shared/constants/defaultSettings'
 import { storageKeys } from '@/shared/constants/storageKeys'
 import { useLocalStorage } from '@/shared/hooks/useLocalStorage'
@@ -33,15 +32,11 @@ export default function AppLayout() {
 
   const [settings, setSettings] = useLocalStorage(storageKeys.SETTINGS, defaultSettings)
 
-  const [projectList, setProjectList] = useState(() => getStoredProjects(initialProjects))
+  const { data: projectList = [] } = useProjects()
 
   useTheme(settings.theme)
 
   const activeSection = routeSections[location.pathname] || 'Visão geral'
-
-  useEffect(() => {
-    saveProjects(projectList)
-  }, [projectList])
 
   // Fecha os menus ao trocar de rota (ajuste de estado na renderização, sem useEffect)
   const [lastPathname, setLastPathname] = useState(location.pathname)
@@ -104,9 +99,7 @@ export default function AppLayout() {
           onSelectProject={handleSelectProject}
         />
 
-        <Outlet
-          context={{ projectList, setProjectList, settings, onSaveSettings: handleSaveSettings }}
-        />
+        <Outlet context={{ settings, onSaveSettings: handleSaveSettings }} />
       </div>
     </div>
   )
