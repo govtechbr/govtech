@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Building2, ChevronRight, KeyRound } from 'lucide-react'
 import { useForm } from 'react-hook-form'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 
 import { createOrganization, joinOrganization, signOut } from '@/features/auth/api/authApi'
 import AuthField from '@/features/auth/components/AuthField'
 import styles from '@/features/auth/components/AuthForms.module.css'
 import AuthLayout from '@/features/auth/components/AuthLayout'
-import { organizationsKey, useSession } from '@/features/auth/hooks/useAuth'
+import { organizationsKey, useMyOrganizations, useSession } from '@/features/auth/hooks/useAuth'
+import { rememberOrganization } from '@/features/auth/utils/lastOrganization'
 import { createOrganizationSchema, joinOrganizationSchema } from '@/features/auth/utils/schemas'
 import { zodResolver } from '@/shared/lib/zodResolver'
 
@@ -42,8 +43,8 @@ function OrganizationForm({ mode, onDone }) {
 
   async function onSubmit(values) {
     try {
-      await action(values)
-      await onDone()
+      const organizationId = await action(values)
+      await onDone(organizationId)
     } catch (error) {
       setError('root', { message: error.message })
     }
@@ -85,12 +86,16 @@ export default function OrganizationPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [mode, setMode] = useState('create')
+  // Quem já tem empresa chegou por "Adicionar empresa" e pode voltar
+  const { data: organizations = [] } = useMyOrganizations()
 
   if (session === null) {
     return <Navigate to="/login" replace />
   }
 
-  async function handleDone() {
+  // A empresa criada ou a que acabou de entrar passa a ser a escolhida (regra A5)
+  async function handleDone(organizationId) {
+    rememberOrganization(session.user.id, organizationId)
     await queryClient.invalidateQueries({ queryKey: organizationsKey })
     navigate('/dashboard', { replace: true })
   }
@@ -111,6 +116,12 @@ export default function OrganizationPage() {
 
       {/* key: cada modo tem o próprio formulário, sem herdar valores ou erros do outro */}
       <OrganizationForm key={mode} mode={mode} onDone={handleDone} />
+
+      {organizations.length > 0 && (
+        <p className={styles.footer}>
+          <Link to="/dashboard">Voltar para o painel</Link>
+        </p>
+      )}
 
       <p className={styles.footer}>
         Entrou com a conta errada?{' '}

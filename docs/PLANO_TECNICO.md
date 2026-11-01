@@ -1041,7 +1041,7 @@ Cadastro → login → criar ou entrar numa organização → **CRUD de projetos
 - **Versões:** `@supabase/supabase-js` 2.118.0, `react-hook-form` **7.90.0** (a 7.91.0 tinha só 9 dias), `zod` 4.6.7, `msw` 3.0.3 (dev). Os 9 alertas do `npm audit` já existiam antes e estão só nas ferramentas de lint.
 - **Sem `@hookform/resolvers`:** não estava no plano, então o adaptador zod → react-hook-form virou uma função de 20 linhas em `shared/lib/zodResolver.js`.
 - **Cadastro em dois passos:** primeiro a conta (nome, e-mail, senha), depois a tela `/organizacao` (criar ou entrar com código). Com a confirmação de e-mail ligada, não há sessão logo após o cadastro, e as funções do banco exigem login. Os dois passos funcionam com a confirmação ligada ou desligada, e quem fica sem organização volta sempre para essa tela.
-- **Organização atual:** um projeto novo vai para a primeira organização do usuário. A troca de organização pela barra lateral (hoje com dados de exemplo) entra com a tela de membros (§16.6).
+- **Organização atual:** um projeto novo vai para a primeira organização do usuário. A troca de organização pela barra lateral (hoje com dados de exemplo) entra com a tela de membros (§16.6). *Atualização: resolvido na E2 (ver §18.8).*
 - **Erros do RLS:** editar ou excluir sem permissão não dá erro no banco, só afeta 0 linhas. A API transforma isso em “Projeto não encontrado ou sem permissão para alterá-lo.”, para a tela não mostrar sucesso falso.
 - **Regra no ESLint:** só `features/*/api/` pode importar `shared/lib/supabase`.
 - **Build:** `supabase-js` e os formulários vão para arquivos separados (`manualChunks`), o que tirou o aviso de pacote grande (o principal tinha passado de 326 kB para 680 kB).
@@ -1213,3 +1213,12 @@ Uma função com três ações. Todas conferem o login (JWT) e o papel do usuár
 
 - **Janela no deploy:** entre a migration e o merge do front, a página Repositórios e a sincronização da produção dão erro (o site antigo ainda lê `repositories.project_id`). Aceito por ser poucos minutos e o sistema ainda não ter usuários reais.
 - **Depois do merge:** o admin abre o projeto, clica em "Escolher repositórios" e marca os do projeto.
+
+**E2: troca de empresa** (regras A5 e A6; 03/11/2026; sem migration)
+
+- **Bug encontrado e corrigido:** quem está em duas empresas via os projetos e repositórios das duas misturados (o RLS libera todas as empresas do usuário e a tela não filtrava), e um projeto novo ia sempre para a primeira empresa.
+- **Como ficou:** o `ProtectedRoute` decide a empresa atual (a última usada, ou a primeira se ela não existir mais) e a entrega pelo contexto `shared/hooks/useCurrentOrganization`. Projetos, repositórios, PRs e branches filtram por `organization_id` e têm a empresa na chave do TanStack Query. Projeto novo nasce na empresa escolhida.
+- **Última empresa usada:** no `localStorage` (`govtech:last-organization`, por usuário), por decisão do dono. Outro aparelho abre a primeira empresa até a pessoa trocar.
+- **Trocar de empresa remonta as telas** (`key` no `Outlet`), para não sobrar projeto aberto da empresa anterior.
+- **Adicionar empresa:** item na lista da barra lateral que leva a `/organizacao`. Lá aparece "Voltar para o painel" para quem já tem empresa, e a empresa criada ou a que acabou de entrar passa a ser a escolhida.
+- **Testes:** 6 novos com MSW (filtro de projetos e repositórios, lembrar a última, empresa que sumiu, projeto novo na empresa certa, adicionar empresa por código). **96 testes**, lint e build verdes.

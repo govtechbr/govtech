@@ -8,9 +8,11 @@ import {
   Users,
   Settings2,
   Check,
+  Plus,
   X,
 } from 'lucide-react'
 
+import { useCurrentOrganization } from '@/shared/hooks/useCurrentOrganization'
 import Brand from '@/shared/ui/Brand'
 import Icon from '@/shared/ui/Icon'
 import ChatbotModal from './ChatbotModal'
@@ -53,21 +55,17 @@ const adminItems = [
   },
 ]
 
-const workspaces = [
-  { id: 1, name: 'govtech-platform', logo: 'G' },
-  { id: 2, name: 'govtech-ms', logo: 'M' },
-  { id: 3, name: 'govtech-ti', logo: 'T' },
-]
+function initial(name) {
+  return name.trim().charAt(0).toUpperCase()
+}
 
-export default function Sidebar({ open, setOpen, settings, setSettings, account }) {
+export default function Sidebar({ open, setOpen, account }) {
   const navigate = useNavigate()
   const location = useLocation()
 
   const [showChatbot, setShowChatbot] = useState(false)
   const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false)
-
-  const selectedWorkspace =
-    workspaces.find((workspace) => workspace.name === settings?.organizationName) || workspaces[0]
+  const { organization, organizations, switchOrganization } = useCurrentOrganization()
 
   function isActive(path) {
     return location.pathname === path
@@ -79,13 +77,13 @@ export default function Sidebar({ open, setOpen, settings, setSettings, account 
     setShowWorkspaceMenu(false)
   }
 
-  function handleWorkspaceSelect(workspace) {
-    setSettings((previousSettings) => ({
-      ...previousSettings,
-      organizationName: workspace.name,
-    }))
-
+  // Regra A5: a escolha fica guardada e as telas recarregam com os dados da empresa
+  function handleWorkspaceSelect(organizationId) {
     setShowWorkspaceMenu(false)
+
+    if (organizationId !== organization.id) {
+      switchOrganization(organizationId)
+    }
   }
 
   return (
@@ -104,7 +102,7 @@ export default function Sidebar({ open, setOpen, settings, setSettings, account 
           </button>
         </div>
 
-        {/* Workspace Switcher */}
+        {/* Troca de empresa (workspace) */}
         <div className="workspace-switch">
           {!showWorkspaceMenu && (
             <button
@@ -112,13 +110,13 @@ export default function Sidebar({ open, setOpen, settings, setSettings, account 
               className={styles.trigger}
               onClick={() => setShowWorkspaceMenu(true)}
               aria-expanded="false"
-              aria-label={`Trocar workspace (atual: ${selectedWorkspace.name})`}
+              aria-label={`Trocar empresa (atual: ${organization.name})`}
             >
-              <span className={styles.logo}>{selectedWorkspace.logo}</span>
+              <span className={styles.logo}>{initial(organization.name)}</span>
 
               <span className={styles.label}>
-                <small className={styles.kicker}>Workspace</small>
-                <b className={styles.name}>{selectedWorkspace.name}</b>
+                <small className={styles.kicker}>Empresa</small>
+                <b className={styles.name}>{organization.name}</b>
               </span>
 
               <ChevronDown size={14} className={styles.chevron} />
@@ -128,37 +126,51 @@ export default function Sidebar({ open, setOpen, settings, setSettings, account 
           {showWorkspaceMenu && (
             <div>
               <div className={styles.menuHeader}>
-                <span className={styles.kicker}>Selecione o workspace</span>
+                <span className={styles.kicker}>Selecione a empresa</span>
 
                 <button
                   type="button"
                   className={styles.closeMenu}
                   onClick={() => setShowWorkspaceMenu(false)}
-                  aria-label="Fechar seleção de workspace"
+                  aria-label="Fechar seleção de empresa"
                 >
                   <X size={14} strokeWidth={2.5} />
                 </button>
               </div>
 
               <ul className={styles.options}>
-                {workspaces.map((workspace) => {
-                  const selected = selectedWorkspace.name === workspace.name
+                {organizations.map((candidate) => {
+                  const selected = candidate.id === organization.id
 
                   return (
-                    <li key={workspace.id}>
+                    <li key={candidate.id}>
                       <button
                         type="button"
                         className={`${styles.option} ${selected ? styles.selected : ''}`}
-                        onClick={() => handleWorkspaceSelect(workspace)}
+                        onClick={() => handleWorkspaceSelect(candidate.id)}
                         aria-pressed={selected}
                       >
-                        <span className={styles.logo}>{workspace.logo}</span>
-                        <span className={styles.label}>{workspace.name}</span>
+                        <span className={styles.logo}>{initial(candidate.name)}</span>
+                        <span className={styles.label}>{candidate.name}</span>
                         {selected && <Check size={15} strokeWidth={2.5} className={styles.check} />}
                       </button>
                     </li>
                   )
                 })}
+
+                {/* Regra A6: criar outra empresa ou entrar com código */}
+                <li>
+                  <button
+                    type="button"
+                    className={styles.option}
+                    onClick={() => handleNavigate('/organizacao')}
+                  >
+                    <span className={styles.logo}>
+                      <Plus size={14} strokeWidth={2.5} />
+                    </span>
+                    <span className={styles.label}>Adicionar empresa</span>
+                  </button>
+                </li>
               </ul>
             </div>
           )}

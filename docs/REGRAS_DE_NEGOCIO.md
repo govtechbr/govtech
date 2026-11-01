@@ -14,8 +14,8 @@ Fonte única das regras do produto. Definidas com o dono do projeto em 02/11/202
 | A2 | Quem entra pelo código começa como **stakeholder** | ✅ E1 (03/11/2026) |
 | A3 | O código de convite é aleatório (10 caracteres, não é o nome da empresa). Só o admin o vê na tela e pode gerar outro; o anterior para de valer | ✅ |
 | A4 | Uma empresa **nunca fica sem admin**: o último admin não pode ser rebaixado nem sair | ✅ |
-| A5 | Uma pessoa pode estar em **várias empresas** e troca pela barra lateral (workspace). Ao entrar, abre a **última empresa usada** | 🔜 E2 |
-| A6 | A barra lateral tem **"Adicionar empresa"**, que leva a criar uma empresa ou entrar com código | 🔜 E2 |
+| A5 | Uma pessoa pode estar em **várias empresas** e troca pela barra lateral (workspace). Ao entrar, abre a **última empresa usada** (guardada no navegador) | ✅ E2 (03/11/2026) |
+| A6 | A barra lateral tem **"Adicionar empresa"**, que leva a criar uma empresa ou entrar com código | ✅ E2 |
 
 ## 2. Papéis
 
