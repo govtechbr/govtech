@@ -17,8 +17,10 @@ import styles from './ProjectsPage.module.css'
 // permissions vem do papel do usuário (adaptador em app/routes.jsx). Esconder o
 // botão é só conveniência: quem bloqueia de verdade é o RLS do banco.
 const allowAll = { create: true, edit: true, delete: true, manageGitHub: true, syncGitHub: true }
+const healthy = { status: 'success', alerts: [] }
 
-export default function ProjectsPage({ initialProjectId, permissions = allowAll }) {
+// health: { [projectId]: { status, alerts } }, calculado pelos alertas (regra P3)
+export default function ProjectsPage({ initialProjectId, permissions = allowAll, health = {} }) {
   const { showToast } = useToast()
   const { data: projectList = [], isPending, isError } = useProjects()
   const createProject = useCreateProject()
@@ -32,6 +34,9 @@ export default function ProjectsPage({ initialProjectId, permissions = allowAll 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const selectedProject = projectList.find((project) => project.id === selectedProjectId) ?? null
+  const healthOf = (project) => health[project.id] ?? healthy
+  const countStatus = (status) =>
+    projectList.filter((project) => healthOf(project).status === status).length
 
   const openCreateForm = () => {
     setEditingProject(null)
@@ -112,14 +117,14 @@ export default function ProjectsPage({ initialProjectId, permissions = allowAll 
 
         <article className="metric-card elevation-1">
           <span>Em atenção</span>
-          <strong>{projectList.filter((p) => p.status === 'warning').length}</strong>
+          <strong>{countStatus('warning')}</strong>
           <small>Exigem acompanhamento</small>
         </article>
 
         <article className="metric-card elevation-1">
-          <span>Riscos críticos</span>
-          <strong>{projectList.filter((p) => p.status === 'danger').length}</strong>
-          <small>Impacto potencial em prazo</small>
+          <span>Em risco</span>
+          <strong>{countStatus('danger')}</strong>
+          <small>Com alerta de risco</small>
         </article>
       </div>
 
@@ -132,60 +137,64 @@ export default function ProjectsPage({ initialProjectId, permissions = allowAll 
       )}
 
       <div className="project-grid" aria-busy={isPending}>
-        {projectList.map((project) => (
-          <article className={`project-card elevation-1 ${styles.card}`} key={project.id}>
-            <div className="project-card-top">
-              <div className="project-icon">
-                <FolderKanban size={19} />
+        {projectList.map((project) => {
+          const { status, alerts } = healthOf(project)
+
+          return (
+            <article className={`project-card elevation-1 ${styles.card}`} key={project.id}>
+              <div className="project-card-top">
+                <div className="project-icon">
+                  <FolderKanban size={19} />
+                </div>
+
+                <span className={`status-badge ${status}`}>{PROJECT_STATUS[status]}</span>
               </div>
 
-              <span className={`status-badge ${project.status}`}>
-                {PROJECT_STATUS[project.status]}
-              </span>
-            </div>
+              <h3>
+                {/* O botão cobre o cartão inteiro (::after), então clique e teclado funcionam em todo ele */}
+                <button
+                  type="button"
+                  className={styles.cardButton}
+                  onClick={() => handleProjectClick(project)}
+                >
+                  {project.name}
+                </button>
+              </h3>
 
-            <h3>
-              {/* O botão cobre o cartão inteiro (::after), então clique e teclado funcionam em todo ele */}
-              <button
-                type="button"
-                className={styles.cardButton}
-                onClick={() => handleProjectClick(project)}
-              >
-                {project.name}
-              </button>
-            </h3>
+              <div className="project-meta">
+                <span>
+                  <Users size={15} />
+                  {project.owner}
+                </span>
 
-            <div className="project-meta">
-              <span>
-                <Users size={15} />
-                {project.owner}
-              </span>
-
-              <span>
-                <CalendarClock size={15} />
-                {project.deadline}
-              </span>
-            </div>
-
-            <div className="project-progress">
-              <div>
-                <span>Progresso</span>
-                <strong>{project.progress}%</strong>
+                <span>
+                  <CalendarClock size={15} />
+                  {project.deadline}
+                </span>
               </div>
 
-              <div className="progress-track">
-                <span style={{ width: `${project.progress}%` }} />
-              </div>
-            </div>
+              <div className="project-progress">
+                <div>
+                  <span>Progresso</span>
+                  <strong>{project.progress}%</strong>
+                </div>
 
-            {project.status === 'danger' && (
-              <div className="project-alert">
-                <CircleAlert size={15} />
-                Dependências pendentes podem afetar o prazo.
+                <div className="progress-track">
+                  <span style={{ width: `${project.progress}%` }} />
+                </div>
               </div>
-            )}
-          </article>
-        ))}
+
+              {alerts.length > 0 && (
+                <div className="project-alert">
+                  <CircleAlert size={15} />
+                  {alerts.length === 1
+                    ? alerts[0].title
+                    : `${alerts.length} alertas: ${alerts[0].title}`}
+                </div>
+              )}
+            </article>
+          )
+        })}
       </div>
 
       {showForm && (
@@ -195,6 +204,7 @@ export default function ProjectsPage({ initialProjectId, permissions = allowAll 
       {selectedProject && !showDeleteConfirm && (
         <ProjectDetailModal
           project={selectedProject}
+          health={healthOf(selectedProject)}
           onClose={() => setSelectedProjectId(null)}
           github={{ canManage: permissions.manageGitHub, canSync: permissions.syncGitHub }}
           onEdit={permissions.edit ? () => openEditForm(selectedProject) : null}

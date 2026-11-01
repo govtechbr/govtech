@@ -55,6 +55,7 @@ export function resetDb({ withOrganization = true } = {}) {
   db.projectRepositories = []
   db.pullRequests = []
   db.branches = []
+  db.commits = []
 }
 
 // Chave que a Edge Function simulada aceita
