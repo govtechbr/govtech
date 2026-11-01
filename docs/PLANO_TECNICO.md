@@ -937,7 +937,14 @@ Commits: (1) `git mv` + correção dos caminhos relativos; (2) alias `@/` → `s
 
 ## 16. Proposta: fase Supabase, primeira entrega (aguardando aprovação)
 
-**Nada disto foi executado.** Decisões de 01/11: o ambiente é o **Supabase local com Docker** (o dono do projeto instala o Docker Desktop), e **o Claude executa** a fase (não o Dev B).
+**Nada disto foi executado.** Decisões de 01/11: **o Claude executa** a fase (não o Dev B) e **não haverá Docker** (o dono do projeto preferiu não instalar; decisão revista no mesmo dia).
+
+**Como trabalhar sem Docker (substitui o fluxo local da §4.5):**
+- As migrations continuam **versionadas como arquivos** em `backend/supabase/migrations/` (fonte da verdade, revisadas no PR).
+- São aplicadas no projeto **`govtech-br`** pelo MCP do Supabase (`apply_migration`), **cada uma com aprovação explícita**, como manda o CLAUDE.md.
+- Os testes pgTAP rodam no próprio `govtech-br` dentro de uma transação que termina em `rollback`: nada do que o teste cria fica no banco.
+- O Security Advisor (`get_advisors`) roda depois de cada migration.
+- O `govtech-br` ainda não tem usuários reais, então serve como ambiente de desenvolvimento até a defesa.
 
 ### 16.1 Objetivo da primeira entrega
 Cadastro → login → criar ou entrar numa organização → **CRUD de projetos no banco, isolado por organização**. Repositórios, PRs, auditoria e GitHub ficam para as entregas seguintes (16.6).
@@ -993,25 +1000,25 @@ Cadastro → login → criar ou entrar numa organização → **CRUD de projetos
 | Testes | MSW para simular a API do Supabase nos testes de API (`onUnhandledRequest: 'error'`), como prevê o AGENTS.md |
 | Vercel | As 2 variáveis públicas configuradas pelo MCP da Vercel |
 
-**Dependências novas desta entrega (todas previstas no plano):** `supabase` (CLI) **2.121.0** em `backend/package.json`, `@supabase/supabase-js` 2.118.0, `react-hook-form`, `zod` e `msw` (versões conferidas na hora de instalar, com pelo menos 2 semanas de publicação).
+**Dependências novas desta entrega (todas previstas no plano):** `@supabase/supabase-js` 2.118.0, `react-hook-form`, `zod` e `msw` (versões conferidas na hora de instalar, com pelo menos 2 semanas de publicação). O CLI do Supabase **não** é instalado: sem Docker, o MCP faz o papel dele.
 
 ### 16.6 Entregas seguintes (cada uma com proposta própria)
 1. **Auditoria:** trigger `private.audit_row()` e tela de Auditoria lendo do banco (§4.4).
 2. **GitHub:** chave por projeto no Vault, Edge Function `github-sync`, tabelas `repositories`/`pull_requests`/`branches` (§4.7).
 3. **RBAC:** tela de membros com troca de papel e código de convite.
 
-### 16.7 Ordem de execução (cada passo vira commit; o banco remoto só no fim)
-1. `backend/` + CLI + `supabase init` + `supabase start` (local).
-2. Migration `core_schema` + `seed.sql` (organização demo com os 4 projetos do mock).
-3. Testes pgTAP verdes (`supabase test db`) + Security Advisor local.
+### 16.7 Ordem de execução (cada passo vira commit)
+1. `backend/supabase/migrations/` com a migration `core_schema` e o `seed.sql` (organização demo com os 4 projetos do mock), revisados no PR.
+2. **Pedir aprovação** → aplicar no `govtech-br` pelo MCP → Security Advisor.
+3. Testes pgTAP no `govtech-br` (em transação com `rollback`) → todos verdes.
 4. Front: client, auth, cadastro, `projectsApi` no Supabase, testes.
-5. **Pedir aprovação** e só então `supabase db push` para o `govtech-br` + variáveis na Vercel.
+5. Variáveis públicas na Vercel (MCP) e teste ponta a ponta no preview do PR.
 
 ### 16.8 Riscos
 
 | Risco | Mitigação |
 |---|---|
-| Docker no Windows exige WSL2 e reinicialização | Passo 1 só começa com o Docker rodando |
+| Sem banco local, um erro de migration atinge o `govtech-br` | Cada migration é revisada e aprovada antes; o banco ainda não tem usuários reais; testes rodam em transação com `rollback` |
 | Plano gratuito pausa o projeto após 7 dias sem uso (Q11: aceito) | Acessar antes da defesa; reativar leva ~1 min |
 | E-mail de confirmação do cadastro tem limite de envio no plano gratuito | Para a demo, desligar a confirmação por e-mail no projeto (decisão a aprovar no passo 5) |
 | Dados do `localStorage` não migram para o banco | Esperado: o banco começa com o seed demo |
