@@ -346,7 +346,7 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 
 | Componente | Responsabilidade | Props principais |
 |---|---|---|
-| `Sidebar` | Menu lateral com logo, seletor de “workspace”, itens de menu e botão do chatbot. Usa `useNavigate` para trocar de rota. | `open`, `setOpen`, `settings` |
+| `Sidebar` | Menu lateral com logo, troca de empresa (lista as empresas do usuário e "Adicionar empresa", que leva a `/organizacao`), itens de menu e botão do chatbot. Lê a empresa atual de `useCurrentOrganization`. | `open`, `setOpen`, `account` |
 | `Topbar` | Barra superior: botão de menu (mobile), breadcrumb “GOVTECH PLATFORM › SEÇÃO”, sino e menu da conta. | `active`, `setOpen`, `onNavigate` |
 | `GlobalSearch` | Busca em projetos, serviços, PRs e branches. Abre pelo botão de lupa da Topbar e fecha com `Esc`, com o X ou clicando fora. Escolher um projeto leva a `/projects` com o detalhe dele aberto. | `open`, `onClose`, `projects`, `onNavigate`, `onSelectProject` |
 
