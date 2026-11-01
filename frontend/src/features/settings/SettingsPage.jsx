@@ -14,6 +14,7 @@ import {
   TimerReset,
 } from 'lucide-react'
 
+import { useToast } from '@/shared/hooks/useToast'
 import StatusBadge from '@/shared/ui/StatusBadge'
 
 function toDraft(settings) {
@@ -27,7 +28,8 @@ function toDraft(settings) {
   }
 }
 
-export default function SettingsPage({ settings, onSaveSettings, onToast }) {
+export default function SettingsPage({ settings, onSaveSettings }) {
+  const { showToast: onToast } = useToast()
   const [tab, setTab] = useState('geral')
 
   const [draft, setDraft] = useState(() => toDraft(settings))

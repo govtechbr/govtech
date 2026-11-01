@@ -11,7 +11,7 @@ export default function GlobalSearch({ open, ...props }) {
   return <SearchPanel {...props} />
 }
 
-function SearchPanel({ onClose, projects, onNavigate, setSelectedProject }) {
+function SearchPanel({ onClose, projects = [], onNavigate, onSelectProject }) {
   const [query, setQuery] = useState('')
   const inputRef = useRef(null)
 
@@ -39,8 +39,7 @@ function SearchPanel({ onClose, projects, onNavigate, setSelectedProject }) {
               subtitle: `Deadline: ${formatProjectDate(project.deadline)}`,
               icon: Target,
               action: () => {
-                setSelectedProject(project)
-                onNavigate('Projetos')
+                onSelectProject(project)
                 onClose()
               },
             })),
@@ -99,6 +98,8 @@ function SearchPanel({ onClose, projects, onNavigate, setSelectedProject }) {
       <button
         type="button"
         onClick={onClose}
+        aria-hidden="true"
+        tabIndex={-1}
         style={{
           position: 'fixed',
           zIndex: 100,
@@ -130,12 +131,20 @@ function SearchPanel({ onClose, projects, onNavigate, setSelectedProject }) {
 
           <input
             ref={inputRef}
+            type="search"
+            aria-label="Buscar no sistema"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => event.key === 'Escape' && onClose()}
             placeholder="Buscar projetos, repositórios, PRs e branches..."
           />
 
-          <button type="button" className="input-action" onClick={onClose}>
+          <button
+            type="button"
+            className="input-action"
+            onClick={onClose}
+            aria-label="Fechar busca"
+          >
             <X size={17} />
           </button>
         </div>

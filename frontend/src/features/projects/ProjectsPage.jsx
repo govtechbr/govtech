@@ -5,11 +5,15 @@ import DeleteProjectModal from './components/DeleteProjectModal'
 import ProjectDetailModal from './components/ProjectDetailModal'
 import ProjectFormModal from './components/ProjectFormModal'
 import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
+import { useToast } from '@/shared/hooks/useToast'
 import { normalizeProject } from '@/shared/lib/projectUtils'
 
-export default function ProjectsPage({ projectList = [], setProjectList, onToast }) {
+export default function ProjectsPage({ projectList = [], setProjectList, initialProjectId }) {
+  const { showToast: onToast } = useToast()
   const [showForm, setShowForm] = useState(false)
-  const [selectedProject, setSelectedProject] = useState(null)
+  const [selectedProject, setSelectedProject] = useState(
+    () => projectList.find((project) => project.id === initialProjectId) ?? null,
+  )
   const [editingProject, setEditingProject] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 

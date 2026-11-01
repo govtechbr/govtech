@@ -38,4 +38,49 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: 'Projeto Persistido' })).toBeInTheDocument()
   })
+
+  it('shows a toast after creating a project', async () => {
+    const { user } = renderWithRouter(<App />, { route: '/projects' })
+
+    await user.click(screen.getByRole('button', { name: /novo projeto/i }))
+    await user.type(screen.getByLabelText('Nome do Projeto'), 'Projeto Avisado')
+    await user.type(screen.getByLabelText('Objetivo do Projeto'), 'Teste do aviso')
+    await user.type(screen.getByLabelText('Deadline'), '2026-12-20')
+    await user.type(screen.getByLabelText('Responsável'), 'Dev')
+    await user.click(screen.getByRole('button', { name: /criar projeto/i }))
+
+    expect(screen.getByText('Projeto criado com sucesso.')).toBeInTheDocument()
+  })
+
+  it('renders the landing page lazily', async () => {
+    renderWithRouter(<App />, { route: '/landing' })
+
+    const loginLinks = await screen.findAllByRole('link', { name: /acessar plataforma/i })
+
+    expect(loginLinks[0]).toHaveAttribute('href', '/login')
+  })
+
+  describe('global search', () => {
+    it('opens from the topbar and closes', async () => {
+      const { user } = renderWithRouter(<App />, { route: '/dashboard' })
+
+      await user.click(screen.getByRole('button', { name: 'Buscar' }))
+      expect(screen.getByRole('searchbox', { name: /buscar no sistema/i })).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: /fechar busca/i }))
+      expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
+    })
+
+    it('opens the chosen project on the projects page', async () => {
+      const { user } = renderWithRouter(<App />, { route: '/dashboard' })
+
+      await user.click(screen.getByRole('button', { name: 'Buscar' }))
+      await user.type(screen.getByRole('searchbox'), 'Pagamentos')
+      await user.click(screen.getByRole('button', { name: /plataforma de pagamentos/i }))
+
+      expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
+      expect(await screen.findByRole('button', { name: /editar/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /novo projeto/i })).toBeInTheDocument()
+    })
+  })
 })
