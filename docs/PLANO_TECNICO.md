@@ -909,3 +909,11 @@ Commits: (1) `git mv` + correção dos caminhos relativos; (2) alias `@/` → `s
 | 05–08/11 | 4 (shared/ui + 4 telas) | Sem rolagem horizontal em 390 px; 0 avisos de acessibilidade nessas telas |
 | 09/11 | 5 (TanStack Query) | Testes de Projetos verdes com o `projectsApi` mockado |
 | 10/11 | Folga da etapa | — |
+
+### 15.9 Registro de execução
+
+| Data | Etapa | O que foi feito | Verificação |
+|---|---|---|---|
+| 01/11 | 1 | `git mv` de todo o app para `frontend/` (61 arquivos, histórico preservado). Husky: `prepare` = `cd .. && husky frontend/.husky` e hook `cd frontend && npx lint-staged`. CI com `working-directory: frontend`. `README.md` na raiz. AGENTS.md: comandos rodam em `frontend/` | lint 0 erros, 32 testes, build ok, hook rodou no próprio commit |
+
+**Vercel:** nenhum projeto da Vercel está ligado à conta conectada ao Claude (busca por nome e por repositório vazia em 01/11). Quem criar ou ligar o projeto deve definir **Root Directory = `frontend`** (Settings → Build and Deployment). O `vercel.json` já está em `frontend/`.

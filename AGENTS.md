@@ -16,8 +16,9 @@ Atue como **Tech Lead full-stack sênior**: crítico e construtivo.
 - Plano geral e decisões: `docs/PLANO_TECNICO.md`. Mapa de testes: `docs/TESTES.mmd`. Funcionamento atual: `DOCUMENTACAO.md`.
 
 ## Comandos
-Hoje existem `dev`, `build`, `preview`, `lint`, `format` e `test`/`test:run`/`test:coverage`. Os de e2e e Supabase entram nas fases seguintes (ver `docs/PLANO_TECNICO.md` §8); se não existirem ainda, avise em vez de criar. Node ≥ 22.12.
+Os comandos `npm` rodam **dentro de `frontend/`**. Hoje existem `dev`, `build`, `preview`, `lint`, `format` e `test`/`test:run`/`test:coverage`. Os de e2e e Supabase entram nas fases seguintes (ver `docs/PLANO_TECNICO.md` §8); se não existirem ainda, avise em vez de criar. Node ≥ 22.12.
 ```bash
+cd frontend
 npm run dev            # Vite em http://localhost:5173
 npm run build          # build de produção (deve passar antes de qualquer PR)
 npm run lint           # ESLint
@@ -30,7 +31,7 @@ npx supabase test db   # testes pgTAP de RLS
 Ao rodar testes ou build, mostre só o resumo/erros (`| tail -30`), não o log inteiro.
 
 ## Estrutura
-**Hoje** o app está na raiz (`pages/`, `components/`, `data/mockData.js`, `utils/`, `constants/`). **Alvo** (fase Nova estrutura, PLANO_TECNICO §5.1):
+**Hoje** o app está em `frontend/` (`pages/`, `components/`, `data/mockData.js`, `utils/`, `constants/`), migrando para `frontend/src/`. **Alvo** (fase Nova estrutura, PLANO_TECNICO §5.1):
 - **Front e back separados.** `frontend/` = app React (JavaScript, sem TypeScript). `backend/supabase/` = migrations, seed, testes pgTAP e Edge Functions.
 - `frontend/src/landing/` página institucional · `frontend/src/app/` providers e rotas · `frontend/src/features/<dominio>/` (api, hooks, components, utils, `__tests__`) · `frontend/src/shared/` (ui, layout, hooks, lib) · `frontend/src/mocks/` dados de exemplo · `frontend/src/styles/` tokens
 - Os mocks são intencionais: só sair deles quando a feature tiver dado real no Supabase.
