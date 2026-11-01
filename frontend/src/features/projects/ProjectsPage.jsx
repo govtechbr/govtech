@@ -14,7 +14,11 @@ import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
 import { useToast } from '@/shared/hooks/useToast'
 import styles from './ProjectsPage.module.css'
 
-export default function ProjectsPage({ initialProjectId }) {
+// permissions vem do papel do usuário (adaptador em app/routes.jsx). Esconder o
+// botão é só conveniência: quem bloqueia de verdade é o RLS do banco.
+const allowAll = { create: true, edit: true, delete: true }
+
+export default function ProjectsPage({ initialProjectId, permissions = allowAll }) {
   const { showToast } = useToast()
   const { data: projectList = [], isPending, isError } = useProjects()
   const createProject = useCreateProject()
@@ -91,10 +95,12 @@ export default function ProjectsPage({ initialProjectId }) {
           </p>
         </div>
 
-        <button type="button" className="primary-button" onClick={openCreateForm}>
-          <Plus size={16} />
-          Novo projeto
-        </button>
+        {permissions.create && (
+          <button type="button" className="primary-button" onClick={openCreateForm}>
+            <Plus size={16} />
+            Novo projeto
+          </button>
+        )}
       </div>
 
       <div className="dashboard-grid three-columns">
@@ -190,8 +196,8 @@ export default function ProjectsPage({ initialProjectId }) {
         <ProjectDetailModal
           project={selectedProject}
           onClose={() => setSelectedProjectId(null)}
-          onEdit={() => openEditForm(selectedProject)}
-          onDelete={() => setShowDeleteConfirm(true)}
+          onEdit={permissions.edit ? () => openEditForm(selectedProject) : null}
+          onDelete={permissions.delete ? () => setShowDeleteConfirm(true) : null}
         />
       )}
 

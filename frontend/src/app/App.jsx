@@ -4,14 +4,13 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 
 import AppLayout from '@/app/AppLayout'
 import { createQueryClient } from '@/app/queryClient'
-import { OverviewRoute, ProjectsRoute, SettingsRoute } from '@/app/routes'
+import { AccessRoute, OverviewRoute, ProjectsRoute, SettingsRoute } from '@/app/routes'
 import AuditPage from '@/features/audit/AuditPage'
 import AuthProvider from '@/features/auth/AuthProvider'
 import ProtectedRoute from '@/features/auth/components/ProtectedRoute'
 import LoginPage from '@/features/auth/LoginPage'
 import OrganizationPage from '@/features/auth/OrganizationPage'
 import SignupPage from '@/features/auth/SignupPage'
-import RbacPage from '@/features/rbac/RbacPage'
 import RepositoriesPage from '@/features/repositories/RepositoriesPage'
 import ToastProvider from '@/shared/ui/ToastProvider'
 
@@ -45,7 +44,7 @@ export default function App() {
                 <Route path="/audit" element={<AuditPage />} />
                 <Route path="/repositories" element={<RepositoriesPage />} />
                 <Route path="/projects" element={<ProjectsRoute />} />
-                <Route path="/access" element={<RbacPage />} />
+                <Route path="/access" element={<AccessRoute />} />
                 <Route path="/settings" element={<SettingsRoute />} />
               </Route>
             </Route>
