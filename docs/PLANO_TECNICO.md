@@ -915,5 +915,6 @@ Commits: (1) `git mv` + correção dos caminhos relativos; (2) alias `@/` → `s
 | Data | Etapa | O que foi feito | Verificação |
 |---|---|---|---|
 | 01/11 | 1 | `git mv` de todo o app para `frontend/` (61 arquivos, histórico preservado). Husky: `prepare` = `cd .. && husky frontend/.husky` e hook `cd frontend && npx lint-staged`. CI com `working-directory: frontend`. `README.md` na raiz. AGENTS.md: comandos rodam em `frontend/` | lint 0 erros, 32 testes, build ok, hook rodou no próprio commit |
+| 01/11 | 2 | (1) `git mv` de 50 arquivos para `frontend/src/` conforme a tabela 15.3, com script que recalcula os imports (diff só de caminhos). (2) Alias `@/` → `src/` (`vite.config.js` + `jsconfig.json` para o editor); 65 imports trocados. (3) ESLint `no-restricted-imports`: proíbe `../`, feature importando outra feature, `shared/` importando `features/`/`app/`/`landing/` e `landing/` importando o sistema. DOCUMENTACAO.md §4, §5, §6, §11.2 e §13 atualizadas | lint 0 erros, 32 testes, build ok; a regra foi testada com arquivo de prova que viola as fronteiras (3 erros esperados) |
 
 **Vercel:** nenhum projeto da Vercel está ligado à conta conectada ao Claude (busca por nome e por repositório vazia em 01/11). Quem criar ou ligar o projeto deve definir **Root Directory = `frontend`** (Settings → Build and Deployment). O `vercel.json` já está em `frontend/`.

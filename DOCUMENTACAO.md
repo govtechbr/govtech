@@ -82,12 +82,14 @@ CSS é escrito à mão em arquivos `.css` (sem Tailwind, sem Bootstrap, sem bibl
 
 ## 4. Como rodar o projeto, passo a passo
 
-Pré-requisito: **Node.js** instalado (versão 18 ou superior recomendada). Para conferir: abra um terminal e rode `node -v`.
+Pré-requisito: **Node.js 22.12 ou superior** (exigência do Vitest). Para conferir: abra um terminal e rode `node -v`.
 
-### Passo 1 — Entrar na pasta do projeto
+### Passo 1 — Entrar na pasta do front-end
+
+Desde 01/11/2026 o app fica em `frontend/`; todos os comandos `npm` rodam lá dentro.
 
 ```bash
-cd C:\Users\oguil\Documents\tcc\govtech
+cd C:\Users\oguil\Documents\tcc\govtech\frontend
 ```
 
 ### Passo 2 — Instalar as dependências
@@ -96,7 +98,7 @@ cd C:\Users\oguil\Documents\tcc\govtech
 npm install
 ```
 
-Isso lê o `package.json` e baixa as bibliotecas para a pasta `node_modules/` (que não vai para o git, conforme o `.gitignore`).
+Isso lê o `package.json` e baixa as bibliotecas para a pasta `node_modules/` (que não vai para o git, conforme o `.gitignore`). Também instala o hook de pre-commit (Husky), que roda ESLint e Prettier nos arquivos alterados a cada commit.
 
 ### Passo 3 — Subir o servidor de desenvolvimento
 
@@ -118,6 +120,14 @@ Cria a pasta `dist/` com o site compilado. Para testar essa versão localmente:
 npm run preview
 ```
 
+### Passo 5 — Rodar lint e testes
+
+```bash
+npm run lint       # ESLint (inclui as regras de dependência entre pastas)
+npm run test:run   # testes automatizados (Vitest), uma vez
+npm test           # testes em modo watch, enquanto você programa
+```
+
 ### Verificação feita para esta documentação
 
 `npm ci` e `npm run build` foram executados com sucesso: 1631 módulos transformados, sem erros. O bundle JavaScript final tem cerca de 307 kB (88 kB comprimido).
@@ -126,58 +136,55 @@ npm run preview
 
 ## 5. Estrutura de pastas
 
+Desde 01/11/2026 o repositório separa front-end e back-end (decisão registrada em `docs/PLANO_TECNICO.md` §15).
+
 ```
 govtech/
-├── index.html            ← Única página HTML. Contém só <div id="root">.
-├── main.jsx              ← Ponto de entrada do React (liga tudo ao HTML).
-├── App.jsx               ← Define as rotas e o layout autenticado.
-├── index.css             ← Estilos globais (inclui tema escuro).
-├── app.css               ← Estilos das telas e componentes.
-├── tokens.css            ← “Variáveis” de cor, espaçamento e sombra (design tokens).
-├── vite.config.js        ← Configuração do Vite (só ativa o plugin do React).
-├── vercel.json           ← Configuração de publicação na Vercel.
-├── package.json          ← Nome do projeto, scripts e lista de dependências.
-├── package-lock.json     ← Versões exatas das dependências instaladas.
-├── .gitignore            ← Arquivos que o git ignora (node_modules, dist, .env…).
+├── README.md             ← Como começar e comandos.
+├── AGENTS.md / CLAUDE.md ← Regras do projeto para pessoas e agentes de IA.
+├── DOCUMENTACAO.md       ← Este arquivo.
+├── docs/                 ← Plano técnico (PLANO_TECNICO.md) e mapa de testes (TESTES.mmd).
+├── .github/workflows/    ← CI: lint, testes e build em todo PR.
+├── backend/              ← (fase Supabase) migrations, seed, testes pgTAP e Edge Functions.
 │
-├── pages/                ← Telas completas, uma por rota/menu.
-│   ├── LoginPage.jsx         Tela de login (simulada).
-│   ├── LandingPage.jsx       Página de apresentação do produto (marketing).
-│   ├── OverviewPage.jsx      “Visão geral”: KPIs, gráficos e status dos projetos.
-│   ├── ProjectsPage.jsx      Cadastro, edição, exclusão e cards de projetos.
-│   ├── RepositoriesPage.jsx  Abas: Repositórios, Pull Requests, Branches.
-│   ├── AuditPage.jsx         Lista de eventos de auditoria.
-│   ├── RbacPage.jsx          Papéis e lista de usuários.
-│   └── SettingsPage.jsx      Configurações gerais, integrações, notificações, segurança.
-│
-├── components/           ← Peças reutilizáveis, agrupadas por assunto.
-│   ├── layout/           Estrutura da tela: Sidebar (menu lateral), Topbar (barra superior),
-│   │                     GlobalSearch (busca).
-│   ├── common/           Genéricos: Brand (logo), Icon (ícone por nome), StatCard (cartão de número),
-│   │                     StatusBadge (etiqueta colorida), Toast (aviso, sem uso no momento), ModalShell, ChatbotModal.
-│   ├── dashboard/        Gráficos e painéis da Visão geral.
-│   ├── projects/         Modais de projeto (formulário, detalhes, exclusão).
-│   ├── repositories/     Listas e modal de repositórios, PRs e branches.
-│   └── rbac/             Modal de detalhes de um papel.
-│
-├── data/                 ← Dados de exemplo (mock).
-│   └── mockData.js       TODOS os dados de exemplo do app (inclusive listas de repositórios,
-│                         PRs, branches e usuários do RBAC, que antes ficavam dentro dos componentes).
-│
-├── constants/            ← Valores fixos.
-│   ├── colors.js         Cores usadas em gráficos e status.
-│   ├── defaultSettings.js Configurações padrão.
-│   ├── projectStatus.js  Status manual do projeto: Saudável, Atenção, Risco.
-│   └── storageKeys.js    Nomes das chaves do localStorage.
-│
-├── hooks/                ← Funções reutilizáveis com lógica de estado.
-│   ├── useLocalStorage.js Guarda um estado React no localStorage automaticamente.
-│   └── useTheme.js        Aplica o tema claro/escuro no <html>.
-│
-└── utils/                ← Funções auxiliares puras (sem tela).
-    ├── projectUtils.js   Normaliza projetos, formata datas e calcula o semáforo de prazo.
-    └── storageUtils.js   Lê e grava projetos e configurações no localStorage.
+└── frontend/             ← App React + Vite. Todos os comandos npm rodam aqui.
+    ├── index.html        ← Única página HTML. Contém só <div id="root"> e carrega src/main.jsx.
+    ├── package.json      ← Scripts e dependências.
+    ├── vite.config.js    ← Vite, alias @/ → src/ e configuração dos testes (Vitest).
+    ├── eslint.config.js  ← Regras de lint, inclusive quem pode importar de quem.
+    ├── jsconfig.json     ← Ensina o editor a entender o alias @/.
+    ├── vercel.json       ← Publicação na Vercel (Root Directory = frontend).
+    ├── .husky/           ← Hook de pre-commit (ESLint + Prettier).
+    │
+    └── src/
+        ├── main.jsx      ← Ponto de entrada do React (liga tudo ao HTML).
+        ├── app/          ← App.jsx: rotas e layout autenticado.
+        ├── landing/      ← LandingPage.jsx: página de apresentação, separada do sistema.
+        │
+        ├── features/     ← Uma pasta por área do sistema. Uma feature não importa outra.
+        │   ├── auth/          LoginPage.jsx (login simulado).
+        │   ├── dashboard/     OverviewPage.jsx + components/ (gráficos e painéis da Visão geral).
+        │   ├── projects/      ProjectsPage.jsx + components/ (modais) + utils/storageUtils.js.
+        │   ├── repositories/  RepositoriesPage.jsx + components/ (repositórios, PRs, branches).
+        │   ├── audit/         AuditPage.jsx (eventos de auditoria).
+        │   ├── rbac/          RbacPage.jsx + components/ (detalhes de um papel).
+        │   └── settings/      SettingsPage.jsx.
+        │
+        ├── shared/       ← O que mais de uma área usa. Não importa de features/.
+        │   ├── layout/        Sidebar, Topbar, GlobalSearch e ChatbotModal.
+        │   ├── ui/            Brand, Icon, ModalShell, StatCard, StatusBadge, Toast.
+        │   ├── hooks/         useLocalStorage (estado salvo no navegador), useTheme (tema claro/escuro).
+        │   ├── lib/           projectUtils.js: normaliza projetos, formata datas e calcula o semáforo de prazo.
+        │   └── constants/     colors, defaultSettings, projectStatus (Saudável/Atenção/Risco), storageKeys.
+        │
+        ├── mocks/        ← mockData.js: TODOS os dados de exemplo (ficam até existir dado real no Supabase).
+        ├── styles/       ← tokens.css (cores, espaços, sombras), index.css (global + tema escuro), app.css (telas).
+        └── test/         ← setup.js e renderWithRouter.jsx, usados pelos testes.
 ```
+
+Os testes ficam em pastas `__tests__/` ao lado do código que testam (ex.: `src/features/projects/__tests__/`).
+
+Os imports usam o alias `@/` (ex.: `import Sidebar from '@/shared/layout/Sidebar'`). O ESLint barra `../` e imports proibidos entre pastas.
 
 ---
 
@@ -186,7 +193,7 @@ govtech/
 Esta é a sequência real, seguindo o código:
 
 **Passo 1 — O navegador abre `index.html`.**
-Ele tem apenas `<div id="root"></div>` e carrega `main.jsx` como módulo.
+Ele tem apenas `<div id="root"></div>` e carrega `src/main.jsx` como módulo.
 
 **Passo 2 — `main.jsx` monta o React.**
 ```jsx
@@ -212,7 +219,7 @@ Ele usa `<Routes>` para comparar o endereço atual com a lista de rotas (ver §7
 - `/dashboard`, `/audit`, `/repositories`, `/projects`, `/access`, `/settings` → `AuthenticatedLayout`.
 
 **Passo 5 — `AuthenticatedLayout` monta a casca do sistema.**
-Dentro de `App.jsx` ele:
+Dentro de `src/app/App.jsx` ele:
 1. Guarda estados de tela: aviso (toast), menu lateral aberto e menu da conta.
 2. Carrega as configurações com `useLocalStorage('govtech:settings', defaultSettings)` e aplica o tema com `useTheme`.
 3. Carrega a lista de projetos com `getStoredProjects(projetosDoMock)` e grava cada mudança em `govtech:projects` com `saveProjects`.
@@ -229,7 +236,7 @@ Qualquer endereço desconhecido cai em `<Navigate to="/" />`, ou seja, volta par
 
 ## 7. Rotas (endereços da aplicação)
 
-Definidas em `App.jsx`:
+Definidas em `src/app/App.jsx`:
 
 | Endereço | Componente | Layout | Observação |
 |---|---|---|---|
@@ -430,7 +437,7 @@ Garante que um projeto sempre tenha campos válidos, mesmo que os dados salvos e
 - `repositories` → só strings.
 
 ### 11.2 `getProjectStatus(project)` — o semáforo
-Calcula a diferença em dias entre hoje e o prazo (`deadline`):
+Calcula a diferença em dias entre hoje e o prazo (`deadline`), com as duas datas à meia-noite. Fica em `src/shared/lib/projectUtils.js`. Até 01/11/2026 a contagem saía com um dia a mais (o prazo ia até 23:59:59 e era arredondado para cima); os testes acharam e o bug foi corrigido.
 
 | Condição | Resultado | Cor | Ícone |
 |---|---|---|---|
@@ -460,7 +467,7 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 
 ## 13. Deploy (Vercel)
 
-`vercel.json`:
+`frontend/vercel.json` (o projeto da Vercel precisa usar **Root Directory = `frontend`**):
 ```json
 {
   "framework": "vite",

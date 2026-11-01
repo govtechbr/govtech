@@ -31,7 +31,7 @@ npx supabase test db   # testes pgTAP de RLS
 Ao rodar testes ou build, mostre só o resumo/erros (`| tail -30`), não o log inteiro.
 
 ## Estrutura
-**Hoje** o app está em `frontend/` (`pages/`, `components/`, `data/mockData.js`, `utils/`, `constants/`), migrando para `frontend/src/`. **Alvo** (fase Nova estrutura, PLANO_TECNICO §5.1):
+**Hoje** o app já está em `frontend/src/` organizado por feature (mapa em `DOCUMENTACAO.md` §5). Imports usam o alias `@/`; o ESLint barra `../` e imports entre features. **Alvo** (fase Nova estrutura, PLANO_TECNICO §5.1):
 - **Front e back separados.** `frontend/` = app React (JavaScript, sem TypeScript). `backend/supabase/` = migrations, seed, testes pgTAP e Edge Functions.
 - `frontend/src/landing/` página institucional · `frontend/src/app/` providers e rotas · `frontend/src/features/<dominio>/` (api, hooks, components, utils, `__tests__`) · `frontend/src/shared/` (ui, layout, hooks, lib) · `frontend/src/mocks/` dados de exemplo · `frontend/src/styles/` tokens
 - Os mocks são intencionais: só sair deles quando a feature tiver dado real no Supabase.
