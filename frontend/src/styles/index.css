@@ -1457,7 +1457,9 @@ button {
   }
 }
 
-@media (max-width: 900px) {
+/* Sidebar vira gaveta abaixo de 768 px. Tem que bater com o breakpoint do botão
+   .menu-toggle em app.css; senão sobra uma faixa sem menu (bug de 01/11 no iPad) */
+@media (max-width: 767px) {
   .app-layout .sidebar {
     transform: translateX(-100%);
     transition: transform 0.25s ease;
