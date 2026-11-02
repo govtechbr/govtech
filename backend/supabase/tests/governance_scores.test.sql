@@ -72,8 +72,10 @@ select throws_ok(
 reset role;
 
 delete from public.projects where id = '20000000-0000-0000-0000-00000000000a';
+-- Filtra pelo projeto do teste: como postgres, o SQL Editor de produção vê as linhas reais
 select is_empty(
-  $$ select 1 from public.governance_scores $$,
+  $$ select 1 from public.governance_scores
+     where project_id = '20000000-0000-0000-0000-00000000000a' $$,
   'projeto excluído leva o histórico do índice junto'
 );
 
