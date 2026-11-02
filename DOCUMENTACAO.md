@@ -292,7 +292,7 @@ Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir
 - **4 cartões**: Quantidade de PRs (abertos agora + criados no período), Lead time médio (abertura → merge), Taxa de aprovação (mergeados com ao menos 1 aprovação) e PRs em risco (abertos há mais de 3 dias).
 - **Gráfico semanal** (`PullRequestFlowChart`): PRs abertos × mergeados, pelo menos 4 semanas. **Distribuição** (`PullRequestDistribution`): abertos, rascunhos, mergeados e fechados.
 - **Lista de projetos** com o status calculado (pior primeiro) e o primeiro alerta de cada um.
-- **Alertas automatizados** (`AutomatedAlerts`), Risco primeiro, com link para o PR, e **Eventos de desenvolvimento** (`RecentActivityPanel`): repositórios, commits da branch principal, branches e contribuidores no período.
+- **Alertas automatizados** (`AutomatedAlerts`), os mais críticos primeiro (Risco antes de Atenção; branch e revisão antes de prazo e PR parado), cada um com o motivo e link para o PR; 8 visíveis e o botão "Ver todos os N alertas", e **Eventos de desenvolvimento** (`RecentActivityPanel`): repositórios, commits da branch principal, branches e contribuidores no período.
 - **Tooltips explicativos** (desde 02/11/2026): as regras de cálculo do índice, do status e dos eventos ficam no botão ⓘ do canto de cada cartão (`shared/ui/Tooltip.jsx`), que abre com o mouse, o foco do teclado ou um toque e fecha com Esc. O texto continua ligado ao botão por `aria-describedby` para leitor de tela.
 
 ### 8.5 `ProjectsPage.jsx` — Projetos
@@ -388,7 +388,7 @@ As contas de data do calendário ficam em `shared/lib/date.js` (`todayIso`, `add
 | `ProjectStatusSummary` | Resumo “Status dos Projetos” (contagem por status calculado) e o cartão que explica a regra. |
 | `PullRequestFlowChart` | Gráfico de fluxo de PRs criadas × integradas. |
 | `PullRequestDistribution` | Distribuição das PRs por status (abertas, em revisão, aprovadas, integradas). |
-| `AutomatedAlerts` | Painel “Alertas Automatizados”, com a origem indicada como GitHub Actions. |
+| `AutomatedAlerts` | Painel “Alertas Automatizados”: alertas de `governanceAlerts` com título, origem, motivo e “Ver todos”. |
 | `RecentActivityPanel` | Painel “Atividade Recente” com eventos de PR e branch. |
 
 ### 9.4 Projetos

@@ -60,6 +60,7 @@ export default function ProjectDetailModal({
                   {PROJECT_STATUS[alert.level]}: {alert.title}
                 </strong>
                 <span className={styles.deadlineMessage}>{alert.detail}</span>
+                <span className={styles.alertReason}>{alert.reason}</span>
               </li>
             ))}
           </ul>

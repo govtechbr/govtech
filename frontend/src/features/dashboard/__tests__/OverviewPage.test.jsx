@@ -122,7 +122,7 @@ describe('OverviewPage', () => {
     ).toHaveAccessibleDescription(/O status vem dos alertas automáticos/)
   })
 
-  it('lists the automated alerts, the most serious first', () => {
+  it('lists the automated alerts, the most critical first, with the reason', () => {
     renderOverview()
 
     const alerts = within(
@@ -130,15 +130,32 @@ describe('OverviewPage', () => {
     ).getAllByRole('listitem')
 
     expect(alerts.map((item) => item.querySelector('strong').textContent)).toEqual([
-      'Risco: PR aberto há 5 dias',
       'Risco: Prazo vencido',
+      'Risco: PR aberto há 5 dias',
       'Atenção: PR mergeado sem aprovação',
       'Atenção: Prazo perto do fim',
     ])
-    expect(within(alerts[0]).getByRole('link', { name: '#3 · app · PR 3' })).toHaveAttribute(
+    expect(within(alerts[1]).getByRole('link', { name: '#3 · app · PR 3' })).toHaveAttribute(
       'href',
       'https://github.com/o/app/pull/3',
     )
+    expect(alerts[2]).toHaveTextContent(/sem nenhuma revisão aprovada/)
+  })
+
+  it('shows every alert on demand instead of hiding the extra ones', async () => {
+    const stale = Array.from({ length: 10 }, (_, index) =>
+      pr({ number: 10 + index, state: 'open', created_at_github: daysAgo(2), merged_at: null }),
+    )
+    const { user } = renderOverview({ governance: { ...governance, pullRequests: stale } })
+    const panel = screen.getByRole('heading', { name: 'Alertas Automatizados' }).closest('section')
+
+    expect(within(panel).getAllByRole('listitem')).toHaveLength(8)
+
+    await user.click(within(panel).getByRole('button', { name: 'Ver todos os 12 alertas' }))
+    expect(within(panel).getAllByRole('listitem')).toHaveLength(12)
+
+    await user.click(within(panel).getByRole('button', { name: 'Mostrar menos' }))
+    expect(within(panel).getAllByRole('listitem')).toHaveLength(8)
   })
 
   it('tells the user to connect GitHub when nothing is synced', () => {
