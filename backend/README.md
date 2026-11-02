@@ -43,6 +43,7 @@ Assistente de Governança com IA (`docs/REGRAS_DE_NEGOCIO.md` §5.2; contrato em
 - `functions/assistant/prompt.js`: valida o pedido, remove dados pessoais do contexto e monta o prompt. Puro, testado com `node --test`.
 - **Secret necessário:** `GROQ_API_KEY`, gravado pelo dono do projeto em Supabase → Edge Functions → Secrets. Nunca no git nem no chat. Sem ele, a função responde 503 "O assistente ainda não foi configurado".
 - Conta do Groq com **Zero Data Retention** ligado (Data Controls).
+- Publicação: pelo MCP do Supabase, `verify_jwt` ligado. Versão 1 (02/11/2026). Secret `GROQ_API_KEY` configurado em 02/11/2026; primeira pergunta real respondida (200).
 
 ## Como rodar os testes pgTAP (sem Docker)
 
@@ -65,7 +66,7 @@ python scripts/to_sql_editor.py tests/*.test.sql todos.editor.sql   # ou só um 
 | `repository_selection.test.sql` | 11 | 11/11 ok (03/11/2026) |
 | `github_sync.test.sql` | 9 | a rodar (04/11/2026) |
 | `governance_scores.test.sql` | 6 | 6/6 ok (02/11/2026) |
-| `assistant_usage.test.sql` | 8 | a rodar (02/11/2026) |
+| `assistant_usage.test.sql` | 8 | 8/8 ok (02/11/2026) |
 
 Depois de cada execução, o banco é conferido pelo MCP: nenhum usuário `@test.local` nem a extensão `pgtap` ficam para trás.
 
