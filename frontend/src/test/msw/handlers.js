@@ -255,7 +255,29 @@ function githubFunction({ action, projectId, token, githubIds }) {
   return HttpResponse.json({ disconnected: true })
 }
 
+// Edge Function `assistant` simulada: guarda o pedido e responde citando a pergunta
+function assistantFunction(body) {
+  db.assistantRequests.push(body)
+
+  if (db.assistantRemaining === 0) {
+    return HttpResponse.json(
+      { error: 'Limite de perguntas de hoje atingido (20 por pessoa). Volte amanhã.' },
+      { status: 429 },
+    )
+  }
+
+  db.assistantRemaining -= 1
+  return HttpResponse.json({
+    answer: `Resposta simulada para: ${body.messages.at(-1).content}`,
+    remaining: db.assistantRemaining,
+  })
+}
+
 export const handlers = [
+  http.post(`${url}/functions/v1/assistant`, async ({ request }) =>
+    assistantFunction(await request.json()),
+  ),
+
   http.post(`${url}/functions/v1/github`, async ({ request }) =>
     githubFunction(await request.json()),
   ),

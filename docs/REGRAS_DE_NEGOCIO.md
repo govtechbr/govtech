@@ -89,6 +89,19 @@ Uma nota de **0 a 100** por projeto e por empresa, com histórico diário. Os pe
 
 Os limites são os mesmos dos alertas (§6).
 
+### 5.2 Assistente de Governança com IA (E6, decisão de 02/11/2026)
+
+Substitui o assistente simulado da barra lateral. Provedor: **Groq** (plano gratuito, modelo `openai/gpt-oss-120b`). Pelos termos do Groq, os dados não são usados para treinar modelos e os pedidos não ficam guardados por padrão; o processamento é nos EUA.
+
+| # | Regra | Situação |
+|---|---|---|
+| IA1 | Responde **só sobre a empresa atual**, com os dados que a pessoa já vê na tela. Só lê e explica, não altera nada. **Todos os papéis** usam | 🔜 E6 |
+| IA2 | **O que vai para a IA:** índice e critérios (empresa e projetos), alertas, métricas de 30 dias, nome, prazo, prioridade e progresso dos projetos, e número, título, estado, idade e aprovações dos PRs. **Nunca** login, avatar, e-mail ou chave. Títulos de PR podem citar pessoas: risco aceito | 🔜 E6 |
+| IA3 | **Limite:** 20 perguntas por pessoa por dia e 200 por dia no sistema todo (dia no fuso de MS). Ao estourar, a tela avisa | 🔜 E6 |
+| IA4 | A **conversa não é guardada**: some ao fechar o painel. O banco guarda só a contagem de uso (quem e quantas, sem o texto) | 🔜 E6 |
+| IA5 | A tela avisa que a resposta é gerada por IA (Groq, EUA, sem treino com os dados) e que os números oficiais estão nos painéis | 🔜 E6 |
+| IA6 | Responde em pt-BR. Pergunta fora de governança, ou sem dado suficiente, recebe essa resposta em vez de um palpite | 🔜 E6 |
+
 ## 6. Alertas automáticos
 
 | Alerta | Atenção | Risco |
@@ -108,7 +121,7 @@ Parada por decisão de 02/11/2026. A tela continua com dados de exemplo.
 
 ## 8. Fora do escopo até 18/11/2026
 
-Convite por e-mail, webhook ou GitHub App (atualização instantânea), status do CI, separar PRs por projeto dentro de um repositório compartilhado, auditoria.
+Convite por e-mail, webhook ou GitHub App (atualização instantânea), status do CI, separar PRs por projeto dentro de um repositório compartilhado, auditoria, histórico salvo de conversas com o assistente.
 
 ## 9. Entregas
 
@@ -119,4 +132,5 @@ Convite por e-mail, webhook ou GitHub App (atualização instantânea), status d
 | E3 | Mais dados do GitHub + sincronização a cada hora | G6–G8 | 08/11 |
 | E4 | Visão geral com métricas reais, alertas e status automático com cartão | P3, P4, §5, §6 | 12/11 |
 | E5 | Índice de Governança (0–100) com histórico | I1–I6 | 06/11 |
+| E6 | Assistente de Governança com IA (Groq) | IA1–IA6 | 08/11 |
 | — | Folga: testes, documentação do TCC, ensaio | — | 13–18/11 |
