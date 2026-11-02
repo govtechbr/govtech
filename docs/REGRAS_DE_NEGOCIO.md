@@ -50,6 +50,7 @@ Esconder um botão na tela é só conveniência: quem bloqueia de verdade é o b
 | G6 | **Sincronização automática a cada hora**, e o botão "Sincronizar" continua para quem não quer esperar | ✅ E3 (minuto 7 de cada hora) |
 | G7 | Dados buscados: repositórios, PRs (com **revisões/aprovações**), branches (com proteção), **commits da branch principal** e **contribuidores** | ✅ E3 (aprovações dos PRs, commits dos últimos 90 dias; contribuidores = logins distintos de commits e PRs) |
 | G8 | **LGPD:** de pessoas de fora (autores, contribuidores), guardar só o **login** e o **avatar público** do GitHub. Nada de e-mail | ✅ (commits sem nome, e-mail nem mensagem) |
+| G9 | **Paginação:** repositórios visíveis até 500; PRs **abertos** (até 1.000) mais os atualizados nos **últimos 90 dias** (até 1.000 por repositório); branches até 500; commits da branch principal de 90 dias, até 1.000. Se algum teto for atingido, a sincronização marca **dados parciais** e o painel do projeto e a auditoria avisam | 🔜 E7 |
 
 ## 5. Métricas de governança (Visão geral)
 
@@ -95,12 +96,12 @@ Substitui o assistente simulado da barra lateral. Provedor: **Groq** (plano grat
 
 | # | Regra | Situação |
 |---|---|---|
-| IA1 | Responde **só sobre a empresa atual**, com os dados que a pessoa já vê na tela. Só lê e explica, não altera nada. **Todos os papéis** usam | 🔜 E6 |
-| IA2 | **O que vai para a IA:** índice e critérios (empresa e projetos), alertas, métricas de 30 dias, nome, prazo, prioridade e progresso dos projetos, e número, título, estado, idade e aprovações dos PRs. **Nunca** login, avatar, e-mail ou chave. Títulos de PR podem citar pessoas: risco aceito | 🔜 E6 |
-| IA3 | **Limite:** 20 perguntas por pessoa por dia e 200 por dia no sistema todo (dia no fuso de MS). Ao estourar, a tela avisa | 🔜 E6 |
-| IA4 | A **conversa não é guardada**: some ao fechar o painel. O banco guarda só a contagem de uso (quem e quantas, sem o texto) | 🔜 E6 |
-| IA5 | A tela avisa que a resposta é gerada por IA (Groq, EUA, sem treino com os dados) e que os números oficiais estão nos painéis | 🔜 E6 |
-| IA6 | Responde em pt-BR. Pergunta fora de governança, ou sem dado suficiente, recebe essa resposta em vez de um palpite | 🔜 E6 |
+| IA1 | Responde **só sobre a empresa atual**, com os dados que a pessoa já vê na tela. Só lê e explica, não altera nada. **Todos os papéis** usam | ✅ E6 |
+| IA2 | **O que vai para a IA:** índice e critérios (empresa e projetos), alertas, métricas de 30 dias, nome, prazo, prioridade e progresso dos projetos, e número, título, estado, idade e aprovações dos PRs. **Nunca** login, avatar, e-mail ou chave. Títulos de PR podem citar pessoas: risco aceito | ✅ E6 |
+| IA3 | **Limite:** 20 perguntas por pessoa por dia e 200 por dia no sistema todo (dia no fuso de MS). Ao estourar, a tela avisa | ✅ E6 |
+| IA4 | A **conversa não é guardada**: some ao fechar o painel. O banco guarda só a contagem de uso (quem e quantas, sem o texto) | ✅ E6 |
+| IA5 | A tela avisa que a resposta é gerada por IA (Groq, EUA, sem treino com os dados) e que os números oficiais estão nos painéis | ✅ E6 |
+| IA6 | Responde em pt-BR. Pergunta fora de governança, ou sem dado suficiente, recebe essa resposta em vez de um palpite | ✅ E6 |
 
 ## 6. Alertas automáticos
 
@@ -115,13 +116,23 @@ Substitui o assistente simulado da barra lateral. Provedor: **Groq** (plano grat
 
 **Detalhes decididos na implementação (E4):** o alerta "mergeado sem aprovação" olha os PRs mergeados nos **últimos 30 dias**, fixo, para o status do projeto não mudar quando se troca o período da tela. Os alertas de PR e de branch valem para todos os projetos ligados ao repositório. Projeto sem prazo não gera alerta de prazo.
 
-## 7. Auditoria
+## 7. Auditoria (E7, decisão de 02/11/2026)
 
-Parada por decisão de 02/11/2026. A tela continua com dados de exemplo.
+Trilha simples, para revisão (sem cadeia de hash, decisão Q7 do plano técnico).
+
+| # | Regra | Situação |
+|---|---|---|
+| AU1 | **O que se registra.** Projetos: criado, alterado (quais campos, antes e depois) e excluído. Membros: entrou, papel alterado, removido ou saiu. Empresa: nome alterado e código de convite gerado de novo (**sem o código**). GitHub: chave conectada ou removida (**nunca a chave**, só os 4 últimos caracteres), repositórios escolhidos e cada sincronização (manual ou automática) com o resultado | 🔜 E7 |
+| AU2 | **Quem fez:** a pessoa logada; nas ações do agendador, "Sistema". O nome e o papel de quem agiu ficam gravados no evento, para continuar legível se a pessoa sair da empresa | 🔜 E7 |
+| AU3 | **Imutável:** ninguém altera nem apaga um evento, nem pelo app nem com a chave de serviço. Os eventos só somem junto com a empresa | 🔜 E7 |
+| AU4 | **Quem vê:** admin e stakeholder da empresa. O developer não vê (o menu some e o banco bloqueia) | 🔜 E7 |
+| AU5 | **Tela:** do mais novo ao mais antigo, 50 por vez com "Carregar mais"; filtros de período (7, 30 ou 90 dias) e de tipo (Projetos, Membros, Empresa, GitHub). Os cartões mostram números reais do período: eventos, mudanças de acesso e sincronizações com falha | 🔜 E7 |
+| AU6 | **CSV** dos eventos filtrados, gerado no navegador e protegido contra fórmulas (célula que começa com `=`, `+`, `-` ou `@`) | 🔜 E7 |
+| AU7 | **LGPD:** o evento guarda nome e papel de quem agiu; nada de e-mail ou chave. Do GitHub, só contagens | 🔜 E7 |
 
 ## 8. Fora do escopo até 18/11/2026
 
-Convite por e-mail, webhook ou GitHub App (atualização instantânea), status do CI, separar PRs por projeto dentro de um repositório compartilhado, auditoria, histórico salvo de conversas com o assistente.
+Convite por e-mail, webhook ou GitHub App (atualização instantânea), status do CI, separar PRs por projeto dentro de um repositório compartilhado, cadeia de hash e retenção automática na auditoria, histórico salvo de conversas com o assistente.
 
 ## 9. Entregas
 
@@ -133,4 +144,5 @@ Convite por e-mail, webhook ou GitHub App (atualização instantânea), status d
 | E4 | Visão geral com métricas reais, alertas e status automático com cartão | P3, P4, §5, §6 | 12/11 |
 | E5 | Índice de Governança (0–100) com histórico | I1–I6 | 06/11 |
 | E6 | Assistente de Governança com IA (Groq) | IA1–IA6 | 08/11 |
+| E7 | Auditoria real + paginação do GitHub | AU1–AU7, G9 | 10/11 |
 | — | Folga: testes, documentação do TCC, ensaio | — | 13–18/11 |

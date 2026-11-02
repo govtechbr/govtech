@@ -255,6 +255,31 @@ function githubFunction({ action, projectId, token, githubIds }) {
   return HttpResponse.json({ disconnected: true })
 }
 
+// audit_events com os filtros que a tela usa e o RLS (só admin e stakeholder)
+function auditRows(request) {
+  const params = new URL(request.url).searchParams
+  const organizationId = eqParam(request, 'organization_id')
+  const member = memberOf(organizationId, callerId(request))
+  if (!member || !['admin', 'stakeholder'].includes(member.role)) return []
+
+  const since = params.get('created_at')?.replace(/^gte\./, '')
+  const action = params.get('action') ?? ''
+  const before = params.get('id')?.replace(/^lt\./, '')
+  const limit = Number(params.get('limit') ?? Infinity)
+
+  return db.auditEvents
+    .filter((event) => event.organization_id === organizationId)
+    .filter((event) => !since || event.created_at >= since)
+    .filter((event) =>
+      action.startsWith('like.')
+        ? event.action.startsWith(action.slice(5).replace(/[%*]$/, ''))
+        : !action.startsWith('eq.') || event.action === action.slice(3),
+    )
+    .filter((event) => !before || event.id < Number(before))
+    .sort((a, b) => b.id - a.id)
+    .slice(0, limit)
+}
+
 // Edge Function `assistant` simulada: guarda o pedido e responde citando a pergunta
 function assistantFunction(body) {
   db.assistantRequests.push(body)
@@ -274,6 +299,13 @@ function assistantFunction(body) {
 }
 
 export const handlers = [
+  http.get(rest('audit_events'), ({ request }) => rows(request, auditRows(request))),
+  // contagem dos cartões: select com head + count=exact
+  http.head(rest('audit_events'), ({ request }) => {
+    const total = auditRows(request).length
+    return new HttpResponse(null, { headers: { 'Content-Range': `*/${total}` } })
+  }),
+
   http.post(`${url}/functions/v1/assistant`, async ({ request }) =>
     assistantFunction(await request.json()),
   ),

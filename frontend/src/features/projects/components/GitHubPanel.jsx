@@ -186,6 +186,13 @@ export default function GitHubPanel({ projectId, canManage, canSync }) {
         </p>
       )}
 
+      {github.lastSyncPartial && (
+        <p className={styles.muted}>
+          Dados parciais: algum repositório tem mais itens do que o limite da sincronização (PRs
+          abertos e dos últimos 90 dias até 1.000, branches até 500, commits até 1.000).
+        </p>
+      )}
+
       {picking && canManage && (
         <RepositoryPicker
           projectId={projectId}

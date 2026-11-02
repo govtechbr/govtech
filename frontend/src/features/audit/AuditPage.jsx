@@ -1,80 +1,223 @@
-import { Download, FileSearch, Filter, ShieldCheck } from 'lucide-react'
-import { auditEvents } from '@/mocks/mockData'
+import { useState } from 'react'
+import { Building2, Download, FolderKanban, GitBranch, Lock, Users } from 'lucide-react'
+
+import styles from '@/features/audit/AuditPage.module.css'
+import { AUDIT_TYPES, listAllAuditEvents } from '@/features/audit/api/auditApi'
+import { useAuditCounts, useAuditEvents } from '@/features/audit/hooks/useAuditEvents'
+import { describeEvent, eventType } from '@/features/audit/utils/describeEvent'
+import { toCsv } from '@/features/audit/utils/toCsv'
+import { useCurrentOrganization } from '@/shared/hooks/useCurrentOrganization'
+import { useToast } from '@/shared/hooks/useToast'
+import { formatDateTime } from '@/shared/lib/date'
+import { PERIODS, DEFAULT_PERIOD } from '@/shared/lib/governance'
+
+const TYPE_ICONS = {
+  project: FolderKanban,
+  member: Users,
+  organization: Building2,
+  github: GitBranch,
+}
+
+// Quem vê a auditoria (AU4); o banco também bloqueia
+const CAN_SEE = ['admin', 'stakeholder']
+
+function download(fileName, content) {
+  const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+function MetricCard({ label, value, hint }) {
+  return (
+    <article className="metric-card elevation-1">
+      <span>{label}</span>
+      <strong>{value ?? '–'}</strong>
+      <small>{hint}</small>
+    </article>
+  )
+}
 
 export default function AuditPage() {
+  const { organization } = useCurrentOrganization()
+
+  if (!CAN_SEE.includes(organization.role)) {
+    return (
+      <section className="dashboard-content">
+        <p className={styles.notice} role="note">
+          <Lock size={16} aria-hidden="true" />A auditoria é visível só para admin e stakeholder da
+          empresa.
+        </p>
+      </section>
+    )
+  }
+
+  return <AuditTrail organization={organization} />
+}
+
+function AuditTrail({ organization }) {
+  const [days, setDays] = useState(DEFAULT_PERIOD)
+  const [type, setType] = useState('')
+  const [exporting, setExporting] = useState(false)
+  const { showToast } = useToast()
+  const filters = { organizationId: organization.id, days, type }
+  const events = useAuditEvents(filters)
+  const counts = useAuditCounts(filters)
+  const list = events.data?.pages.flat() ?? []
+
+  async function handleExport() {
+    setExporting(true)
+    try {
+      const all = await listAllAuditEvents(filters)
+      const rows = all.map((event) => {
+        const { who, what, target } = describeEvent(event)
+        return [formatDateTime(event.created_at), who, what, target, event.action]
+      })
+      download(
+        `auditoria-${days}-dias.csv`,
+        toCsv(['Data e hora', 'Quem', 'O que', 'Onde', 'Ação'], rows),
+      )
+    } catch (error) {
+      showToast(error.message, 'danger')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <section className="dashboard-content">
       <div className="page-heading">
         <div>
           <span className="page-eyebrow">RASTREABILIDADE E COMPLIANCE</span>
           <p>
-            Acompanhe os eventos relevantes registrados nos repositórios, pipelines e atividades de
-            governança.
+            Quem fez o quê e quando: projetos, membros, empresa e integração com o GitHub. Os
+            eventos não podem ser alterados nem apagados.
           </p>
         </div>
 
-        <button type="button" className="primary-button">
-          <Download size={16} />
-          Exportar CSV
+        <button
+          type="button"
+          className="primary-button"
+          onClick={handleExport}
+          disabled={exporting || list.length === 0}
+        >
+          <Download size={16} aria-hidden="true" />
+          {exporting ? 'Gerando CSV…' : 'Exportar CSV'}
         </button>
       </div>
 
+      <div className={styles.filters}>
+        <div className={styles.segmented} role="group" aria-label="Período">
+          {PERIODS.map((period) => (
+            <button
+              key={period}
+              type="button"
+              aria-pressed={days === period}
+              onClick={() => setDays(period)}
+            >
+              {period} dias
+            </button>
+          ))}
+        </div>
+
+        <div className={styles.segmented} role="group" aria-label="Tipo de evento">
+          <button type="button" aria-pressed={type === ''} onClick={() => setType('')}>
+            Todos
+          </button>
+          {Object.entries(AUDIT_TYPES).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={type === key}
+              onClick={() => setType(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="dashboard-grid three-columns">
-        <article className="metric-card elevation-1">
-          <span>Eventos registrados</span>
-          <strong>{auditEvents.length}</strong>
-          <small>Histórico disponível</small>
-        </article>
-
-        <article className="metric-card elevation-1">
-          <span>Aprovações auditadas</span>
-          <strong>34</strong>
-          <small>Pull Requests revisadas</small>
-        </article>
-
-        <article className="metric-card elevation-1">
-          <span>Conformidade</span>
-          <strong>92%</strong>
-          <small>Processos sem pendências</small>
-        </article>
+        <MetricCard
+          label="Eventos registrados"
+          value={counts.data?.total}
+          hint={`Nos últimos ${days} dias`}
+        />
+        <MetricCard
+          label="Mudanças de acesso"
+          value={counts.data?.accessChanges}
+          hint="Entradas, saídas e trocas de papel"
+        />
+        <MetricCard
+          label="Sincronizações com falha"
+          value={counts.data?.failedSyncs}
+          hint="Integração com o GitHub"
+        />
       </div>
 
       <article className="content-card elevation-1">
         <div className="content-card-header">
           <div>
-            <div className="content-card-title">
-              <FileSearch size={18} />
-              Eventos recentes
-            </div>
-            <p>Registros utilizados para rastreabilidade e auditoria.</p>
+            <h2 className={styles.title}>Eventos</h2>
+            <p>Do mais recente ao mais antigo.</p>
           </div>
+        </div>
 
-          <button type="button" className="secondary-button">
-            <Filter size={16} />
-            Filtrar
+        {events.isPending && <p className={styles.muted}>Carregando a auditoria…</p>}
+        {events.isError && (
+          <p className={styles.error} role="alert">
+            {events.error.message}
+          </p>
+        )}
+        {events.isSuccess && list.length === 0 && (
+          <p className={styles.muted}>Nenhum evento neste período.</p>
+        )}
+
+        {list.length > 0 && (
+          <ol className={styles.list}>
+            {list.map((event) => {
+              const { who, what, target } = describeEvent(event)
+              const kind = eventType(event)
+              const Icon = TYPE_ICONS[kind] ?? FolderKanban
+
+              return (
+                <li key={event.id} className={styles.item}>
+                  <span
+                    className={`${styles.icon} ${event.action === 'github.sync_failed' ? styles.failed : ''}`}
+                    aria-hidden="true"
+                  >
+                    <Icon size={16} />
+                  </span>
+                  <div className={styles.body}>
+                    <p className={styles.what}>
+                      {what}
+                      {target && <span className={styles.target}> · {target}</span>}
+                    </p>
+                    <p className={styles.meta}>
+                      {who} · <span className={styles.kind}>{AUDIT_TYPES[kind]}</span>
+                    </p>
+                  </div>
+                  <time className={styles.time} dateTime={event.created_at}>
+                    {formatDateTime(event.created_at)}
+                  </time>
+                </li>
+              )
+            })}
+          </ol>
+        )}
+
+        {events.hasNextPage && (
+          <button
+            type="button"
+            className={`secondary-button ${styles.more}`}
+            onClick={() => events.fetchNextPage()}
+            disabled={events.isFetchingNextPage}
+          >
+            {events.isFetchingNextPage ? 'Carregando…' : 'Carregar mais'}
           </button>
-        </div>
-
-        <div className="audit-list">
-          {auditEvents.slice(0, 8).map((event, index) => (
-            <div className="audit-item" key={event.id || index}>
-              <div className="audit-icon">
-                <ShieldCheck size={16} />
-              </div>
-
-              <div className="audit-item-content">
-                <strong>{event.action || 'Evento registrado'}</strong>
-                <span>
-                  {event.description ||
-                    event.message ||
-                    'Atividade registrada na trilha de auditoria.'}
-                </span>
-              </div>
-
-              <small>{event.date || event.createdAt || 'Hoje'}</small>
-            </div>
-          ))}
-        </div>
+        )}
       </article>
     </section>
   )

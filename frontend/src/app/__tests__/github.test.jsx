@@ -148,6 +148,18 @@ describe('GitHub connection (project detail)', () => {
     ])
   })
 
+  it('warns when the last sync hit a pagination ceiling (rule G9)', async () => {
+    connect()
+    linkRepository(privateRepo, 0)
+    db.githubCredentials[0].last_sync_partial = true
+    const { user } = await renderAs(testUser)
+    const dialog = await openProject(user)
+
+    expect(await within(dialog).findByText(/Dados parciais/)).toHaveTextContent(
+      'mais itens do que o limite da sincronização',
+    )
+  })
+
   it('shows why the hourly sync failed until a sync works again', async () => {
     connect()
     linkRepository(privateRepo, 0)

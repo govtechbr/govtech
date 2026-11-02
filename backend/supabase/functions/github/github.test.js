@@ -4,6 +4,7 @@ import { describe, it } from 'node:test'
 
 import {
   checkToken,
+  fetchPullRequests,
   fetchRepositoryData,
   GitHubError,
   githubErrorMessage,
@@ -13,6 +14,8 @@ import {
   toPullRequestRow,
   toAvailableRepository,
   toRepositoryRow,
+  listRepositories,
+  LIMITS,
 } from './github.js'
 
 const ids = { organizationId: 'o1', repositoryId: 'r1' }
@@ -26,7 +29,9 @@ function fakeFetch(routes) {
     const route = Object.entries(routes).find(([prefix]) => path.startsWith(prefix))
 
     if (!route) throw new Error(`rota não simulada: ${path}`)
-    const [status, body, headers = {}] = route[1]
+    // a resposta pode depender do pedido (página, cursor do GraphQL)
+    const reply = typeof route[1] === 'function' ? route[1](path, options) : route[1]
+    const [status, body, headers = {}] = reply
 
     return {
       ok: status < 400,
@@ -76,7 +81,39 @@ const commit = {
   },
 }
 
-const pullsResponse = { data: { repository: { pullRequests: { nodes: [pr] } } } }
+// GraphQL paginado: `open` e `done` são listas de páginas de PRs (abertos e
+// mergeados/fechados); o cursor é o número da próxima página
+function graphqlPages({ open = [[]], done = [[]] } = {}) {
+  return (_path, options) => {
+    const { states, after } = JSON.parse(options.body).variables
+    const pages = states.includes('OPEN') ? open : done
+    const index = after ? Number(after) : 0
+
+    return [
+      200,
+      {
+        data: {
+          repository: {
+            pullRequests: {
+              nodes: pages[index] ?? [],
+              pageInfo: { hasNextPage: index < pages.length - 1, endCursor: String(index + 1) },
+            },
+          },
+        },
+      },
+    ]
+  }
+}
+
+// Página REST: `pages` são listas; a página pedida vem do parâmetro page
+function restPagesOf(pages) {
+  return (path) => [
+    200,
+    pages[Number(new URL(path, 'https://x').searchParams.get('page')) - 1] ?? [],
+  ]
+}
+
+const pullsResponse = graphqlPages({ done: [[pr]] })
 
 describe('row mapping', () => {
   it('maps a repository to its organization (projects link to it separately)', () => {
@@ -165,43 +202,37 @@ describe('GitHub calls', () => {
 
   it('fetches pulls, branches and recent default-branch commits of the chosen repositories', async () => {
     const { impl, calls } = fakeFetch({
-      '/graphql': [200, pullsResponse],
+      '/graphql': pullsResponse,
       '/repos/dono/app/branches': [200, [{ name: 'main', commit: { sha: 'abc' } }]],
       '/repos/dono/app/commits': [200, [commit]],
     })
 
     const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-01T00:00:00.000Z')
 
-    assert.equal(calls.length, 3)
-    const graphql = calls.find(({ url }) => url.endsWith('/graphql'))
-    assert.deepEqual(JSON.parse(graphql.options.body).variables, { owner: 'dono', name: 'app' })
+    // abertos, depois mergeados/fechados; uma página de branches e uma de commits
+    const graphql = calls.filter(({ url }) => url.endsWith('/graphql'))
+    assert.deepEqual(
+      graphql.map(({ options }) => JSON.parse(options.body).variables),
+      [
+        { owner: 'dono', name: 'app', states: ['OPEN'], after: null },
+        { owner: 'dono', name: 'app', states: ['MERGED', 'CLOSED'], after: null },
+      ],
+    )
     const commits = calls.find(({ url }) => url.includes('/commits'))
     assert.match(commits.url, /sha=main/)
     assert.match(commits.url, /since=2026-08-01T00:00:00.000Z/)
+    assert.match(commits.url, /per_page=100&page=1/)
 
     assert.equal(data.repo.full_name, 'dono/app')
     assert.equal(data.pulls[0].number, 7)
     assert.equal(data.branches[0].name, 'main')
     assert.equal(data.commits[0].sha, 'abc123')
-  })
-
-  it('reads up to 3 pages of commits', async () => {
-    const page = Array.from({ length: 100 }, (_, index) => ({ ...commit, sha: `c${index}` }))
-    const { impl, calls } = fakeFetch({
-      '/graphql': [200, pullsResponse],
-      '/repos/dono/app/branches': [200, []],
-      '/repos/dono/app/commits': [200, page],
-    })
-
-    const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-01T00:00:00.000Z')
-
-    assert.equal(calls.filter(({ url }) => url.includes('/commits')).length, 3)
-    assert.equal(data.commits.length, 300)
+    assert.equal(data.partial, false)
   })
 
   it('treats an empty repository as having no commits', async () => {
     const { impl } = fakeFetch({
-      '/graphql': [200, { data: { repository: { pullRequests: { nodes: [] } } } }],
+      '/graphql': graphqlPages(),
       '/repos/dono/app/branches': [200, []],
       '/repos/dono/app/commits': [409, { message: 'Git Repository is empty.' }],
     })
@@ -248,5 +279,85 @@ describe('GitHub calls', () => {
     }
 
     await assert.rejects(checkToken('t', failing), /não respondeu/)
+  })
+})
+
+describe('pagination (rule G9)', () => {
+  const since = '2026-08-01T00:00:00.000Z'
+  const pull = (number, updatedAt = '2026-10-31T10:00:00Z') => ({ ...pr, number, updatedAt })
+  const fullPage = (start, updatedAt) =>
+    Array.from({ length: 100 }, (_, index) => pull(start + index, updatedAt))
+
+  it('follows the GraphQL cursor through every page of open PRs', async () => {
+    const { impl, calls } = fakeFetch({
+      '/graphql': graphqlPages({ open: [fullPage(1), [pull(101)]], done: [[pull(500)]] }),
+    })
+
+    const { pulls, partial } = await fetchPullRequests('t', repo, since, impl)
+
+    assert.equal(pulls.length, 102)
+    assert.equal(partial, false)
+    const afters = calls.map(({ options }) => JSON.parse(options.body).variables.after)
+    assert.deepEqual(afters, [null, '1', null])
+  })
+
+  it('stops reading merged and closed PRs once they are older than the 90-day window', async () => {
+    const old = '2026-07-01T00:00:00Z'
+    const { impl, calls } = fakeFetch({
+      '/graphql': graphqlPages({
+        done: [fullPage(1), [pull(101), pull(102, old)], fullPage(200)],
+      }),
+    })
+
+    const { pulls, partial } = await fetchPullRequests('t', repo, since, impl)
+
+    assert.equal(pulls.length, 101)
+    assert.ok(pulls.every((item) => item.updatedAt >= since))
+    assert.equal(partial, false)
+    // a terceira página nem é pedida: 1 de abertos + 2 de fechados
+    assert.equal(calls.length, 3)
+  })
+
+  it('marks partial data when the PR ceiling is reached with more to come', async () => {
+    const pages = Array.from({ length: 12 }, (_, page) => fullPage(page * 100))
+    const { impl } = fakeFetch({ '/graphql': graphqlPages({ open: pages }) })
+
+    const { pulls, partial } = await fetchPullRequests('t', repo, since, impl)
+
+    assert.equal(pulls.length, LIMITS.pullRequests)
+    assert.equal(partial, true)
+  })
+
+  it('reads branches and commits page by page and flags a full last page at the ceiling', async () => {
+    const branchPage = (count) =>
+      Array.from({ length: count }, (_, index) => ({ name: `b${index}`, commit: { sha: 's' } }))
+    const commitPage = Array.from({ length: 100 }, (_, index) => ({ ...commit, sha: `c${index}` }))
+    const { impl, calls } = fakeFetch({
+      '/graphql': graphqlPages(),
+      '/repos/dono/app/branches': restPagesOf([branchPage(100), branchPage(30)]),
+      '/repos/dono/app/commits': [200, commitPage],
+    })
+
+    const [data] = await fetchRepositoryData('t', [repo], impl, since)
+
+    assert.equal(data.branches.length, 130)
+    assert.equal(calls.filter(({ url }) => url.includes('/branches')).length, 2)
+    assert.equal(data.commits.length, LIMITS.commits)
+    assert.equal(calls.filter(({ url }) => url.includes('/commits')).length, 10)
+    assert.equal(data.partial, true)
+  })
+
+  it('lists up to 500 repositories the token can read, most recently pushed first', async () => {
+    const page = (start, count) =>
+      Array.from({ length: count }, (_, index) => ({ ...repo, id: start + index }))
+    const { impl, calls } = fakeFetch({
+      '/user/repos': restPagesOf([page(0, 100), page(100, 100), page(200, 5)]),
+    })
+
+    const repos = await listRepositories('t', impl)
+
+    assert.equal(repos.length, 205)
+    assert.ok(calls[0].url.endsWith('/user/repos?sort=pushed&per_page=100&page=1'))
+    assert.equal(calls.length, 3)
   })
 })

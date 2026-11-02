@@ -2,7 +2,7 @@
 
 Plataforma web de **governança e monitoramento de projetos de TI**: painel com indicadores, lista de projetos com prazo e progresso, visão de repositórios/Pull Requests/branches, auditoria, controle de acesso (RBAC) e configurações.
 
-> **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações, membros, projetos e os dados do GitHub (repositórios, PRs e branches) são reais** e ficam no banco. Desde 04/11/2026 a **Visão geral** também usa dados reais (métricas, alertas e status calculado). As outras telas (auditoria, busca global) ainda mostram dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
+> **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações, membros, projetos e os dados do GitHub (repositórios, PRs e branches) são reais** e ficam no banco. Desde 04/11/2026 a **Visão geral** também usa dados reais (métricas, alertas e status calculado). Desde a E7 a **Auditoria** também é real (trilha gravada pelo banco). A busca global ainda mostra dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
 
 ---
 
@@ -168,7 +168,7 @@ govtech/
         │   ├── dashboard/     OverviewPage.jsx + components/ (gráficos e painéis da Visão geral).
         │   ├── projects/      ProjectsPage.jsx + components/ (modais) + api/projectsApi.js (Supabase).
         │   ├── repositories/  RepositoriesPage.jsx (dados sincronizados do GitHub) + api/ + components/ + utils/metrics.js.
-        │   ├── audit/         AuditPage.jsx (eventos de auditoria).
+        │   ├── audit/         AuditPage, api (auditApi), hooks (useAuditEvents), utils (describeEvent, toCsv).
         │   ├── rbac/          RbacPage.jsx (membros reais) + api/membersApi.js + components/ (papel, convite, remover).
         │   └── settings/      SettingsPage.jsx.
         │
@@ -251,7 +251,7 @@ Definidas em `src/app/App.jsx`:
 | `/organizacao` | `OrganizationPage` | Logado | Criar organização (vira admin) ou entrar com código (vira stakeholder). |
 | `/landing` | `LandingPage` | Público | Página institucional. |
 | `/dashboard` | `AppLayout` → `OverviewPage` | Autenticado | Visão geral. |
-| `/audit` | `AppLayout` → `AuditPage` | Autenticado | Auditoria. |
+| `/audit` | `AppLayout` → `AuditPage` | Admin e stakeholder (o developer vê um aviso e não tem o menu) | Auditoria. |
 | `/repositories` | `AppLayout` → `RepositoriesPage` | Autenticado | Repositórios. |
 | `/projects` | `AppLayout` → `ProjectsPage` | Autenticado | Projetos. |
 | `/access` | `AppLayout` → `RbacPage` | Autenticado | Acessos e RBAC. |
@@ -315,8 +315,11 @@ Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir
 - Limites por sincronização: 100 repositórios por chave; 100 PRs (os mais recentes) e 100 branches por repositório.
 - Sem nada sincronizado, a página explica como conectar.
 
-### 8.7 `AuditPage.jsx` — Auditoria
-- Lista `auditEvents` (ação, serviço, autor, hash, horário, status).
+### 8.7 `AuditPage.jsx` — Auditoria (E7)
+- Lê a tabela `audit_events` (regras AU1–AU7): quem fez o quê, onde e quando, do mais novo ao mais antigo, 50 por vez com "Carregar mais".
+- Filtros de período (7/30/90 dias) e de tipo (Projetos, Membros, Empresa, GitHub). Cartões com números reais do período: eventos, mudanças de acesso e sincronizações com falha.
+- "Exportar CSV" gera no navegador o arquivo dos eventos filtrados, com `;`, BOM para o Excel e proteção contra fórmulas.
+- Só admin e stakeholder veem; o developer vê um aviso e o item some do menu.
 - Cartões com **valores fixos**: “34” aprovações e “92%” de conformidade.
 - Botões **“Exportar CSV”** e **“Filtrar”** existem, mas **não têm ação** (não fazem nada ao clicar).
 
@@ -419,8 +422,7 @@ As contas de data do calendário ficam em `shared/lib/date.js` (`todayIso`, `add
 
 | Arquivo | Conteúdo | Quem usa |
 |---|---|---|
-| `data/mockData.js` | `profile`, `services`, `repoStats`, `projects`, `pullRequests`, `branches`, `auditEvents`, `repositoryList`, `pullRequestList`, `branchList` | Telas que ainda não têm dado real. (`accessRoles` e `rbacUsers` saíram em 02/11/2026.) |
-| Dentro dos próprios componentes | Só os números fixos dos cartões (ex.: “34” e “92%” na Auditoria) | Cada tela. |
+| `data/mockData.js` | `profile`, `services`, `repoStats`, `projects`, `pullRequests`, `branches`, `repositoryList`, `pullRequestList`, `branchList` | Telas que ainda não têm dado real. (`accessRoles` e `rbacUsers` saíram em 02/11/2026.) |
 
 Os mocks são intencionais: o app continua usando dados de exemplo até o Supabase entrar.
 
@@ -566,7 +568,7 @@ Organizados por gravidade. ✅ = resolvido na limpeza de 31/10/2026 (branch `cho
 
 ### 15.2 Média (comportamento enganoso)
 
-7. ⏳ **Botões sem função:** “Exportar CSV” e “Filtrar” (Auditoria). Os do RBAC foram resolvidos em 02/11/2026: “Convidar” funciona; “Nova função”, “Filtrar” e “Adicionar” saíram.
+7. ✅ **Botões sem função:** “Exportar CSV” e os filtros da Auditoria funcionam desde a E7. Os do RBAC foram resolvidos em 02/11/2026: “Convidar” funciona; “Nova função”, “Filtrar” e “Adicionar” saíram.
 8. ✅ **Respostas do chatbot descreviam funções que não existem.** Resolvido na E6: o assistente simulado virou o Assistente de Governança com IA.
 9. ⏳ **Valores fixos** (“4.2 dias”, “3” alertas, “34”, “92%”). Mantidos por decisão do time até haver dados reais.
 10. ✅ **Login aceita qualquer coisa.** Resolvido em 01/11/2026: login real com o Supabase Auth.

@@ -57,7 +57,7 @@ Ao rodar testes ou build, mostre só o resumo/erros (`| tail -30`), não o log i
 - Mudança de schema **somente** via `npx supabase migration new` + arquivo SQL. Nunca alterar produção pelo dashboard. Nunca rodar `db push` sem aprovação.
 - No front, apenas `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`. A secret key **nunca** entra no front nem no git.
 - Policies usam `(select auth.uid())`; colunas usadas em policy têm índice; funções `security definer` ficam no schema `private` com `set search_path = ''`.
-- `audit_events` é append-only e escrita só por trigger.
+- `audit_events` é append-only e escrita só pelo banco (trigger ou função `security definer` chamada pela Edge Function), nunca pelo cliente.
 - Depois de cada migration: rodar o Security Advisor e os testes pgTAP.
 
 ## Testes
