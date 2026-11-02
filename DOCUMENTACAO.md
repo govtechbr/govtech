@@ -328,11 +328,10 @@ Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir
 - O papel também decide os botões da página de Projetos: stakeholder não vê criar, editar nem excluir; developer não vê excluir (`projectPermissions` em `app/routes.jsx`). Quem bloqueia de verdade é o RLS.
 
 ### 8.9 `SettingsPage.jsx` — Configurações
-Quatro abas:
+Três abas:
 1. **Geral** — nome da organização, fuso horário (Brasília, Nova York, Londres) e tema (Claro, Escuro, Sistema). Salvar chama `onSaveSettings`.
-2. **Integrações** — cartões de GitHub, SonarQube, Slack e Jira. Os botões mostram só um aviso “ação demonstrativa”; **nenhuma integração é de fato feita**.
-3. **Notificações** — quatro interruptores (deploy, erros críticos, segurança, resumo semanal) guardados em `settings.notifications`.
-4. **Segurança** — 2FA, sessões e troca de senha. Botões também são demonstrativos.
+2. **Notificações** — quatro interruptores (deploy, erros críticos, segurança, resumo semanal) guardados em `settings.notifications`.
+3. **Segurança** — 2FA, sessões e troca de senha. Os botões são demonstrativos.
 
 ### 8.10 `ChatbotModal.jsx` — Assistente virtual
 Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não há IA: a resposta é um texto pré-escrito encontrado na lista. Ver §15 sobre respostas que descrevem funções inexistentes.
@@ -525,7 +524,6 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 | `"framework": "vite"` | `vercel.json` | Diz à Vercel que é um projeto Vite. |
 | `services` (“identity-gateway”, “billing-orchestrator”, etc.) | `data/mockData.js` | Serviços **fictícios** com nomes de microsserviços, só para exibir. |
 | Textos “API do GitHub”, “Integração com GitHub Actions” | `LandingPage.jsx` | Marketing. A integração não existe. |
-| Integrações GitHub, SonarQube, Slack, Jira “Conectado” | `SettingsPage.jsx` | Cartões fixos. O botão só mostra um aviso. |
 | Usuários com e-mail `@govtech.ms` | `RbacPage.jsx` | Dados fixos no código. |
 | Hashes `a82f91c0…7d2e` | `mockData.js` (auditoria) | Strings inventadas, sem cálculo real. |
 
@@ -555,7 +553,7 @@ Organizados por gravidade. ✅ = resolvido na limpeza de 31/10/2026 (branch `cho
 8. ⏳ **Respostas do chatbot descrevem funções que não existem** (`ChatbotModal.jsx`: “Exportar Dados”, “seção Riscos”, campo “branch”).
 9. ⏳ **Valores fixos** (“4.2 dias”, “3” alertas, “34”, “92%”). Mantidos por decisão do time até haver dados reais.
 10. ✅ **Login aceita qualquer coisa.** Resolvido em 01/11/2026: login real com o Supabase Auth.
-11. ⏳ **Integrações e 2FA são demonstrativas.**
+11. ⏳ **2FA é demonstrativo.** A aba Integrações (cartões fixos de GitHub, SonarQube, Slack e Jira) saiu em 02/11/2026; o GitHub real é configurado em cada projeto.
 12. ✅ **Busca global nunca abre:** corrigido em 01/11/2026 (o `AppLayout` controla `open` e a Topbar abre a busca); coberto por testes.
 
 ### 15.3 Baixa (qualidade de código)
