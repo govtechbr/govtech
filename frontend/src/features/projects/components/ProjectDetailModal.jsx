@@ -11,7 +11,7 @@ import StatusBadge from '@/shared/ui/StatusBadge'
 import styles from './ProjectModals.module.css'
 
 // github: { canManage, canSync }, conforme o papel (ver app/routes.jsx)
-// health: { status, alerts } calculado pelos alertas (regra P3)
+// health: { status, alerts } calculado pelos alertas (regra P3); aqui só o status aparece
 // score: linha mais recente do Índice de Governança, ou null se ainda não apurado
 export default function ProjectDetailModal({
   project,
@@ -49,32 +49,6 @@ export default function ProjectDetailModal({
           <dd>{project.progress}%</dd>
         </div>
       </dl>
-
-      <section className={styles.section} aria-labelledby="project-alerts-title">
-        <h3 id="project-alerts-title" className={styles.sectionTitle}>
-          Alertas
-        </h3>
-
-        {health.alerts.length === 0 ? (
-          <p className={styles.deadlineMessage}>Nenhum alerta: o projeto está saudável.</p>
-        ) : (
-          <ul className={styles.alerts}>
-            {health.alerts.map((alert) => (
-              <li key={alert.id}>
-                <strong className={styles[alert.level]}>
-                  {PROJECT_STATUS[alert.level]}: {alert.title}
-                </strong>
-                <span className={styles.deadlineMessage}>{alert.detail}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <p className={styles.deadlineMessage}>
-          O status vem destes alertas: Risco se houver algum de risco; senão Atenção se houver algum
-          de atenção; senão Saudável.
-        </p>
-      </section>
 
       <section className={styles.section} aria-labelledby="project-index-title">
         <h3 id="project-index-title" className={styles.sectionTitle}>

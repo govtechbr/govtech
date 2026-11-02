@@ -131,21 +131,22 @@ describe('ProjectsPage', () => {
     expect(metric('Em risco')).toHaveTextContent('1')
   })
 
-  it('keeps the alerts out of the cards, leaving them to the project detail', async () => {
+  it('keeps the alerts out of the cards', async () => {
     await renderPage()
 
     expect(screen.queryByText('Prazo vencido')).toBeNull()
     expect(screen.queryByText('Branch principal sem proteção')).toBeNull()
   })
 
-  it('shows the alerts behind the status in the project detail', async () => {
+  it('shows the computed status but no alert list in the project detail', async () => {
     const { user } = await renderPage()
 
     await user.click(screen.getByRole('button', { name: 'Sistema de Notificações' }))
 
     const dialog = screen.getByRole('dialog', { name: 'Sistema de Notificações' })
-    expect(within(dialog).getByText('Atenção: Branch principal sem proteção')).toBeInTheDocument()
-    expect(within(dialog).getByText('app · main')).toBeInTheDocument()
+    expect(within(dialog).getByText('Atenção')).toBeInTheDocument()
+    expect(within(dialog).queryByRole('heading', { name: 'Alertas' })).toBeNull()
+    expect(within(dialog).queryByText(/Branch principal sem proteção/)).toBeNull()
   })
 
   it('shows the governance index on the card and its criteria in the detail', async () => {
