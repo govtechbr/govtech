@@ -180,12 +180,26 @@ describe('scoreDay', () => {
 
 describe('reconstructionDays', () => {
   it('lists the end of each of the 30 previous days, oldest first', () => {
-    const days = reconstructionDays(now)
+    const days = reconstructionDays(now, [{ created_at_github: '2026-01-01T00:00:00Z' }])
 
     assert.equal(days.length, 30)
     assert.equal(scoreDay(days[0]), '2026-10-11')
     assert.equal(scoreDay(days[29]), '2026-11-09')
     // fim do dia em Campo Grande: 23:59:59 local = 03:59:59 UTC do dia seguinte
     assert.equal(days[29].toISOString(), '2026-11-10T03:59:59.000Z')
+  })
+
+  it('starts on the day of the first PR, so days without activity are not invented', () => {
+    // primeiro PR em 07/11 às 10:00 de Campo Grande
+    const days = reconstructionDays(now, [
+      { created_at_github: '2026-11-08T12:00:00Z' },
+      { created_at_github: '2026-11-07T14:00:00Z' },
+    ])
+
+    assert.deepEqual(days.map(scoreDay), ['2026-11-07', '2026-11-08', '2026-11-09'])
+  })
+
+  it('rebuilds nothing for a project without PRs', () => {
+    assert.deepEqual(reconstructionDays(now, []), [])
   })
 })

@@ -41,14 +41,18 @@ export function scoreDay(now) {
   return new Date(now.getTime() + MS_OFFSET).toISOString().slice(0, 10)
 }
 
-// O último instante de cada um dos 30 dias anteriores a `now`, do mais antigo ao mais novo
-export function reconstructionDays(now) {
+// O último instante de cada um dos 30 dias anteriores a `now`, do mais antigo ao
+// mais novo, a partir do dia do primeiro PR: antes dele não há o que recalcular
+export function reconstructionDays(now, pullRequests) {
+  if (pullRequests.length === 0) return []
+
+  const firstActivity = Math.min(...pullRequests.map((pr) => time(pr.created_at_github)))
   const today = Date.parse(`${scoreDay(now)}T00:00:00Z`) - MS_OFFSET
 
   return Array.from(
     { length: WINDOW_DAYS },
     (_, index) => new Date(today - (WINDOW_DAYS - 1 - index) * DAY - 1000),
-  )
+  ).filter((endOfDay) => endOfDay.getTime() >= firstActivity)
 }
 
 function reviewAndLeadTime(pullRequests, at) {

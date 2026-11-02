@@ -77,7 +77,7 @@ Uma nota de **0 a 100** por projeto e por empresa, com histórico diário. Os pe
 | I3 | **Faixas:** 80 ou mais = **Bom**; 60 a 79 = **Regular**; abaixo de 60 = **Crítico** | 🔜 E5 |
 | I4 | **Empresa:** média simples dos projetos que têm índice | 🔜 E5 |
 | I5 | **Apuração** de hora em hora, junto da sincronização; vale a última do dia. O dia é contado no fuso de MS (`America/Campo_Grande`). O seletor de período da tela **não** muda o índice | 🔜 E5 |
-| I6 | **Reconstrução:** na primeira apuração de um projeto, os 30 dias anteriores são recalculados pelas datas dos PRs, supondo proteção da branch, prazo e rascunho iguais aos de hoje. Esses dias ficam marcados como **recalculados** e a tela avisa | 🔜 E5 |
+| I6 | **Reconstrução:** na primeira apuração de um projeto, os 30 dias anteriores são recalculados pelas datas dos PRs, **a partir do dia do primeiro PR** (antes dele não há atividade para medir), supondo proteção da branch, prazo e rascunho iguais aos de hoje. Esses dias ficam marcados como **recalculados** e a tela avisa | 🔜 E5 |
 
 | Critério | Peso | Nota (0–100) | Sem dado quando |
 |---|---|---|---|

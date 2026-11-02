@@ -413,7 +413,7 @@ async function snapshotScores(asServer, projectIds) {
       })
 
       if (!scored.has(project.id)) {
-        rows.push(...reconstructionDays(now).map((at) => row(at, true)))
+        rows.push(...reconstructionDays(now, data.pullRequests).map((at) => row(at, true)))
       }
       rows.push(row(now, false))
     }
