@@ -1,4 +1,12 @@
-import { CalendarClock, FolderKanban, Plus, Users } from 'lucide-react'
+import {
+  CalendarClock,
+  ChevronRight,
+  FolderKanban,
+  OctagonAlert,
+  Plus,
+  TriangleAlert,
+  UserRound,
+} from 'lucide-react'
 import { useState } from 'react'
 
 import DeleteProjectModal from './components/DeleteProjectModal'
@@ -12,6 +20,7 @@ import {
 } from '@/features/projects/hooks/useProjects'
 import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
 import { SCORE_BANDS, scoreBand } from '@/shared/lib/governanceScore'
+import { formatProjectDate } from '@/shared/lib/projectUtils'
 import { useToast } from '@/shared/hooks/useToast'
 import styles from './ProjectsPage.module.css'
 
@@ -44,6 +53,31 @@ export default function ProjectsPage({
   const healthOf = (project) => health[project.id] ?? healthy
   const countStatus = (status) =>
     projectList.filter((project) => healthOf(project).status === status).length
+
+  // Cartões de resumo: os números vêm do status calculado (regra P3)
+  const summary = [
+    {
+      label: 'Projetos ativos',
+      value: projectList.length,
+      legend: 'Em acompanhamento',
+      Icon: FolderKanban,
+      tone: 'primary',
+    },
+    {
+      label: 'Em atenção',
+      value: countStatus('warning'),
+      legend: 'Exigem acompanhamento',
+      Icon: TriangleAlert,
+      tone: 'warning',
+    },
+    {
+      label: 'Em risco',
+      value: countStatus('danger'),
+      legend: 'Com alerta de risco',
+      Icon: OctagonAlert,
+      tone: 'danger',
+    },
+  ]
 
   const openCreateForm = () => {
     setEditingProject(null)
@@ -115,24 +149,19 @@ export default function ProjectsPage({
         )}
       </div>
 
-      <div className="dashboard-grid three-columns">
-        <article className="metric-card elevation-1">
-          <span>Projetos ativos</span>
-          <strong>{projectList.length}</strong>
-          <small>Em acompanhamento</small>
-        </article>
-
-        <article className="metric-card elevation-1">
-          <span>Em atenção</span>
-          <strong>{countStatus('warning')}</strong>
-          <small>Exigem acompanhamento</small>
-        </article>
-
-        <article className="metric-card elevation-1">
-          <span>Em risco</span>
-          <strong>{countStatus('danger')}</strong>
-          <small>Com alerta de risco</small>
-        </article>
+      <div className={styles.summary}>
+        {summary.map(({ label, value, legend, Icon, tone }) => (
+          <article className={`${styles.kpi} ${styles[tone]}`} key={label}>
+            <span className={styles.kpiLabel}>
+              <span className={styles.kpiIcon}>
+                <Icon size={16} aria-hidden="true" />
+              </span>
+              {label}
+            </span>
+            <strong className={styles.kpiValue}>{value}</strong>
+            <small className={styles.kpiLegend}>{legend}</small>
+          </article>
+        ))}
       </div>
 
       {isPending && <p className={styles.feedback}>Carregando projetos…</p>}
@@ -143,50 +172,65 @@ export default function ProjectsPage({
         </p>
       )}
 
-      <div className="project-grid" aria-busy={isPending}>
+      <div className={styles.grid} aria-busy={isPending}>
         {projectList.map((project) => {
           const { status } = healthOf(project)
           const score = scores[project.id]?.score ?? null
+          const band = scoreBand(score)
 
           return (
-            <article className={`project-card elevation-1 ${styles.card}`} key={project.id}>
-              <div className="project-card-top">
-                <div className="project-icon">
-                  <FolderKanban size={19} />
-                </div>
+            <article className={styles.card} key={project.id}>
+              <header className={styles.cardHeader}>
+                <h3 className={styles.cardTitle}>
+                  {/* O botão cobre o cartão inteiro (::after), então clique e teclado funcionam em todo ele */}
+                  <button
+                    type="button"
+                    className={styles.cardButton}
+                    onClick={() => handleProjectClick(project)}
+                  >
+                    {project.name}
+                  </button>
+                </h3>
 
                 <span className={`status-badge ${status}`}>{PROJECT_STATUS[status]}</span>
-              </div>
+              </header>
 
-              <h3>
-                {/* O botão cobre o cartão inteiro (::after), então clique e teclado funcionam em todo ele */}
-                <button
-                  type="button"
-                  className={styles.cardButton}
-                  onClick={() => handleProjectClick(project)}
-                >
-                  {project.name}
-                </button>
-              </h3>
+              <dl className={styles.meta}>
+                <div>
+                  <dt>
+                    <UserRound size={15} aria-hidden="true" />
+                    Responsável
+                  </dt>
+                  <dd>{project.owner}</dd>
+                </div>
 
-              <div className="project-meta">
-                <span>
-                  <Users size={15} />
-                  {project.owner}
+                <div>
+                  <dt>
+                    <CalendarClock size={15} aria-hidden="true" />
+                    Prazo
+                  </dt>
+                  <dd>{formatProjectDate(project.deadline)}</dd>
+                </div>
+              </dl>
+
+              <footer className={styles.cardFooter}>
+                {score === null ? (
+                  <p className={styles.noScore}>Índice de Governança ainda não apurado</p>
+                ) : (
+                  <p className={`${styles.score} ${styles[band]}`}>
+                    <strong className={styles.scoreValue}>{score}</strong>
+                    <span className={styles.scoreText}>
+                      Índice de Governança
+                      <span className={styles.scoreBand}>{SCORE_BANDS[band]}</span>
+                    </span>
+                  </p>
+                )}
+
+                <span className={styles.open} aria-hidden="true">
+                  Detalhes
+                  <ChevronRight size={16} />
                 </span>
-
-                <span>
-                  <CalendarClock size={15} />
-                  {project.deadline}
-                </span>
-              </div>
-
-              {score !== null && (
-                <p className={`${styles.index} ${styles[scoreBand(score)]}`}>
-                  Índice de Governança <strong>{score}</strong>
-                  <small>{SCORE_BANDS[scoreBand(score)]}</small>
-                </p>
-              )}
+              </footer>
             </article>
           )
         })}

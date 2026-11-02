@@ -3,8 +3,148 @@
   color: var(--muted);
 }
 
+/* Cores de cada cartão: a faixa/tom vira --tone e --tone-ink (versão escura,
+   legível em texto; no tema escuro a mistura clareia, porque o texto é claro) */
+.primary {
+  --tone: var(--color-primary-500);
+}
+
+.success {
+  --tone: var(--color-success);
+}
+
+.warning {
+  --tone: var(--color-warning);
+}
+
+.danger {
+  --tone: var(--color-danger);
+}
+
+.primary,
+.success,
+.warning,
+.danger {
+  --tone-ink: color-mix(in srgb, var(--tone), var(--color-text-primary) 45%);
+  --tone-soft: color-mix(in srgb, var(--tone) 14%, var(--color-surface));
+}
+
+/* Resumo (KPI): ícone + rótulo, número grande, legenda discreta */
+.summary {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.kpi {
+  display: grid;
+  grid-template-areas:
+    'label value'
+    'legend value';
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--elevation-1);
+}
+
+.kpiLabel {
+  grid-area: label;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.kpiIcon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--tone-soft);
+  color: var(--tone-ink);
+}
+
+.kpiValue {
+  grid-area: value;
+  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiLegend {
+  grid-area: legend;
+  padding-left: calc(28px + var(--space-2)); /* alinha com o texto do rótulo, depois do ícone */
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+}
+
+/* Grade de projetos: 1 / 2 / 3 colunas; linhas com a mesma altura */
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
 .card {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--elevation-1);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.1s ease-out;
+}
+
+.card:hover {
+  border-color: var(--color-primary-200);
+  box-shadow: var(--elevation-2);
+}
+
+/* Resposta no toque, não só no clique (pointer-down) */
+.card:active {
+  transform: scale(0.99);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cardHeader :global(.status-badge) {
+  flex-shrink: 0;
+}
+
+.cardTitle {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .cardButton {
@@ -13,6 +153,7 @@
   background: none;
   color: inherit;
   font: inherit;
+  letter-spacing: inherit;
   text-align: left;
   cursor: pointer;
 }
@@ -33,31 +174,163 @@
   outline-offset: 2px;
 }
 
-/* Índice de Governança no cartão: a faixa vai no texto e na borda, não só na cor */
-.index {
-  display: flex;
-  align-items: baseline;
+/* Metadados como linhas rótulo → valor */
+.meta {
+  display: grid;
   gap: var(--space-2);
-  margin: var(--space-3) 0 0;
-  padding-left: var(--space-2);
-  border-left: 3px solid var(--band-color);
-  color: var(--muted);
+  margin: 0;
+}
+
+.meta > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
   font-size: var(--font-size-sm);
 }
 
-.index strong {
-  color: var(--text);
-  font-size: var(--font-size-md);
+.meta dt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
 }
 
-.success {
-  --band-color: var(--color-success);
+.meta dd {
+  overflow: hidden;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.warning {
-  --band-color: var(--color-warning);
+/* Rodapé: Índice de Governança em destaque e a ação de abrir o detalhe */
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-subtle);
 }
 
-.danger {
-  --band-color: var(--color-danger);
+.score {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.scoreValue {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  height: 40px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--tone-soft);
+  color: var(--tone-ink);
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreText {
+  display: grid;
+  gap: 2px;
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+}
+
+/* A faixa vai em texto e num ponto, não só na cor */
+.scoreBand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tone-ink);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.scoreBand::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tone);
+}
+
+/* Mesma altura do bloco da nota, para os rodapés alinharem na linha da grade */
+.noScore {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+}
+
+.open {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-primary-600);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.open svg {
+  transition: transform 0.2s ease;
+}
+
+.card:hover .open svg {
+  transform: translateX(2px);
+}
+
+@media (min-width: 640px) {
+  .summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  /* Com espaço, o número desce para o meio: rótulo, número, legenda */
+  .kpi {
+    grid-template-areas:
+      'label'
+      'value'
+      'legend';
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .kpiLegend {
+    padding-left: 0;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .open svg {
+    transition: none;
+  }
+
+  .card:active,
+  .card:hover .open svg {
+    transform: none;
+  }
 }
