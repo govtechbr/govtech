@@ -44,15 +44,15 @@ select results_eq(
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';
 
-insert into public.projects (id, organization_id, name, deadline, priority)
-values ('20000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-00000000000a',
-        'Portal', '2026-12-01', 'high');
+-- sem id: o authenticated não escreve a coluna id (grant por coluna)
+insert into public.projects (organization_id, name, deadline, priority)
+values ('10000000-0000-0000-0000-00000000000a', 'Portal', '2026-12-01', 'high');
 update public.projects set progress = 40, priority = 'low'
-where id = '20000000-0000-0000-0000-00000000000a';
+where organization_id = '10000000-0000-0000-0000-00000000000a' and name = 'Portal';
 -- só a coluna antiga de status: não é mudança para a auditoria
 update public.projects set status = 'danger'
-where id = '20000000-0000-0000-0000-00000000000a';
-delete from public.projects where id = '20000000-0000-0000-0000-00000000000a';
+where organization_id = '10000000-0000-0000-0000-00000000000a' and name = 'Portal';
+delete from public.projects where organization_id = '10000000-0000-0000-0000-00000000000a' and name = 'Portal';
 
 update public.organization_members set role = 'stakeholder'
 where organization_id = '10000000-0000-0000-0000-00000000000a'
