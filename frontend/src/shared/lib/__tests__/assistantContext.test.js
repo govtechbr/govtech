@@ -90,6 +90,7 @@ describe('buildAssistantContext', () => {
     expect(context.metricsLast30Days).toMatchObject({
       pullRequests: metrics.pullRequestCount,
       approvalRatePercent: metrics.approvalRate,
+      ciSuccessRatePercent: metrics.ciSuccessRate,
       pullRequestsAtRisk: 1,
       averageLeadTimeHours: 48,
     })

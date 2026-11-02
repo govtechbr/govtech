@@ -17,12 +17,12 @@ export async function loadGovernanceData(organizationId, now = new Date()) {
   const results = await Promise.all([
     supabase
       .from('repositories')
-      .select(`id, name, default_branch, ${links}`)
+      .select(`id, name, default_branch, ci_state, ${links}`)
       .eq('organization_id', organizationId),
     supabase
       .from('pull_requests')
       .select(
-        `id, number, title, state, draft, author_login, approval_count, html_url, created_at_github, merged_at, closed_at, repository:repositories!inner (name, ${links})`,
+        `id, number, title, state, draft, author_login, approval_count, ci_state, html_url, created_at_github, merged_at, closed_at, repository:repositories!inner (name, ${links})`,
       )
       .eq('organization_id', organizationId),
     supabase

@@ -170,6 +170,71 @@ describe('governanceAlerts', () => {
   })
 })
 
+describe('CI status (rule G10)', () => {
+  const projects = [{ id: 'p1', name: 'Portal', deadline: '' }]
+  const ci = {
+    repositories: [
+      { id: 'r1', name: 'app', default_branch: 'main', ci_state: 'failure', projectIds: ['p1'] },
+    ],
+    branches: [{ repository_id: 'r1', name: 'main', protected: true }],
+    commits: [],
+    pullRequests: [
+      pr({ number: 1, ci_state: 'failure' }),
+      pr({ number: 2, ci_state: 'failure', draft: true }),
+      pr({
+        number: 3,
+        state: 'merged',
+        merged_at: daysAgo(2),
+        approval_count: 1,
+        ci_state: 'failure',
+      }),
+      pr({
+        number: 4,
+        state: 'merged',
+        merged_at: daysAgo(3),
+        approval_count: 1,
+        ci_state: 'success',
+      }),
+      pr({
+        number: 5,
+        state: 'merged',
+        merged_at: daysAgo(4),
+        approval_count: 1,
+        ci_state: 'success',
+      }),
+      pr({ number: 6, state: 'merged', merged_at: daysAgo(5), approval_count: 1, ci_state: null }),
+      pr({
+        number: 7,
+        state: 'merged',
+        merged_at: daysAgo(40),
+        approval_count: 1,
+        ci_state: 'failure',
+      }),
+      pr({ number: 8, ci_state: 'pending' }),
+    ],
+  }
+
+  it('raises the CI alerts, the broken main first', () => {
+    const alerts = governanceAlerts(ci, projects, now)
+
+    expect(alerts.map(({ level, title }) => `${level}: ${title}`)).toEqual([
+      'danger: CI falhando na branch principal',
+      'danger: PR mergeado com CI falhando',
+      'warning: PR com CI falhando',
+    ])
+    expect(alerts[0]).toMatchObject({ detail: 'app · main', projectIds: ['p1'] })
+    expect(alerts[1]).toMatchObject({ detail: '#3 · app · PR 3' })
+    expect(alerts[2]).toMatchObject({ detail: '#1 · app · PR 1' })
+    expect(alerts[0].reason).toMatch(/testes automáticos/)
+  })
+
+  it('computes the share of merged PRs with green CI, ignoring PRs without CI', () => {
+    expect(governanceMetrics(ci, 30, now).ciSuccessRate).toBe(67)
+    expect(governanceMetrics(ci, 90, now).ciSuccessRate).toBe(50)
+    expect(governanceMetrics(data, 30, now).ciSuccessRate).toBeNull()
+  })
+})
+
 describe('projectHealth', () => {
   it('takes the worst alert of each project as its status', () => {
     const projects = [
