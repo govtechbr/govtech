@@ -158,4 +158,42 @@ Convite por e-mail, webhook ou GitHub App (atualização instantânea), CI no Í
 | E7 | Auditoria real + paginação do GitHub | AU1–AU7, G9 | 10/11 |
 | E8 | Status do CI: coleta, alertas e taxa de CI verde | G10, §5, §6 | 03/11 |
 | E9 | Histórico de execuções do CI e tempo de correção | G11, §5 | 04/11 |
+| E10 | Direcionadores estratégicos: missão, visão, objetivos e vínculo com projetos | S1–S7 | 04/11 |
+| E11 | Página Processos: evidências por área do CMMI/ISO 12207 | C1–C6 | 05/11 |
 | — | Folga: testes, documentação do TCC, ensaio | — | 13–18/11 |
+
+## 10. Direcionadores estratégicos (E10, decisão de 02/11/2026)
+
+Liga o trabalho técnico às metas da empresa (RF03 e RF07 do TCC): um projeto em risco passa a mostrar **qual objetivo de negócio ele ameaça**.
+
+| # | Regra | Situação |
+|---|---|---|
+| S1 | A empresa tem **missão** e **visão**: texto livre, até 1.000 caracteres cada. Só o admin edita; todos os papéis veem | 🔜 E10 |
+| S2 | A empresa tem uma lista de **objetivos estratégicos**: título (até 120 caracteres) e descrição (até 500). Só o admin cria, edita e exclui; todos veem | 🔜 E10 |
+| S3 | Um projeto se vincula a **no máximo um objetivo** (opcional), escolhido no formulário por admin ou developer. Um objetivo pode ter vários projetos. O vínculo só vale dentro da mesma empresa. Excluir um objetivo **desfaz os vínculos**; os projetos continuam | 🔜 E10 |
+| S4 | **Status do objetivo** = o pior status entre os projetos vinculados (Risco antes de Atenção antes de Saudável, mesma regra P3). Sem projeto vinculado: "Sem projetos vinculados" (falta de dado não vira Saudável) | 🔜 E10 |
+| S5 | **Impacto (RF07):** o objetivo em Risco ou Atenção lista os projetos responsáveis e os **alertas** de cada um (§6, com o "por que importa"). O sistema aponta a relação entre a falha técnica e a meta; **não estima** prazo nem custo do impacto | 🔜 E10 |
+| S6 | Tela **Estratégia** na barra lateral: missão, visão e objetivos com status e projetos. O cartão e o detalhe do projeto mostram o objetivo a que ele serve | 🔜 E10 |
+| S7 | **Auditoria (§7):** objetivo criado, alterado ou excluído; missão e visão alteradas (antes e depois); vínculo do projeto com o objetivo (mudança do projeto) | 🔜 E10 |
+
+## 11. Processos: evidências por área do CMMI (E11, decisão de 02/11/2026)
+
+Objetivo específico 5 do TCC: relacionar os registros dos PRs às práticas de avaliação de processos (CMMI-DEV 1.3 e SPICE, ISO/IEC 33000 sobre os processos da ISO/IEC/IEEE 12207). **O sistema fornece evidências; não avalia nem atribui nível de capacidade ou de maturidade** (isso exige um avaliador qualificado).
+
+| # | Regra | Situação |
+|---|---|---|
+| C1 | A tela **Processos** (todos os papéis veem) mostra cada área de processo, os critérios do Índice de Governança que servem de evidência, a nota atual da empresa e a faixa (I3) | 🔜 E11 |
+| C2 | **Mapeamento fixo** (tabela abaixo). Cada critério do índice (I1) alimenta uma única área, então nenhuma evidência é contada duas vezes | 🔜 E11 |
+| C3 | A **nota da área** é a média ponderada dos critérios dela, com os pesos e a regra de "só critérios com dado" do índice (I2); a empresa usa a média dos projetos (I4). Sem dado em nenhum critério da área: "sem dados" | 🔜 E11 |
+| C4 | Cada área mostra **de onde vem a evidência** (qual dado do GitHub) e a **prática do modelo** correspondente, em texto simples para quem não é técnico | 🔜 E11 |
+| C5 | Um aviso fixo na tela diz que a nota é **evidência de apoio**, não avaliação formal de maturidade | 🔜 E11 |
+| C6 | Mapeamento só de apoio à leitura: mudar a tabela não muda o índice nem os alertas | 🔜 E11 |
+
+| Área (CMMI-DEV 1.3) | Processo ISO/IEC/IEEE 12207 | Critérios do índice | Prática que a evidência apoia |
+|---|---|---|---|
+| Verificação (VER) | Verificação | Revisão de código | Revisão por pares dos produtos de trabalho: PR mergeado com aprovação |
+| Gestão de Configuração (CM) | Gestão de configuração | Proteção da branch | Controle das linhas-base: a branch principal só muda por PR revisado |
+| Monitoramento e Controle do Projeto (PMC) | Avaliação e controle do projeto | Fluxo de PRs e Prazo | Acompanhar o andamento contra o plano e agir sobre os desvios |
+| Medição e Análise (MA) | Medição | Lead time | Medir o tempo de entrega e usá-lo para decidir |
+
+A auditoria (§7) e o histórico do CI (G11) complementam CM e MA como registro e medida, mas **não entram na nota** (C6).
