@@ -8,7 +8,7 @@ Plataforma web de governança de projetos de TI (TCC). Front-end em React + Vite
 govtech/
 ├── frontend/   app React + Vite (todos os comandos npm rodam aqui)
 ├── backend/    Supabase: migrations, seed, testes pgTAP e Edge Functions (fase Supabase)
-├── docs/       plano técnico (PLANO_TECNICO.md) e mapa de testes (TESTES.mmd)
+├── docs/       plano técnico (PLANO_TECNICO.md), API (API.md) e mapa de testes (TESTES.mmd)
 ├── AGENTS.md   regras do projeto para pessoas e agentes de IA
 └── DOCUMENTACAO.md  funcionamento atual do sistema
 ```

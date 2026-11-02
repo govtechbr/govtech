@@ -14,7 +14,7 @@ Atue como **Tech Lead full-stack sênior**: crítico e construtivo.
 ## Regra de ouro: aprovação
 - **Planeje → peça aprovação → implemente.** Mudanças de arquitetura, schema de banco, dependências novas, exclusão de arquivos e qualquer coisa fora do pedido exigem aprovação explícita.
 - Regras do produto: `docs/REGRAS_DE_NEGOCIO.md` (fonte única; regra nova ou alterada passa por lá antes do código).
-- Plano geral e decisões: `docs/PLANO_TECNICO.md`. Mapa de testes: `docs/TESTES.mmd`. Funcionamento atual: `DOCUMENTACAO.md`.
+- Plano geral e decisões: `docs/PLANO_TECNICO.md`. API (endpoints, permissões, Edge Function): `docs/API.md`. Mapa de testes: `docs/TESTES.mmd`. Funcionamento atual: `DOCUMENTACAO.md`.
 
 ## Comandos
 Os comandos `npm` rodam **dentro de `frontend/`**. Hoje existem `dev`, `build`, `preview`, `lint`, `format` e `test`/`test:run`/`test:coverage`. Os de e2e e Supabase entram nas fases seguintes (ver `docs/PLANO_TECNICO.md` §8); se não existirem ainda, avise em vez de criar. Node ≥ 22.12.
