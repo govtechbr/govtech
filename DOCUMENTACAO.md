@@ -296,8 +296,8 @@ Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir
 
 ### 8.5 `ProjectsPage.jsx` — Projetos
 É o módulo mais completo para o usuário final:
-- **Cards** de projeto com nome, responsável, prazo, barra de progresso e alerta se o status for `danger`.
-- **Status calculado** (desde 04/11/2026): Saudável, Atenção ou Risco, a partir dos alertas do projeto (PR parado, PR sem aprovação, branch sem proteção, prazo). O formulário não tem mais o campo Status. O cartão mostra o primeiro alerta e o detalhe do projeto lista todos, com a explicação da regra.
+- **Cards** de projeto com nome, responsável, prazo, barra de progresso e o badge de status. Desde 02/11/2026 o card não lista alertas (gerava rolagem demais); eles ficam no detalhe do projeto.
+- **Status calculado** (desde 04/11/2026): Saudável, Atenção ou Risco, a partir dos alertas do projeto (PR parado, PR sem aprovação, branch sem proteção, prazo). O formulário não tem mais o campo Status. O cartão mostra só o status; o detalhe do projeto lista os alertas, com a explicação da regra.
 - **Índice de Governança** (desde 02/11/2026): o cartão mostra a nota mais recente e a faixa; o detalhe mostra a nota de cada critério.
 - **3 indicadores**: total, “em atenção” (`status === 'warning'`), “riscos críticos” (`status === 'danger'`).
 - **Novo projeto**: abre `ProjectFormModal` vazio.

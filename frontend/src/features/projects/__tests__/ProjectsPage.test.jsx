@@ -126,10 +126,16 @@ describe('ProjectsPage', () => {
     expect(screen.getByRole('heading', { name: 'Sistema de Notificações' })).toBeInTheDocument()
     expect(screen.getByText('Risco')).toBeInTheDocument()
     expect(screen.getByText('Atenção')).toBeInTheDocument()
-    expect(screen.getByText('Prazo vencido')).toBeInTheDocument()
     expect(metric('Projetos ativos')).toHaveTextContent('2')
     expect(metric('Em atenção')).toHaveTextContent('1')
     expect(metric('Em risco')).toHaveTextContent('1')
+  })
+
+  it('keeps the alerts out of the cards, leaving them to the project detail', async () => {
+    await renderPage()
+
+    expect(screen.queryByText('Prazo vencido')).toBeNull()
+    expect(screen.queryByText('Branch principal sem proteção')).toBeNull()
   })
 
   it('shows the alerts behind the status in the project detail', async () => {
