@@ -1,13 +1,12 @@
 .field {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-2);
   min-width: 0;
 }
 
+/* Herda cor e tamanho do formulário em volta, como os rótulos dos inputs nativos */
 .label {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .trigger {
@@ -19,10 +18,9 @@
   min-width: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: var(--color-surface-muted);
+  background: var(--color-surface);
   color: var(--color-text-primary);
   font: inherit;
-  font-size: var(--font-size-sm);
   text-align: left;
   cursor: pointer;
   transition:
@@ -37,6 +35,7 @@
 
 .sm {
   min-height: 32px;
+  font-size: var(--font-size-sm);
   padding: 0 var(--space-2);
 }
 
@@ -68,6 +67,16 @@
 }
 
 .placeholder {
+  color: var(--color-text-muted);
+}
+
+.value,
+.placeholder {
+  flex: 1;
+}
+
+.icon {
+  flex-shrink: 0;
   color: var(--color-text-muted);
 }
 

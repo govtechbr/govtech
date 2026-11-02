@@ -27,6 +27,7 @@ const Select = forwardRef(function Select(
     id,
     error,
     size = 'md',
+    icon: Icon,
     className,
     'aria-label': ariaLabel,
   },
@@ -172,6 +173,7 @@ const Select = forwardRef(function Select(
         onKeyDown={handleTriggerKeyDown}
         onBlur={handleBlur}
       >
+        {Icon && <Icon size={17} aria-hidden="true" className={styles.icon} />}
         <span id={valueId} className={selected ? styles.value : styles.placeholder}>
           {selected ? selected.label : placeholder}
         </span>
