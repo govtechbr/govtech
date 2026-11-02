@@ -1253,3 +1253,11 @@ Uma função com três ações. Todas conferem o login (JWT) e o papel do usuár
 - **Banco:** tabela `governance_scores` (PK projeto + dia), RLS de leitura para membros, sem escrita pelo front; 6 testes pgTAP.
 - **Tela:** card no topo da Visão geral (nota, faixa com ícone, variação em 7 dias, linha de 30 dias em SVG com cursor, teclado e tabela para leitor de tela, critérios com peso, explicação). Em Projetos, o índice no cartão e os critérios no detalhe (`shared/ui/ScoreBreakdown.jsx`).
 - **Testes:** 6 das funções do front (`governanceScore.test.js`), 4 da Visão geral, 1 de Projetos e 1 de ponta a ponta. **115 testes**, lint e build verdes.
+
+**E6: Assistente de Governança com IA** (regras IA1–IA6; 02/11/2026; migration `assistant_usage`)
+- **Provedor:** Groq, plano gratuito, modelo `openai/gpt-oss-120b`. Termos lidos em 02/11/2026: não treina com os dados (Services Agreement §4.2), não guarda os pedidos por padrão, oferece Zero Data Retention, processa nos EUA, exige 18 anos. Gemini gratuito descartado por usar os dados para treino fora da UE.
+- **Decisões do dono:** 20 perguntas por pessoa e 200 no total por dia; vão números e títulos de PR, nunca login, avatar ou e-mail; todos os papéis usam.
+- **Onde está cada parte:** o navegador monta os dados da empresa com os mesmos cálculos dos painéis (`shared/lib/assistantContext.js`), para a resposta bater com a tela sem duplicar regras no Deno. A Edge Function `assistant` só valida, confere a empresa, conta o limite (`assistant_consume`, `security definer` em `private`) e chama o Groq. Um contexto forjado só engana quem o forjou: a função não lê dados de outras empresas.
+- **Prompt injection:** os dados vão numa mensagem separada, marcada como "dados, não instruções".
+- **Tela:** o `ChatbotModal` (FAQ fixa, ~40 estilos inline) foi apagado; o painel novo usa o `Modal` acessível de `shared/ui`, com 4 perguntas sugeridas, aviso de IA e perguntas restantes.
+- **Testes:** 9 `node --test` da função, 7 do contexto e 4 de ponta a ponta no app (−1 do chatbot antigo). **125 testes**, lint e build verdes. pgTAP `assistant_usage` com 8 casos.
