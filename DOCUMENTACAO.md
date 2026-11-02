@@ -297,7 +297,7 @@ Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir
 
 ### 8.5 `ProjectsPage.jsx` — Projetos
 É o módulo mais completo para o usuário final:
-- **Cards** de projeto com nome, responsável, prazo e o badge de status. A barra de progresso manual saiu em 02/11/2026 (regra P2). Desde 02/11/2026 nem o card nem o detalhe do projeto listam alertas (geravam rolagem demais); a lista fica na Visão geral.
+- **Cards** de projeto com nome e badge de status no topo, responsável e prazo como linhas rótulo/valor, e o Índice de Governança no rodapé (nota na cor da faixa, ou "ainda não apurado"); grade de 1/2/3 colunas (640/1024 px). Os cards de resumo do topo seguem o padrão KPI (ícone + rótulo, número, legenda). A barra de progresso manual saiu em 02/11/2026 (regra P2). Desde 02/11/2026 nem o card nem o detalhe do projeto listam alertas (geravam rolagem demais); a lista fica na Visão geral.
 - **Status calculado** (desde 04/11/2026): Saudável, Atenção ou Risco, a partir dos alertas do projeto (PR parado, PR sem aprovação, branch sem proteção, prazo, CI). O formulário não tem mais o campo Status. O cartão e o detalhe do projeto mostram só o status; os alertas que o explicam, com o motivo de cada um, aparecem na Visão geral.
 - **Índice de Governança** (desde 02/11/2026): o cartão mostra a nota mais recente e a faixa; o detalhe mostra a nota de cada critério.
 - **3 indicadores**: total, “em atenção” (`status === 'warning'`), “riscos críticos” (`status === 'danger'`).

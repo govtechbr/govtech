@@ -120,6 +120,10 @@ function metric(label) {
   return within(screen.getByText(label).closest('article')).getByRole('strong')
 }
 
+function projectCard(name) {
+  return screen.getByRole('heading', { name }).closest('article')
+}
+
 describe('ProjectsPage', () => {
   it('lists projects with the status computed from their alerts', async () => {
     await renderPage()
@@ -131,6 +135,21 @@ describe('ProjectsPage', () => {
     expect(metric('Projetos ativos')).toHaveTextContent('2')
     expect(metric('Em atenção')).toHaveTextContent('1')
     expect(metric('Em risco')).toHaveTextContent('1')
+  })
+
+  it('shows the owner and the formatted deadline on each card', async () => {
+    await renderPage()
+
+    const card = projectCard('Plataforma de Pagamentos')
+    const [owner, deadline] = within(card).getAllByRole('definition')
+    expect(
+      within(card)
+        .getAllByRole('term')
+        .map((term) => term.textContent),
+    ).toEqual(['Responsável', 'Prazo'])
+    expect(owner).toHaveTextContent('Ana')
+    expect(deadline).toHaveTextContent('01/12/2026')
+    expect(within(card).getByText('Risco')).toBeInTheDocument()
   })
 
   it('keeps the alerts out of the cards', async () => {
@@ -155,12 +174,15 @@ describe('ProjectsPage', () => {
   it('shows the governance index on the card and its criteria in the detail', async () => {
     const { user } = await renderPage()
 
-    const card = screen
-      .getByRole('heading', { name: 'Plataforma de Pagamentos' })
-      .closest('article')
-    expect(within(card).getByText(/Índice de Governança/)).toHaveTextContent(
-      'Índice de Governança 57Crítico',
-    )
+    const card = projectCard('Plataforma de Pagamentos')
+    expect(
+      within(card)
+        .getByText(/Índice de Governança/)
+        .closest('p'),
+    ).toHaveTextContent('57Índice de GovernançaCrítico')
+    expect(
+      within(projectCard('Sistema de Notificações')).getByText(/ainda não apurado/),
+    ).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: 'Plataforma de Pagamentos' }))
     const dialog = screen.getByRole('dialog', { name: 'Plataforma de Pagamentos' })
