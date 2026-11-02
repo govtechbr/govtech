@@ -202,27 +202,6 @@
   font-size: var(--font-size-xs);
 }
 
-.ruleCard {
-  display: flex;
-  gap: var(--space-3);
-  margin-top: var(--space-5);
-  padding: var(--space-4);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--muted);
-  font-size: var(--font-size-sm);
-}
-
-.ruleCard strong {
-  display: block;
-  margin-bottom: var(--space-1);
-  color: var(--text);
-}
-
-.ruleCard p {
-  margin: 0;
-}
-
 .visuallyHidden {
   position: absolute;
   width: 1px;

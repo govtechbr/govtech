@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { AlertTriangle, Check, Info } from 'lucide-react'
+import { AlertTriangle, Check } from 'lucide-react'
 
 import styles from '@/features/dashboard/components/GovernanceIndex.module.css'
 import { formatDay, formatTime } from '@/shared/lib/date'
 import { SCORE_BANDS, scoreBand, scoreChange, scoreHistory } from '@/shared/lib/governanceScore'
 import ScoreBreakdown from '@/shared/ui/ScoreBreakdown'
 import StatusBadge from '@/shared/ui/StatusBadge'
+import Tooltip from '@/shared/ui/Tooltip'
 
 const DAY = 24 * 60 * 60 * 1000
 const CHART_DAYS = 30
@@ -185,6 +186,16 @@ export default function GovernanceIndex({ scores }) {
           <span className="section-kicker">ÍNDICE DE GOVERNANÇA · 0 A 100</span>
           <h2 id="governance-index-title">Índice de Governança</h2>
         </div>
+
+        <Tooltip label="Como o índice é calculado">
+          <p>
+            Cada projeto recebe uma nota dos últimos 30 dias: revisão de código (peso 30), fluxo de
+            PRs (20), prazo (20), proteção da branch principal (15) e lead time (15). Critério sem
+            dado fica de fora e os outros pesos são reescalados. A nota da empresa é a média dos
+            projetos. Faixas: 80 ou mais é Bom, de 60 a 79 é Regular e abaixo de 60 é Crítico. O
+            seletor de período não muda o índice.
+          </p>
+        </Tooltip>
       </div>
 
       {!last ? (
@@ -195,21 +206,6 @@ export default function GovernanceIndex({ scores }) {
       ) : (
         <IndexContent history={history} last={last} />
       )}
-
-      <div className={styles.ruleCard} role="note" aria-labelledby="index-rule-title">
-        <Info size={16} aria-hidden="true" />
-
-        <div>
-          <strong id="index-rule-title">Como o índice é calculado</strong>
-          <p>
-            Cada projeto recebe uma nota dos últimos 30 dias: revisão de código (peso 30), fluxo de
-            PRs (20), prazo (20), proteção da branch principal (15) e lead time (15). Critério sem
-            dado fica de fora e os outros pesos são reescalados. A nota da empresa é a média dos
-            projetos. Faixas: 80 ou mais é Bom, de 60 a 79 é Regular e abaixo de 60 é Crítico. O
-            seletor de período não muda o índice.
-          </p>
-        </div>
-      </div>
     </section>
   )
 }
