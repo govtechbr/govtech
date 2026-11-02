@@ -85,6 +85,16 @@ const health = {
   },
 }
 
+// Índice de Governança mais recente (regra I1); só o projeto 1 já foi apurado
+const scores = {
+  1: {
+    project_id: 1,
+    day: '2026-11-02',
+    score: 57,
+    components: { review: 5, flow: 100, deadline: 100, protection: 0, leadTime: null },
+  },
+}
+
 async function renderPage({ initialProjectId } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
@@ -92,7 +102,7 @@ async function renderPage({ initialProjectId } = {}) {
     <QueryClientProvider client={queryClient}>
       <CurrentOrganizationContext.Provider value={currentOrganization}>
         <ToastProvider>
-          <ProjectsPage initialProjectId={initialProjectId} health={health} />
+          <ProjectsPage initialProjectId={initialProjectId} health={health} scores={scores} />
         </ToastProvider>
       </CurrentOrganizationContext.Provider>
     </QueryClientProvider>,
@@ -130,6 +140,32 @@ describe('ProjectsPage', () => {
     const dialog = screen.getByRole('dialog', { name: 'Sistema de Notificações' })
     expect(within(dialog).getByText('Atenção: Branch principal sem proteção')).toBeInTheDocument()
     expect(within(dialog).getByText('app · main')).toBeInTheDocument()
+  })
+
+  it('shows the governance index on the card and its criteria in the detail', async () => {
+    const { user } = await renderPage()
+
+    const card = screen
+      .getByRole('heading', { name: 'Plataforma de Pagamentos' })
+      .closest('article')
+    expect(within(card).getByText(/Índice de Governança/)).toHaveTextContent(
+      'Índice de Governança 57Crítico',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Plataforma de Pagamentos' }))
+    const dialog = screen.getByRole('dialog', { name: 'Plataforma de Pagamentos' })
+    expect(within(dialog).getByText('Revisão de código').closest('li')).toHaveTextContent(
+      'Revisão de código peso 305',
+    )
+    expect(within(dialog).getByText('Lead time').closest('li')).toHaveTextContent('sem dados')
+
+    await user.keyboard('{Escape}')
+    await user.click(screen.getByRole('button', { name: 'Sistema de Notificações' }))
+    expect(
+      within(screen.getByRole('dialog', { name: 'Sistema de Notificações' })).getByText(
+        /Ainda não apurado/,
+      ),
+    ).toBeInTheDocument()
   })
 
   it('creates a project without a manual status (it is computed)', async () => {

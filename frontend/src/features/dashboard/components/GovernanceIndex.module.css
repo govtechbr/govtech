@@ -1,0 +1,233 @@
+.panel {
+  margin-bottom: var(--space-6);
+}
+
+.layout {
+  display: grid;
+  gap: var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(220px, 280px);
+    align-items: start;
+  }
+}
+
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+}
+
+.headline {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+}
+
+.score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.score strong {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.score span {
+  color: var(--muted);
+  font-size: var(--font-size-md);
+}
+
+.change {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+/* Gráfico */
+.chart {
+  min-width: 0;
+  margin: 0;
+}
+
+.plot {
+  position: relative;
+  height: 160px;
+  border-bottom: 1px solid var(--border);
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.plot:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 4px;
+}
+
+.plot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.line,
+.rebuilt {
+  fill: none;
+  stroke: var(--color-primary-500);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.rebuilt {
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+.reference {
+  stroke: var(--border);
+  stroke-width: 1px;
+  stroke-dasharray: 2 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.referenceLabel {
+  position: absolute;
+  top: var(--y);
+  right: 0;
+  transform: translateY(-100%);
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  pointer-events: none;
+}
+
+.dot {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--color-primary-500);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.crosshair {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--x);
+  width: 1px;
+  background: var(--muted);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  left: var(--x);
+  display: grid;
+  margin-left: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--elevation-2);
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tooltipLeft {
+  margin-left: 0;
+  transform: translateX(calc(-100% - var(--space-2)));
+}
+
+.tooltip strong {
+  color: var(--text);
+  font-size: var(--font-size-md);
+}
+
+.axis {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.keySolid,
+.keyDashed {
+  display: inline-block;
+  width: 16px;
+  margin-left: var(--space-2);
+  border-top: 2px solid var(--color-primary-500);
+}
+
+.keyDashed {
+  border-top-style: dashed;
+  opacity: 0.7;
+}
+
+.subtitle {
+  margin: 0 0 var(--space-3);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+}
+
+.notice {
+  grid-column: 1 / -1;
+  font-size: var(--font-size-xs);
+}
+
+.ruleCard {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+}
+
+.ruleCard strong {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--text);
+}
+
+.ruleCard p {
+  margin: 0;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

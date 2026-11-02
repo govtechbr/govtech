@@ -11,6 +11,7 @@ import {
   useUpdateProject,
 } from '@/features/projects/hooks/useProjects'
 import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
+import { SCORE_BANDS, scoreBand } from '@/shared/lib/governanceScore'
 import { useToast } from '@/shared/hooks/useToast'
 import styles from './ProjectsPage.module.css'
 
@@ -20,7 +21,13 @@ const allowAll = { create: true, edit: true, delete: true, manageGitHub: true, s
 const healthy = { status: 'success', alerts: [] }
 
 // health: { [projectId]: { status, alerts } }, calculado pelos alertas (regra P3)
-export default function ProjectsPage({ initialProjectId, permissions = allowAll, health = {} }) {
+// scores: { [projectId]: linha mais recente do Índice de Governança } (regra I1)
+export default function ProjectsPage({
+  initialProjectId,
+  permissions = allowAll,
+  health = {},
+  scores = {},
+}) {
   const { showToast } = useToast()
   const { data: projectList = [], isPending, isError } = useProjects()
   const createProject = useCreateProject()
@@ -139,6 +146,7 @@ export default function ProjectsPage({ initialProjectId, permissions = allowAll,
       <div className="project-grid" aria-busy={isPending}>
         {projectList.map((project) => {
           const { status, alerts } = healthOf(project)
+          const score = scores[project.id]?.score ?? null
 
           return (
             <article className={`project-card elevation-1 ${styles.card}`} key={project.id}>
@@ -184,6 +192,13 @@ export default function ProjectsPage({ initialProjectId, permissions = allowAll,
                 </div>
               </div>
 
+              {score !== null && (
+                <p className={`${styles.index} ${styles[scoreBand(score)]}`}>
+                  Índice de Governança <strong>{score}</strong>
+                  <small>{SCORE_BANDS[scoreBand(score)]}</small>
+                </p>
+              )}
+
               {alerts.length > 0 && (
                 <div className="project-alert">
                   <CircleAlert size={15} />
@@ -205,6 +220,7 @@ export default function ProjectsPage({ initialProjectId, permissions = allowAll,
         <ProjectDetailModal
           project={selectedProject}
           health={healthOf(selectedProject)}
+          score={scores[selectedProject.id] ?? null}
           onClose={() => setSelectedProjectId(null)}
           github={{ canManage: permissions.manageGitHub, canSync: permissions.syncGitHub }}
           onEdit={permissions.edit ? () => openEditForm(selectedProject) : null}

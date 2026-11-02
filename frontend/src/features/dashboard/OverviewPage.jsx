@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Target } from 'lucide-react'
 
 import AutomatedAlerts from '@/features/dashboard/components/AutomatedAlerts'
+import GovernanceIndex from '@/features/dashboard/components/GovernanceIndex'
 import ProjectStatusSummary from '@/features/dashboard/components/ProjectStatusSummary'
 import PullRequestDistribution from '@/features/dashboard/components/PullRequestDistribution'
 import PullRequestFlowChart from '@/features/dashboard/components/PullRequestFlowChart'
@@ -65,6 +66,8 @@ export default function OverviewPage({ projectList, governance = emptyGovernance
           ))}
         </div>
       </div>
+
+      <GovernanceIndex scores={governance.scores} />
 
       <ProjectStatusSummary health={health} />
 

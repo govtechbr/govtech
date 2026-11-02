@@ -5,12 +5,14 @@ import { supabase } from '@/shared/lib/supabase'
 
 // Commits guardados no banco: os dos últimos 90 dias (maior período da tela)
 const COMMIT_DAYS = 90
+const SCORE_DAYS = 31
+const DAY = 24 * 60 * 60 * 1000
 const links = 'project_repositories (project_id)'
 
 const projectIds = (rows) => rows.map((row) => row.project_id)
 
 export async function loadGovernanceData(organizationId, now = new Date()) {
-  const since = new Date(now.getTime() - COMMIT_DAYS * 24 * 60 * 60 * 1000).toISOString()
+  const since = new Date(now.getTime() - COMMIT_DAYS * DAY).toISOString()
 
   const results = await Promise.all([
     supabase
@@ -32,13 +34,22 @@ export async function loadGovernanceData(organizationId, now = new Date()) {
       .select('repository_id, author_login, committed_at')
       .eq('organization_id', organizationId)
       .gte('committed_at', since),
+    // Índice de Governança: a Edge Function grava um dia por projeto; a tela mostra 30
+    supabase
+      .from('governance_scores')
+      .select('project_id, day, score, components, reconstructed, computed_at')
+      .eq('organization_id', organizationId)
+      .gte('day', new Date(now.getTime() - SCORE_DAYS * DAY).toISOString().slice(0, 10))
+      .order('day'),
   ])
 
   if (results.some((result) => result.error)) {
     throw new Error('Não foi possível carregar os dados do GitHub. Tente de novo.')
   }
 
-  const [repositories, pullRequests, branches, commits] = results.map((result) => result.data)
+  const [repositories, pullRequests, branches, commits, scores] = results.map(
+    (result) => result.data,
+  )
 
   return {
     repositories: repositories.map(({ project_repositories: rows, ...repository }) => ({
@@ -52,5 +63,6 @@ export async function loadGovernanceData(organizationId, now = new Date()) {
     })),
     branches,
     commits,
+    scores,
   }
 }

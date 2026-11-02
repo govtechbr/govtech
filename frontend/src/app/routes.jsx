@@ -10,6 +10,7 @@ import RepositoriesPage from '@/features/repositories/RepositoriesPage'
 import SettingsPage from '@/features/settings/SettingsPage'
 import { useCurrentOrganization } from '@/shared/hooks/useCurrentOrganization'
 import { emptyGovernance, projectHealth } from '@/shared/lib/governance'
+import { latestScores } from '@/shared/lib/governanceScore'
 
 // Adaptadores entre rotas e páginas. Uma feature não importa de outra, então o
 // que vem de outra feature (projetos, sessão, papel) chega às páginas por prop.
@@ -47,6 +48,8 @@ export function ProjectsRoute() {
   const governance = useGovernanceData()
   // Status calculado pelos alertas (regra P3), com os dados do GitHub da Visão geral
   const health = projectHealth(projectList, governance.data ?? emptyGovernance, new Date())
+  // Índice de Governança mais recente de cada projeto (regra I1)
+  const scores = latestScores(governance.data?.scores ?? [])
 
   // A key remonta a página a cada navegação, para abrir o projeto escolhido na busca global
   return (
@@ -55,6 +58,7 @@ export function ProjectsRoute() {
       initialProjectId={location.state?.projectId}
       permissions={projectPermissions[organization.role]}
       health={health}
+      scores={scores}
     />
   )
 }
