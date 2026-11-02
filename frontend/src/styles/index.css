@@ -1223,19 +1223,6 @@ button {
   color: var(--muted);
 }
 
-.project-alert {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  padding: 10px;
-  margin-top: 16px;
-  color: #9a6900;
-  background: rgba(255, 193, 7, 0.12);
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
 .audit-list {
   display: grid;
 }

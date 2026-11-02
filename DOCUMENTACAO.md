@@ -297,8 +297,8 @@ Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir
 
 ### 8.5 `ProjectsPage.jsx` — Projetos
 É o módulo mais completo para o usuário final:
-- **Cards** de projeto com nome, responsável, prazo e alerta se o status for `danger`. A barra de progresso manual saiu em 02/11/2026 (regra P2).
-- **Status calculado** (desde 04/11/2026): Saudável, Atenção ou Risco, a partir dos alertas do projeto (PR parado, PR sem aprovação, branch sem proteção, prazo). O formulário não tem mais o campo Status. O cartão mostra o primeiro alerta e o detalhe do projeto lista todos, com a explicação da regra.
+- **Cards** de projeto com nome, responsável, prazo e o badge de status. A barra de progresso manual saiu em 02/11/2026 (regra P2). Desde 02/11/2026 nem o card nem o detalhe do projeto listam alertas (geravam rolagem demais); a lista fica na Visão geral.
+- **Status calculado** (desde 04/11/2026): Saudável, Atenção ou Risco, a partir dos alertas do projeto (PR parado, PR sem aprovação, branch sem proteção, prazo, CI). O formulário não tem mais o campo Status. O cartão e o detalhe do projeto mostram só o status; os alertas que o explicam, com o motivo de cada um, aparecem na Visão geral.
 - **Índice de Governança** (desde 02/11/2026): o cartão mostra a nota mais recente e a faixa; o detalhe mostra a nota de cada critério.
 - **3 indicadores**: total, “em atenção” (`status === 'warning'`), “riscos críticos” (`status === 'danger'`).
 - **Novo projeto**: abre `ProjectFormModal` vazio.
@@ -332,11 +332,10 @@ Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir
 - O papel também decide os botões da página de Projetos: stakeholder não vê criar, editar nem excluir; developer não vê excluir (`projectPermissions` em `app/routes.jsx`). Quem bloqueia de verdade é o RLS.
 
 ### 8.9 `SettingsPage.jsx` — Configurações
-Quatro abas:
+Três abas:
 1. **Geral** — nome da organização, fuso horário (Brasília, Nova York, Londres) e tema (Claro, Escuro, Sistema). Salvar chama `onSaveSettings`.
-2. **Integrações** — cartões de GitHub, SonarQube, Slack e Jira. Os botões mostram só um aviso “ação demonstrativa”; **nenhuma integração é de fato feita**.
-3. **Notificações** — quatro interruptores (deploy, erros críticos, segurança, resumo semanal) guardados em `settings.notifications`.
-4. **Segurança** — 2FA, sessões e troca de senha. Botões também são demonstrativos.
+2. **Notificações** — quatro interruptores (deploy, erros críticos, segurança, resumo semanal) guardados em `settings.notifications`.
+3. **Segurança** — 2FA, sessões e troca de senha. Os botões são demonstrativos.
 
 ### 8.10 Assistente de Governança com IA (`features/assistant/`)
 Aberto pelo botão "Assistente com IA" do menu lateral (`app/AssistantDialog.jsx` junta os dados de Projetos e da Visão geral). A pessoa escolhe uma das 4 perguntas sugeridas ou digita a sua. A pergunta vai, com os dados da empresa calculados na tela (`shared/lib/assistantContext.js`, sem login nem responsável), para a Edge Function `assistant`, que pergunta ao Groq. Limite de 20 perguntas por pessoa por dia; a conversa some ao fechar o painel. Regras IA1–IA6 em `docs/REGRAS_DE_NEGOCIO.md` §5.2.
@@ -545,7 +544,6 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 | `"framework": "vite"` | `vercel.json` | Diz à Vercel que é um projeto Vite. |
 | `services` (“identity-gateway”, “billing-orchestrator”, etc.) | `data/mockData.js` | Serviços **fictícios** com nomes de microsserviços, só para exibir. |
 | Textos “API do GitHub”, “Integração com GitHub Actions” | `LandingPage.jsx` | Marketing. A integração não existe. |
-| Integrações GitHub, SonarQube, Slack, Jira “Conectado” | `SettingsPage.jsx` | Cartões fixos. O botão só mostra um aviso. |
 | Usuários com e-mail `@govtech.ms` | `RbacPage.jsx` | Dados fixos no código. |
 | Hashes `a82f91c0…7d2e` | `mockData.js` (auditoria) | Strings inventadas, sem cálculo real. |
 
@@ -575,7 +573,7 @@ Organizados por gravidade. ✅ = resolvido na limpeza de 31/10/2026 (branch `cho
 8. ✅ **Respostas do chatbot descreviam funções que não existem.** Resolvido na E6: o assistente simulado virou o Assistente de Governança com IA.
 9. ⏳ **Valores fixos** (“4.2 dias”, “3” alertas, “34”, “92%”). Mantidos por decisão do time até haver dados reais.
 10. ✅ **Login aceita qualquer coisa.** Resolvido em 01/11/2026: login real com o Supabase Auth.
-11. ⏳ **Integrações e 2FA são demonstrativas.**
+11. ⏳ **2FA é demonstrativo.** A aba Integrações (cartões fixos de GitHub, SonarQube, Slack e Jira) saiu em 02/11/2026; o GitHub real é configurado em cada projeto.
 12. ✅ **Busca global nunca abre:** corrigido em 01/11/2026 (o `AppLayout` controla `open` e a Topbar abre a busca); coberto por testes.
 
 ### 15.3 Baixa (qualidade de código)

@@ -113,13 +113,12 @@ describe('App', () => {
     })
   })
 
-  it('points the GitHub integration in settings to the projects page', async () => {
-    const { user } = await renderApp('/settings')
+  it('has no integrations tab in settings (GitHub is set up per project)', async () => {
+    await renderApp('/settings')
 
-    await user.click(screen.getByRole('button', { name: 'Integrações' }))
-    await user.click(screen.getByRole('link', { name: 'Abrir Projetos' }))
-
-    expect(await screen.findByRole('button', { name: /novo projeto/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Geral' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Integrações' })).toBeNull()
+    expect(screen.queryByText('SonarQube')).toBeNull()
   })
 
   describe('invite code', () => {

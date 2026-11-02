@@ -27,36 +27,8 @@
   font-weight: 400;
 }
 
-.success {
-  color: var(--color-success);
-}
-
-.warning {
-  color: var(--color-warning);
-}
-
-.danger {
-  color: var(--color-danger);
-}
-
 .section {
   margin-top: var(--space-5);
-}
-
-.alerts {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-2);
-  padding: 0;
-  list-style: none;
-  font-size: var(--font-size-sm);
-}
-
-.alertReason {
-  display: block;
-  margin-top: var(--space-1);
-  font-size: var(--font-size-xs);
-  font-weight: 400;
 }
 
 .sectionTitle {
