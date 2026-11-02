@@ -1,4 +1,4 @@
-import { CalendarClock, CircleAlert, FolderKanban, Plus, Users } from 'lucide-react'
+import { CalendarClock, FolderKanban, Plus, Users } from 'lucide-react'
 import { useState } from 'react'
 
 import DeleteProjectModal from './components/DeleteProjectModal'
@@ -145,7 +145,7 @@ export default function ProjectsPage({
 
       <div className="project-grid" aria-busy={isPending}>
         {projectList.map((project) => {
-          const { status, alerts } = healthOf(project)
+          const { status } = healthOf(project)
           const score = scores[project.id]?.score ?? null
 
           return (
@@ -197,15 +197,6 @@ export default function ProjectsPage({
                   Índice de Governança <strong>{score}</strong>
                   <small>{SCORE_BANDS[scoreBand(score)]}</small>
                 </p>
-              )}
-
-              {alerts.length > 0 && (
-                <div className="project-alert">
-                  <CircleAlert size={15} />
-                  {alerts.length === 1
-                    ? alerts[0].title
-                    : `${alerts.length} alertas: ${alerts[0].title}`}
-                </div>
               )}
             </article>
           )

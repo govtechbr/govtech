@@ -3,22 +3,16 @@ import {
   Bell,
   BriefcaseBusiness,
   Check,
-  Code2,
   Eye,
-  GitFork,
   LockKeyhole,
   Settings2,
   Shield,
   Sparkles,
-  Target,
   TimerReset,
 } from 'lucide-react'
 
-import { Link } from 'react-router-dom'
-
 import { useToast } from '@/shared/hooks/useToast'
 import Select from '@/shared/ui/Select'
-import StatusBadge from '@/shared/ui/StatusBadge'
 
 const TIMEZONE_OPTIONS = [
   { value: 'America/Sao_Paulo', label: 'Brasília (UTC-3)' },
@@ -67,38 +61,8 @@ export default function SettingsPage({ settings, onSaveSettings }) {
 
   const tabs = [
     { id: 'geral', label: 'Geral', icon: Settings2 },
-    { id: 'integracoes', label: 'Integrações', icon: GitFork },
     { id: 'notificacoes', label: 'Notificações', icon: Bell },
     { id: 'seguranca', label: 'Segurança', icon: Shield },
-  ]
-
-  const integrations = [
-    {
-      name: 'GitHub',
-      description:
-        'A conexão é feita em cada projeto: abra o projeto em Projetos e use a seção GitHub.',
-      icon: GitFork,
-      // Integração real (desde 02/11/2026): leva para onde ela é configurada
-      to: '/projects',
-    },
-    {
-      name: 'SonarQube',
-      description: 'Análise de qualidade de código.',
-      icon: Code2,
-      connected: true,
-    },
-    {
-      name: 'Slack',
-      description: 'Notificações e alertas.',
-      icon: Bell,
-      connected: false,
-    },
-    {
-      name: 'Jira',
-      description: 'Issues, tarefas e sprints.',
-      icon: Target,
-      connected: false,
-    },
   ]
 
   const notifications = [
@@ -270,74 +234,6 @@ export default function SettingsPage({ settings, onSaveSettings }) {
               <Check size={16} />
               Salvar alterações
             </button>
-          </div>
-        </section>
-      )}
-
-      {tab === 'integracoes' && (
-        <section className="panel elevation-1">
-          <div className="panel-heading">
-            <h2>Integrações</h2>
-          </div>
-
-          <div style={{ display: 'grid', gap: '12px' }}>
-            {integrations.map((integration) => {
-              const IntegrationIcon = integration.icon
-
-              return (
-                <article
-                  key={integration.name}
-                  className="metric-card elevation-1"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px',
-                  }}
-                >
-                  <div className="metric-icon">
-                    <IntegrationIcon size={18} />
-                  </div>
-
-                  <div style={{ flex: 1 }}>
-                    <h3>{integration.name}</h3>
-
-                    <small
-                      style={{
-                        display: 'block',
-                        marginTop: '4px',
-                        color: 'var(--muted)',
-                      }}
-                    >
-                      {integration.description}
-                    </small>
-                  </div>
-
-                  {integration.to ? (
-                    <>
-                      <StatusBadge status="info">Por projeto</StatusBadge>
-
-                      <Link className="secondary-button small" to={integration.to}>
-                        Abrir Projetos
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      <StatusBadge status={integration.connected ? 'success' : 'warning'}>
-                        {integration.connected ? 'Conectado' : 'Desconectado'}
-                      </StatusBadge>
-
-                      <button
-                        type="button"
-                        className="secondary-button small"
-                        onClick={() => onToast(`${integration.name}: ação demonstrativa.`)}
-                      >
-                        {integration.connected ? 'Configurar' : 'Conectar'}
-                      </button>
-                    </>
-                  )}
-                </article>
-              )
-            })}
           </div>
         </section>
       )}
