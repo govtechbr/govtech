@@ -51,6 +51,7 @@ Esconder um botão na tela é só conveniência: quem bloqueia de verdade é o b
 | G7 | Dados buscados: repositórios, PRs (com **revisões/aprovações**), branches (com proteção), **commits da branch principal** e **contribuidores** | ✅ E3 (aprovações dos PRs, commits dos últimos 90 dias; contribuidores = logins distintos de commits e PRs) |
 | G8 | **LGPD:** de pessoas de fora (autores, contribuidores), guardar só o **login** e o **avatar público** do GitHub. Nada de e-mail | ✅ (commits sem nome, e-mail nem mensagem) |
 | G9 | **Paginação:** repositórios visíveis até 500; PRs **abertos** (até 1.000) mais os atualizados nos **últimos 90 dias** (até 1.000 por repositório); branches até 500; commits da branch principal de 90 dias, até 1.000. Se algum teto for atingido, a sincronização marca **dados parciais** e o painel do projeto e a auditoria avisam | 🔜 E7 |
+| G10 | **Status do CI** (decisão de 02/11/2026): a cada sincronização, o resultado combinado dos checks (GitHub Actions ou outro CI) do **último commit** de cada PR e da **branch principal**: **verde**, **falhou** ou **rodando**. Repositório sem CI fica "sem CI" e não gera alerta nem entra na taxa. É uma **foto da hora da sincronização, não um histórico**: uma falha corrigida antes da sincronização seguinte não fica registrada. Se a chave não tiver permissão de leitura de *Commit statuses* e *Checks*, o CI vem como "sem CI" e a sincronização segue | ✅ E8 |
 
 ## 5. Métricas de governança (Visão geral)
 
@@ -61,11 +62,12 @@ Calculadas dos dados sincronizados, nunca valores fixos. **Período:** seletor 7
 | Quantidade de PRs | PRs **abertos agora** + PRs **criados no período** |
 | Lead time médio | Média do tempo da **abertura do PR até o merge**, nos PRs mergeados no período |
 | Taxa de aprovação | % dos PRs **mergeados** no período que tiveram **ao menos 1 aprovação** de revisor |
+| CI verde no merge | % dos PRs **mergeados** no período, **com CI**, cujo último commit estava **verde** (G10). Sem PR mergeado com CI = "sem dados" |
 | Evolução dos PRs | Gráfico **por semana**: PRs abertos × PRs mergeados |
 | Eventos de desenvolvimento | Repositórios, commits (branch principal), branches e contribuidores no período |
 | Alertas | Lista dos alertas ativos (§6) |
 
-**Números em destaque na primeira tela** (decisão de 04/11/2026): Quantidade de PRs, Lead time médio, Taxa de aprovação e **PRs em risco** (abertos há mais de 3 dias, sem rascunhos). O gráfico semanal mostra pelo menos 4 semanas, mesmo no período de 7 dias.
+**Números em destaque na primeira tela** (decisão de 04/11/2026): Quantidade de PRs, Lead time médio, Taxa de aprovação e **PRs em risco** (abertos há mais de 3 dias, sem rascunhos); desde 02/11/2026 também **CI verde no merge**. O gráfico semanal mostra pelo menos 4 semanas, mesmo no período de 7 dias.
 
 ### 5.1 Índice de Governança (E5, decisão de 02/11/2026)
 
@@ -88,7 +90,7 @@ Uma nota de **0 a 100** por projeto e por empresa, com histórico diário. Os pe
 | Proteção da branch | 15 | % dos repositórios com a branch principal protegida | projeto sem repositório |
 | Lead time | 15 | Mediana da abertura ao merge: até 24 h = 100; 7 dias ou mais = 0; linear entre os dois | nenhum PR mergeado |
 
-Os limites são os mesmos dos alertas (§6).
+Os limites são os mesmos dos alertas (§6). **O CI (G10) ainda não entra no índice** (decisão de 02/11/2026): mudar os pesos agora quebraria a comparação com o histórico diário já apurado; se entrar, a regra registra a data de corte.
 
 ### 5.2 Assistente de Governança com IA (E6, decisão de 02/11/2026)
 
@@ -107,12 +109,15 @@ Substitui o assistente simulado da barra lateral. Provedor: **Groq** (plano grat
 
 | Alerta | Atenção | Risco | Por que importa (aparece junto do alerta) |
 |---|---|---|---|
+| **CI falhando na branch principal** (G10) | — | sempre | A versão atual da branch principal não passa nos testes automáticos |
 | Branch principal **sem proteção** | sempre | — | Qualquer pessoa com acesso pode fazer push direto ou reescrever o histórico, sem PR nem revisão |
+| PR mergeado com **CI falhando** (últimos 30 dias) | — | sempre | Entrou na branch principal código que não passou nos testes automáticos |
 | PR mergeado **sem nenhuma aprovação** | sempre | — | O código entrou na branch principal sem passar pela revisão |
 | Prazo do projeto | vence em até **7 dias** | **vencido** | Replanejar ou confirmar que o que falta cabe no prazo |
+| PR aberto com **CI falhando** (rascunhos não contam) | sempre | — | Precisa de correção antes de ser revisado e mergeado |
 | PR aberto há muito tempo (rascunhos não contam) | mais de **1 dia** | mais de **3 dias** | PR parado acumula conflitos e atrasa a entrega |
 
-**Ordem (decisão de 02/11/2026):** Risco antes de Atenção; dentro do mesmo nível, na ordem da tabela, dos riscos estruturais (branch, revisão) aos operacionais (prazo, PR parado). O cartão da Visão geral mostra os 8 primeiros e um botão **"Ver todos os N alertas"**; o detalhe do projeto mostra todos os do projeto.
+**Ordem (decisão de 02/11/2026):** Risco antes de Atenção; dentro do mesmo nível, na ordem da tabela, dos riscos estruturais (CI da branch principal, proteção, revisão) aos operacionais (prazo, PR parado). O cartão da Visão geral mostra os 8 primeiros e um botão **"Ver todos os N alertas"**; o detalhe do projeto mostra todos os do projeto.
 
 **Status do projeto (P3):** Risco se houver algum alerta de Risco; senão Atenção se houver algum alerta de Atenção; senão Saudável.
 
@@ -134,7 +139,7 @@ Trilha simples, para revisão (sem cadeia de hash, decisão Q7 do plano técnico
 
 ## 8. Fora do escopo até 18/11/2026
 
-Convite por e-mail, webhook ou GitHub App (atualização instantânea), status do CI, separar PRs por projeto dentro de um repositório compartilhado, cadeia de hash e retenção automática na auditoria, histórico salvo de conversas com o assistente.
+Convite por e-mail, webhook ou GitHub App (atualização instantânea), histórico de cada execução do CI e CI no Índice de Governança, separar PRs por projeto dentro de um repositório compartilhado, cadeia de hash e retenção automática na auditoria, histórico salvo de conversas com o assistente.
 
 ## 9. Entregas
 
@@ -147,4 +152,5 @@ Convite por e-mail, webhook ou GitHub App (atualização instantânea), status d
 | E5 | Índice de Governança (0–100) com histórico | I1–I6 | 06/11 |
 | E6 | Assistente de Governança com IA (Groq) | IA1–IA6 | 08/11 |
 | E7 | Auditoria real + paginação do GitHub | AU1–AU7, G9 | 10/11 |
+| E8 | Status do CI: coleta, alertas e taxa de CI verde | G10, §5, §6 | 03/11 |
 | — | Folga: testes, documentação do TCC, ensaio | — | 13–18/11 |
