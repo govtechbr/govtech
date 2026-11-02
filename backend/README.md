@@ -64,7 +64,7 @@ python scripts/to_sql_editor.py tests/*.test.sql todos.editor.sql   # ou só um 
 | `members.test.sql` | 8 | 8/8 ok (03/11/2026) |
 | `github.test.sql` | 15 | 15/15 ok (03/11/2026) |
 | `repository_selection.test.sql` | 11 | 11/11 ok (03/11/2026) |
-| `github_sync.test.sql` | 9 | a rodar (04/11/2026) |
+| `github_sync.test.sql` | 9 | 9/9 ok (04/11/2026; os 5 arquivos juntos: 68/68 ok) |
 | `governance_scores.test.sql` | 6 | 6/6 ok (02/11/2026) |
 | `assistant_usage.test.sql` | 8 | 8/8 ok (02/11/2026) |
 | `audit_events.test.sql` | 19 | 19/19 ok (02/11/2026) |
