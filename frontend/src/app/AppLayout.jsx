@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
+import AssistantDialog from '@/app/AssistantDialog'
 import { signOut } from '@/features/auth/api/authApi'
 import { useSession } from '@/features/auth/hooks/useAuth'
 import { useProjects } from '@/features/projects/hooks/useProjects'
@@ -60,6 +61,7 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [assistantOpen, setAssistantOpen] = useState(false)
 
   const [settings, setSettings] = useLocalStorage(storageKeys.SETTINGS, defaultSettings)
 
@@ -119,7 +121,10 @@ export default function AppLayout() {
         open={sidebarOpen}
         setOpen={setSidebarOpen}
         account={account}
+        onOpenAssistant={() => setAssistantOpen(true)}
       />
+
+      {assistantOpen && <AssistantDialog onClose={() => setAssistantOpen(false)} />}
 
       <div className="main-content">
         <Topbar

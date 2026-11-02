@@ -15,7 +15,6 @@ import {
 import { useCurrentOrganization } from '@/shared/hooks/useCurrentOrganization'
 import Brand from '@/shared/ui/Brand'
 import Icon from '@/shared/ui/Icon'
-import ChatbotModal from './ChatbotModal'
 import styles from './Sidebar.module.css'
 import { auditEvents } from '@/mocks/mockData'
 
@@ -59,11 +58,10 @@ function initial(name) {
   return name.trim().charAt(0).toUpperCase()
 }
 
-export default function Sidebar({ open, setOpen, account }) {
+export default function Sidebar({ open, setOpen, account, onOpenAssistant }) {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [showChatbot, setShowChatbot] = useState(false)
   const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false)
   const { organization, organizations, switchOrganization } = useCurrentOrganization()
 
@@ -214,23 +212,12 @@ export default function Sidebar({ open, setOpen, account }) {
         </nav>
 
         <div className="sidebar-bottom">
-          <button
-            type="button"
-            className="support-card"
-            onClick={() => setShowChatbot(true)}
-            style={{
-              width: '100%',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            <Sparkles size={17} />
+          <button type="button" className="support-card" onClick={onOpenAssistant}>
+            <Sparkles size={17} aria-hidden="true" />
 
             <div>
-              <b>Precisa de ajuda?</b>
-              <span>Veja o guia de governança</span>
+              <b>Assistente com IA</b>
+              <span>Pergunte sobre a governança</span>
             </div>
 
             <ChevronRight size={15} />
@@ -255,8 +242,6 @@ export default function Sidebar({ open, setOpen, account }) {
           aria-label="Fechar menu"
         />
       )}
-
-      {showChatbot && <ChatbotModal onClose={() => setShowChatbot(false)} />}
     </>
   )
 }
