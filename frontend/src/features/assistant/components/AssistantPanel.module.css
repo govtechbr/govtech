@@ -1,0 +1,136 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Altura fixa: a conversa rola por dentro e o campo fica sempre à vista */
+.log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 45vh;
+  min-height: 220px;
+  overflow-y: auto;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.log p {
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+.intro {
+  display: flex;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.user,
+.answer {
+  max-width: 88%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  /* a resposta vem em texto com quebras de linha e listas com "- " */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.user {
+  align-self: flex-end;
+  background: var(--color-primary-500);
+  color: var(--color-text-inverse);
+}
+
+.answer {
+  align-self: flex-start;
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.pending {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.suggestion {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggestion:hover:not(:disabled),
+.suggestion:focus-visible {
+  border-color: var(--color-primary-300);
+  background: var(--color-hover);
+}
+
+.suggestion:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: var(--font-size-md);
+  resize: none;
+}
+
+.input:focus-visible {
+  border-color: var(--color-primary-500);
+  outline: none;
+}
+
+.form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.notice {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

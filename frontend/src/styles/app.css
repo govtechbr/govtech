@@ -763,6 +763,15 @@ p {
   color: var(--color-primary-700);
 }
 
+/* Botão que abre o assistente: mesma aparência de antes, sem o estilo inline */
+button.support-card {
+  width: 100%;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
 .support-card > div {
   display: flex;
   flex: 1;

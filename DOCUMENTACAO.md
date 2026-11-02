@@ -175,6 +175,8 @@ govtech/
         ├── shared/       ← O que mais de uma área usa. Não importa de features/.
         │   ├── layout/        Sidebar, Topbar, GlobalSearch e ChatbotModal.
         │   ├── ui/            Brand, Icon, Modal, StatCard, StatusBadge, Toast/ToastProvider, Tooltip.
+        │   ├── layout/        Sidebar, Topbar e GlobalSearch.
+        │   ├── ui/            Brand, Icon, Modal, StatCard, StatusBadge, Toast/ToastProvider.
         │   ├── hooks/         useLocalStorage (estado salvo no navegador), useTheme (tema claro/escuro).
         │   ├── lib/           projectUtils.js (normaliza projetos e datas), governance.js (métricas, alertas e status dos projetos), supabase.js (único client), zodResolver.js.
         │   └── constants/     colors, defaultSettings, projectStatus (Saudável/Atenção/Risco), storageKeys.
@@ -335,8 +337,8 @@ Quatro abas:
 3. **Notificações** — quatro interruptores (deploy, erros críticos, segurança, resumo semanal) guardados em `settings.notifications`.
 4. **Segurança** — 2FA, sessões e troca de senha. Botões também são demonstrativos.
 
-### 8.10 `ChatbotModal.jsx` — Assistente virtual
-Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não há IA: a resposta é um texto pré-escrito encontrado na lista. Ver §15 sobre respostas que descrevem funções inexistentes.
+### 8.10 Assistente de Governança com IA (`features/assistant/`)
+Aberto pelo botão "Assistente com IA" do menu lateral (`app/AssistantDialog.jsx` junta os dados de Projetos e da Visão geral). A pessoa escolhe uma das 4 perguntas sugeridas ou digita a sua. A pergunta vai, com os dados da empresa calculados na tela (`shared/lib/assistantContext.js`, sem login nem responsável), para a Edge Function `assistant`, que pergunta ao Groq. Limite de 20 perguntas por pessoa por dia; a conversa some ao fechar o painel. Regras IA1–IA6 em `docs/REGRAS_DE_NEGOCIO.md` §5.2.
 
 ---
 
@@ -346,7 +348,7 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 
 | Componente | Responsabilidade | Props principais |
 |---|---|---|
-| `Sidebar` | Menu lateral com logo, troca de empresa (lista as empresas do usuário e "Adicionar empresa", que leva a `/organizacao`), itens de menu e botão do chatbot. Lê a empresa atual de `useCurrentOrganization`. | `open`, `setOpen`, `account` |
+| `Sidebar` | Menu lateral com logo, troca de empresa (lista as empresas do usuário e "Adicionar empresa", que leva a `/organizacao`), itens de menu e botão do assistente. Lê a empresa atual de `useCurrentOrganization`. | `open`, `setOpen`, `account`, `onOpenAssistant` |
 | `Topbar` | Barra superior: botão de menu (mobile), breadcrumb “GOVTECH PLATFORM › SEÇÃO”, sino e menu da conta. | `active`, `setOpen`, `onNavigate` |
 | `GlobalSearch` | Busca em projetos, serviços, PRs e branches. Abre pelo botão de lupa da Topbar e fecha com `Esc`, com o X ou clicando fora. Escolher um projeto leva a `/projects` com o detalhe dele aberto. | `open`, `onClose`, `projects`, `onNavigate`, `onSelectProject` |
 
@@ -360,7 +362,6 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 | `StatusBadge` | Etiqueta colorida. `status` = `success`, `warning`, `danger`… |
 | `Toast` | Aviso que some sozinho após alguns segundos. Exibido pelo `ToastProvider`; as páginas chamam `const { showToast } = useToast()` (`src/shared/hooks/useToast.js`). A área do aviso tem `role="status"`, então leitores de tela anunciam a mensagem. |
 | `Modal` | Diálogo acessível usado por todos os modais (projetos, RBAC): `role="dialog"`, título ligado por `aria-labelledby`, foco entra no diálogo e fica preso nele (Tab), `Esc` fecha e o foco volta para quem abriu. No celular (< 640 px) abre como folha a partir da parte de baixo. Substituiu o `ModalShell` em 01/11/2026. Props: `title`, `kicker`, `size` (`sm`/`md`/`lg`), `onClose`. |
-| `ChatbotModal` | Assistente com FAQ fixa. |
 
 ### 9.3 Dashboard
 
@@ -405,7 +406,7 @@ Modal aberto pelo menu lateral com **perguntas frequentes fixas** (`faqs`). Não
 | Arquivo | Conteúdo | Quem usa |
 |---|---|---|
 | `data/mockData.js` | `profile`, `services`, `repoStats`, `projects`, `pullRequests`, `branches`, `auditEvents`, `repositoryList`, `pullRequestList`, `branchList` | Telas que ainda não têm dado real. (`accessRoles` e `rbacUsers` saíram em 02/11/2026.) |
-| Dentro dos próprios componentes | Só os números fixos dos cartões (ex.: “34” e “92%” na Auditoria) e a FAQ do chatbot | Cada tela. |
+| Dentro dos próprios componentes | Só os números fixos dos cartões (ex.: “34” e “92%” na Auditoria) | Cada tela. |
 
 Os mocks são intencionais: o app continua usando dados de exemplo até o Supabase entrar.
 
@@ -553,7 +554,7 @@ Organizados por gravidade. ✅ = resolvido na limpeza de 31/10/2026 (branch `cho
 ### 15.2 Média (comportamento enganoso)
 
 7. ⏳ **Botões sem função:** “Exportar CSV” e “Filtrar” (Auditoria). Os do RBAC foram resolvidos em 02/11/2026: “Convidar” funciona; “Nova função”, “Filtrar” e “Adicionar” saíram.
-8. ⏳ **Respostas do chatbot descrevem funções que não existem** (`ChatbotModal.jsx`: “Exportar Dados”, “seção Riscos”, campo “branch”).
+8. ✅ **Respostas do chatbot descreviam funções que não existem.** Resolvido na E6: o assistente simulado virou o Assistente de Governança com IA.
 9. ⏳ **Valores fixos** (“4.2 dias”, “3” alertas, “34”, “92%”). Mantidos por decisão do time até haver dados reais.
 10. ✅ **Login aceita qualquer coisa.** Resolvido em 01/11/2026: login real com o Supabase Auth.
 11. ⏳ **Integrações e 2FA são demonstrativas.**
