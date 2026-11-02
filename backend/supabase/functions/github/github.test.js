@@ -259,7 +259,7 @@ describe('CI status (rule G10)', () => {
     assert.equal(data.mainCiState, null)
   })
 
-  // Chave sem permissão de Checks/Commit statuses: o GitHub devolve os dados com
+  // Chave sem permissão de Commit statuses/Actions: o GitHub devolve os dados com
   // erro só no campo do CI. A sincronização segue, com o CI "sem CI"
   it('keeps syncing when the token cannot read the CI', async () => {
     const forbidden = {

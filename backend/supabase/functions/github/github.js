@@ -49,7 +49,7 @@ export async function githubGet(token, path, fetchImpl = fetch, init = {}) {
   return response.json()
 }
 
-// Erro só no campo do CI (chave sem permissão de Checks/Commit statuses): o
+// Erro só no campo do CI (chave sem permissão de Commit statuses/Actions): o
 // resto dos dados vale e o CI fica "sem CI" (regra G10)
 function isCiFieldError({ path }) {
   return Array.isArray(path) && path.includes('statusCheckRollup')

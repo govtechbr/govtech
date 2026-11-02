@@ -215,7 +215,7 @@ Paginação da regra G9 (E7). Os tetos ficam em `LIMITS`, em `functions/github/g
 - Os abertos vêm todos, mesmo os parados há mais de 90 dias, porque ainda geram alerta.
 - Se alguma lista para no teto com a última página cheia, a sincronização grava `github_credentials.last_sync_partial = true`. O painel do projeto mostra "Dados parciais" e o evento de auditoria marca o mesmo.
 - Repositório vazio (o GitHub responde 409) conta como "sem commits", não como erro.
-- **CI (G10):** `SUCCESS` → `success`; `FAILURE` e `ERROR` → `failure`; `PENDING` e `EXPECTED` → `pending`; sem checks → `null` ("sem CI"). Vai para `pull_requests.ci_state` e `repositories.ci_state`. Se o GitHub devolver erro **só** no campo `statusCheckRollup` (chave sem permissão de *Commit statuses*/*Checks*), os dados valem e o CI fica `null`; qualquer outro erro continua falhando a sincronização.
+- **CI (G10):** `SUCCESS` → `success`; `FAILURE` e `ERROR` → `failure`; `PENDING` e `EXPECTED` → `pending`; sem checks → `null` ("sem CI"). Vai para `pull_requests.ci_state` e `repositories.ci_state`. Se o GitHub devolver erro **só** no campo `statusCheckRollup` (chave sem permissão de *Commit statuses*/*Actions*), os dados valem e o CI fica `null`; qualquer outro erro continua falhando a sincronização.
 
 ### 6.6 Índice de Governança
 

@@ -78,8 +78,8 @@ function TokenForm({ projectId, onDone, onCancel }) {
           </li>
           <li>Em Repository access, escolha só os repositórios deste projeto.</li>
           <li>
-            Em Permissions, marque Contents, Pull requests e Commit statuses como Read-only (e
-            Checks, se aparecer na lista). As duas últimas trazem o status do CI.
+            Em Permissions, marque Contents, Pull requests, Commit statuses e Actions como
+            Read-only. As duas últimas trazem o status do CI.
           </li>
           <li>Gere a chave e cole aqui. Ela fica guardada criptografada e não aparece de novo.</li>
         </ol>
