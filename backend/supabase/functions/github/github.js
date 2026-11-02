@@ -93,6 +93,7 @@ export const LIMITS = {
   pullRequests: 1000,
   branches: 500,
   commits: 1000,
+  ciRuns: 1000,
 }
 
 // PRs com as aprovações (regra G7), 100 por página, do mais recém-atualizado ao mais antigo
@@ -300,16 +301,65 @@ async function fetchCommits(token, repo, since, fetchImpl) {
   }
 }
 
+// Execução do GitHub Actions (regra G11). LGPD: sem `actor` nem `triggering_actor`
+export function toCiRunRow(run, { repositoryId, organizationId }) {
+  return {
+    repository_id: repositoryId,
+    organization_id: organizationId,
+    github_run_id: run.id,
+    run_number: run.run_number,
+    workflow_name: run.name,
+    event: run.event,
+    head_branch: run.head_branch ?? null,
+    head_sha: run.head_sha,
+    status: run.status,
+    conclusion: run.conclusion ?? null,
+    html_url: run.html_url,
+    started_at: run.run_started_at ?? run.created_at,
+    completed_at: run.status === 'completed' ? run.updated_at : null,
+  }
+}
+
+// Execuções criadas desde `since` (até 1.000). A resposta é um objeto
+// { workflow_runs }, não uma lista. Sem a permissão Actions (403/404), o
+// histórico fica vazio e a sincronização segue (G11)
+async function fetchCiRuns(token, repo, since, fetchImpl) {
+  const created = encodeURIComponent(`>=${since.slice(0, 10)}`)
+  const items = []
+
+  try {
+    for (let page = 1; page <= LIMITS.ciRuns / 100; page += 1) {
+      const { workflow_runs: batch } = await githubGet(
+        token,
+        `/repos/${repo.full_name}/actions/runs?created=${created}&${PAGE}&page=${page}`,
+        fetchImpl,
+      )
+
+      items.push(...batch)
+      if (batch.length < 100) return { items, partial: false }
+    }
+  } catch (error) {
+    if (error instanceof GitHubError && [403, 404].includes(error.status)) {
+      return { items: [], partial: false }
+    }
+    throw error
+  }
+
+  return { items, partial: true }
+}
+
 // De cada repositório escolhido: PRs (abertos + 90 dias), branches, commits da
-// branch padrão desde `since` e o CI dela, com partial = algum teto da regra G9
+// branch padrão desde `since`, o CI dela e as execuções do CI, com partial =
+// algum teto da regra G9 (ou G11) foi atingido
 export function fetchRepositoryData(token, repos, fetchImpl = fetch, since) {
   return Promise.all(
     repos.map(async (repo) => {
-      const [pullData, branchData, commitData, mainCiState] = await Promise.all([
+      const [pullData, branchData, commitData, mainCiState, runData] = await Promise.all([
         fetchPullRequests(token, repo, since, fetchImpl),
         restPages(token, `/repos/${repo.full_name}/branches`, LIMITS.branches, fetchImpl),
         fetchCommits(token, repo, since, fetchImpl),
         fetchMainCiState(token, repo, fetchImpl),
+        fetchCiRuns(token, repo, since, fetchImpl),
       ])
 
       return {
@@ -318,7 +368,8 @@ export function fetchRepositoryData(token, repos, fetchImpl = fetch, since) {
         pulls: pullData.pulls,
         branches: branchData.items,
         commits: commitData.items,
-        partial: pullData.partial || branchData.partial || commitData.partial,
+        ciRuns: runData.items,
+        partial: pullData.partial || branchData.partial || commitData.partial || runData.partial,
       }
     }),
   )
