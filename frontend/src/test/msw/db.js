@@ -58,6 +58,9 @@ export function resetDb({ withOrganization = true } = {}) {
   db.commits = []
   // Índice de Governança (gravado pela Edge Function de verdade)
   db.governanceScores = []
+  // Assistente: o que a Edge Function simulada recebeu e quantas perguntas restam hoje
+  db.assistantRequests = []
+  db.assistantRemaining = 20
 }
 
 // Chave que a Edge Function simulada aceita

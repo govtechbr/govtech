@@ -99,6 +99,9 @@ describe('OverviewPage', () => {
     expect(card('Quantidade de PRs')).toHaveTextContent('2')
     expect(card('Lead time médio')).toHaveTextContent('2 dias')
     expect(card('Taxa de aprovação')).toHaveTextContent('100%')
+    expect(screen.getByRole('button', { name: 'O que é contado' })).toHaveAccessibleDescription(
+      /nos últimos 7 dias/,
+    )
   })
 
   it('computes each project status from its alerts and explains the rule', () => {
@@ -114,7 +117,9 @@ describe('OverviewPage', () => {
     // Portal: PR aberto há 5 dias (risco); Folha: prazo vencido (risco); Ouvidoria: prazo perto (atenção)
     expect(names).toEqual(['Portal', 'Folha', 'Ouvidoria'])
     expect(within(panel).getByText('1 alerta(s): Prazo perto do fim')).toBeInTheDocument()
-    expect(screen.getByText('Como o status é calculado')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Como o status é calculado' }),
+    ).toHaveAccessibleDescription(/O status vem dos alertas automáticos/)
   })
 
   it('lists the automated alerts, the most serious first', () => {
@@ -158,7 +163,9 @@ describe('OverviewPage', () => {
       expect(panel.getByText('/100').closest('p')).toHaveTextContent('81/100')
       expect(panel.getByText('Bom')).toBeInTheDocument()
       expect(panel.getByText('▲ 15 pontos em 7 dias')).toBeInTheDocument()
-      expect(panel.getByText('Como o índice é calculado')).toBeInTheDocument()
+      expect(
+        panel.getByRole('button', { name: 'Como o índice é calculado' }),
+      ).toHaveAccessibleDescription(/revisão de código \(peso 30\)/)
     })
 
     it('breaks the score down by criterion, with the weights', () => {
