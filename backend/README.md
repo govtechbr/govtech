@@ -68,6 +68,7 @@ python scripts/to_sql_editor.py tests/*.test.sql todos.editor.sql   # ou só um 
 | `governance_scores.test.sql` | 6 | 6/6 ok (02/11/2026) |
 | `assistant_usage.test.sql` | 8 | 8/8 ok (02/11/2026) |
 | `audit_events.test.sql` | 19 | a rodar (02/11/2026) |
+| `ci_status.test.sql` | 7 | a rodar (migration `ci_status`, ainda não aplicada) |
 
 Depois de cada execução, o banco é conferido pelo MCP: nenhum usuário `@test.local` nem a extensão `pgtap` ficam para trás.
 
