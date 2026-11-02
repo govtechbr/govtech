@@ -174,7 +174,7 @@ govtech/
         │
         ├── shared/       ← O que mais de uma área usa. Não importa de features/.
         │   ├── layout/        Sidebar, Topbar, GlobalSearch e ChatbotModal.
-        │   ├── ui/            Brand, Icon, Modal, StatCard, StatusBadge, Toast/ToastProvider.
+        │   ├── ui/            Brand, Icon, Modal, StatCard, StatusBadge, Toast/ToastProvider, Tooltip.
         │   ├── hooks/         useLocalStorage (estado salvo no navegador), useTheme (tema claro/escuro).
         │   ├── lib/           projectUtils.js (normaliza projetos e datas), governance.js (métricas, alertas e status dos projetos), supabase.js (único client), zodResolver.js.
         │   └── constants/     colors, defaultSettings, projectStatus (Saudável/Atenção/Risco), storageKeys.
@@ -288,11 +288,12 @@ Era uma segunda forma de navegar (estado `active` + `switch`) que duplicava a ba
 Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir dos dados sincronizados do GitHub (`features/dashboard/api/governanceApi.js`, chave `['governance', empresa]`) e do prazo dos projetos. Regras em `docs/REGRAS_DE_NEGOCIO.md` §5 e §6. Recebe `projectList` e `governance` por prop (adaptador em `app/routes.jsx`) e mostra:
 - **Seletor de período** 7 / 30 / 90 dias (começa em 30).
 - **`GovernanceIndex`** (desde 02/11/2026, E5): nota de 0 a 100 da empresa (média dos projetos), faixa Bom/Regular/Crítico, variação em 7 dias, linha dos últimos 30 dias (trecho recalculado tracejado) e a nota de cada critério com o peso. A nota é calculada e gravada pela Edge Function (`governance_scores`); a tela só lê. Funções em `src/shared/lib/governanceScore.js`; regras em `docs/REGRAS_DE_NEGOCIO.md` §5.1.
-- **`ProjectStatusSummary`**: quantos projetos estão Saudáveis, em Atenção e em Risco, e o **cartão que explica a regra do status** (P4).
+- **`ProjectStatusSummary`**: quantos projetos estão Saudáveis, em Atenção e em Risco, e a **regra do status** (P4) num tooltip.
 - **4 cartões**: Quantidade de PRs (abertos agora + criados no período), Lead time médio (abertura → merge), Taxa de aprovação (mergeados com ao menos 1 aprovação) e PRs em risco (abertos há mais de 3 dias).
 - **Gráfico semanal** (`PullRequestFlowChart`): PRs abertos × mergeados, pelo menos 4 semanas. **Distribuição** (`PullRequestDistribution`): abertos, rascunhos, mergeados e fechados.
 - **Lista de projetos** com o status calculado (pior primeiro) e o primeiro alerta de cada um.
 - **Alertas automatizados** (`AutomatedAlerts`), Risco primeiro, com link para o PR, e **Eventos de desenvolvimento** (`RecentActivityPanel`): repositórios, commits da branch principal, branches e contribuidores no período.
+- **Tooltips explicativos** (desde 02/11/2026): as regras de cálculo do índice, do status e dos eventos ficam no botão ⓘ do canto de cada cartão (`shared/ui/Tooltip.jsx`), que abre com o mouse, o foco do teclado ou um toque e fecha com Esc. O texto continua ligado ao botão por `aria-describedby` para leitor de tela.
 
 ### 8.5 `ProjectsPage.jsx` — Projetos
 É o módulo mais completo para o usuário final:
