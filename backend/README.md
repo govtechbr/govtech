@@ -43,7 +43,7 @@ Assistente de Governança com IA (`docs/REGRAS_DE_NEGOCIO.md` §5.2; contrato em
 - `functions/assistant/prompt.js`: valida o pedido, remove dados pessoais do contexto e monta o prompt. Puro, testado com `node --test`.
 - **Secret necessário:** `GROQ_API_KEY`, gravado pelo dono do projeto em Supabase → Edge Functions → Secrets. Nunca no git nem no chat. Sem ele, a função responde 503 "O assistente ainda não foi configurado".
 - Conta do Groq com **Zero Data Retention** ligado (Data Controls).
-- Publicação: pelo MCP do Supabase, `verify_jwt` ligado. Versão 1 (02/11/2026). Secret `GROQ_API_KEY` configurado em 02/11/2026; primeira pergunta real respondida (200).
+- Publicação: pelo MCP do Supabase, `verify_jwt` ligado. Versão 1 (02/11/2026). Secret `GROQ_API_KEY` configurado em 02/11/2026; primeira pergunta real respondida (200). Versão 3 (02/11/2026): resposta sem negrito, data em Campo Grande e notas dos critérios explicadas no prompt.
 
 ## Como rodar os testes pgTAP (sem Docker)
 
