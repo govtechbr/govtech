@@ -3,7 +3,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
 }
 
 .segmented {
@@ -33,17 +33,99 @@
   font-weight: 600;
 }
 
+/* KPIs: rótulo em cima, número grande, legenda. 1 coluna no celular, 3 a partir de 768px */
+.kpis {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.kpi {
+  --kpi-accent: var(--color-primary-600);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--elevation-1);
+}
+
+/* Só quando há falha: a cor de perigo toma o lugar da cor da marca */
+.kpiAlert {
+  --kpi-accent: var(--color-danger);
+
+  border-color: color-mix(in srgb, var(--color-danger) 35%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 4%, var(--color-surface));
+}
+
+.kpiHeader {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+}
+
+.kpiIcon {
+  display: grid;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  place-items: center;
+  background: color-mix(in srgb, var(--kpi-accent) 12%, transparent);
+  color: var(--kpi-accent);
+}
+
+.kpiLabel {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.kpiValue {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0;
+  color: var(--color-text-primary);
+  font: 600 2rem / 1.1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.kpiAlert .kpiValue {
+  color: var(--color-danger);
+}
+
+.kpiHint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
 .title {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--font-size-md);
 }
 
+.events {
+  margin-bottom: 0;
+}
+
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin: var(--space-4) 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -51,24 +133,30 @@
 /* Celular: hora abaixo do texto; a partir de 640px, à direita */
 .item {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: var(--space-1) var(--space-3);
-  align-items: start;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+}
+
+.item + .item {
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .icon {
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   grid-row: span 2;
-  border-radius: var(--radius-sm);
+  align-self: start;
+  border-radius: 50%;
   place-items: center;
   background: var(--color-primary-50);
   color: var(--color-primary-700);
 }
 
 .failed {
-  background: var(--color-hover);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
   color: var(--color-danger);
 }
 
@@ -79,8 +167,9 @@
 .what {
   margin: 0;
   color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   font-weight: 600;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 
@@ -102,29 +191,36 @@
 .time {
   grid-column: 2;
   color: var(--color-text-muted);
-  font: 500 var(--font-size-xs) var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (min-width: 640px) {
   .item {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: var(--space-4);
   }
 
   .icon {
     grid-row: auto;
+    align-self: center;
   }
 
   .time {
     grid-column: auto;
+    padding-left: var(--space-4);
     white-space: nowrap;
   }
 }
 
 .more {
-  margin-top: var(--space-5);
+  margin: var(--space-4) var(--space-5) var(--space-5);
 }
 
-.muted {
+/* Carregando, vazio e erro: mesmo respiro da lista */
+.state {
+  margin: 0;
+  padding: var(--space-5);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }

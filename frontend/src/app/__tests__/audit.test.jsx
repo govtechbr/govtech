@@ -77,6 +77,27 @@ describe('audit trail', () => {
     expect(within(failures).getByText('1')).toBeVisible()
   })
 
+  it('shows the three KPIs and flags failed syncs only when there are any', async () => {
+    db.auditEvents = [auditEvent('project.created'), auditEvent('member.joined')]
+    const { unmount } = await openAudit()
+
+    const total = await screen.findByRole('article', { name: 'Eventos registrados' })
+    expect(await within(total).findByText('2')).toBeVisible()
+    expect(within(total).getByText('Nos últimos 30 dias')).toBeVisible()
+    const access = screen.getByRole('article', { name: 'Mudanças de acesso' })
+    expect(within(access).getByText('1')).toBeVisible()
+    const failures = screen.getByRole('article', { name: 'Sincronizações com falha' })
+    expect(within(failures).getByText('0')).toBeVisible()
+    expect(within(failures).queryByRole('img', { name: 'Requer atenção' })).not.toBeInTheDocument()
+    unmount()
+
+    db.auditEvents.push(auditEvent('github.sync_failed', { trigger: 'schedule' }))
+    await openAudit()
+    const failed = await screen.findByRole('article', { name: 'Sincronizações com falha' })
+    expect(await within(failed).findByRole('img', { name: 'Requer atenção' })).toBeVisible()
+    expect(within(failed).getByText('1')).toBeVisible()
+  })
+
   it('filters by type and period', async () => {
     db.auditEvents = [
       auditEvent('project.created'),
