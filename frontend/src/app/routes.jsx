@@ -1,6 +1,8 @@
 import { useLocation, useOutletContext } from 'react-router-dom'
 
 import { useSession } from '@/features/auth/hooks/useAuth'
+import { useObjectives } from '@/features/strategy/hooks/useStrategy'
+import StrategyPage from '@/features/strategy/StrategyPage'
 import { useGovernanceData } from '@/features/dashboard/hooks/useGovernanceData'
 import OverviewPage from '@/features/dashboard/OverviewPage'
 import { useProjects } from '@/features/projects/hooks/useProjects'
@@ -50,6 +52,8 @@ export function ProjectsRoute() {
   const health = projectHealth(projectList, governance.data ?? emptyGovernance, new Date())
   // Índice de Governança mais recente de cada projeto (regra I1)
   const scores = latestScores(governance.data?.scores ?? [])
+  // Objetivos estratégicos para o vínculo do projeto (regra S3)
+  const { data: objectives = [] } = useObjectives()
 
   // A key remonta a página a cada navegação, para abrir o projeto escolhido na busca global
   return (
@@ -59,7 +63,20 @@ export function ProjectsRoute() {
       permissions={projectPermissions[organization.role]}
       health={health}
       scores={scores}
+      objectives={objectives}
     />
+  )
+}
+
+// Missão, visão e objetivos; o status vem dos alertas dos projetos (regras S4 e S5)
+export function StrategyRoute() {
+  const { organization } = useCurrentOrganization()
+  const { data: projectList = [] } = useProjects()
+  const governance = useGovernanceData()
+  const health = projectHealth(projectList, governance.data ?? emptyGovernance, new Date())
+
+  return (
+    <StrategyPage projects={projectList} health={health} canEdit={organization.role === 'admin'} />
   )
 }
 

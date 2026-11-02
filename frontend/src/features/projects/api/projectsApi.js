@@ -7,7 +7,12 @@ import { supabase } from '@/shared/lib/supabase'
 // Sem `status` (calculado pelos alertas, regra P3) e sem `progress` (removido, regra P2):
 // as colunas antigas ficam sem uso no banco
 const columns = ['name', 'description', 'deadline', 'owner', 'priority']
-const selectColumns = ['id', ...columns].join(', ')
+const selectColumns = ['id', ...columns, 'objective_id'].join(', ')
+
+// A linha do banco (objective_id) vira o campo do app (objectiveId)
+function fromRow({ objective_id: objectiveId, ...row }) {
+  return normalizeProject({ ...row, objectiveId: objectiveId ?? '' })
+}
 
 // Normaliza só os campos enviados, para uma edição parcial não sobrescrever o resto
 function toRow(data) {
@@ -18,6 +23,10 @@ function toRow(data) {
 
   if ('deadline' in row) {
     row.deadline = row.deadline || null
+  }
+
+  if ('objectiveId' in data) {
+    row.objective_id = data.objectiveId || null
   }
 
   return row
@@ -49,7 +58,7 @@ export async function listProjects(organizationId) {
     .order('created_at')
 
   if (error) fail(error)
-  return data.map((project) => normalizeProject(project))
+  return data.map(fromRow)
 }
 
 export async function createProject(organizationId, data) {
@@ -60,7 +69,7 @@ export async function createProject(organizationId, data) {
     .single()
 
   if (error) fail(error)
-  return normalizeProject(created)
+  return fromRow(created)
 }
 
 export async function updateProject(id, data) {
@@ -72,7 +81,7 @@ export async function updateProject(id, data) {
     .single()
 
   if (error) fail(error)
-  return normalizeProject(updated)
+  return fromRow(updated)
 }
 
 export async function deleteProject(id) {

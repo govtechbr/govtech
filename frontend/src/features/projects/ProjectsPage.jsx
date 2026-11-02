@@ -1,6 +1,7 @@
 import {
   CalendarClock,
   ChevronRight,
+  Flag,
   FolderKanban,
   OctagonAlert,
   Plus,
@@ -31,11 +32,13 @@ const healthy = { status: 'success', alerts: [] }
 
 // health: { [projectId]: { status, alerts } }, calculado pelos alertas (regra P3)
 // scores: { [projectId]: linha mais recente do Índice de Governança } (regra I1)
+// objectives: objetivos estratégicos da empresa, para o vínculo do projeto (regra S3)
 export default function ProjectsPage({
   initialProjectId,
   permissions = allowAll,
   health = {},
   scores = {},
+  objectives = [],
 }) {
   const { showToast } = useToast()
   const { data: projectList = [], isPending, isError } = useProjects()
@@ -51,6 +54,7 @@ export default function ProjectsPage({
 
   const selectedProject = projectList.find((project) => project.id === selectedProjectId) ?? null
   const healthOf = (project) => health[project.id] ?? healthy
+  const objectiveOf = (project) => objectives.find(({ id }) => id === project.objectiveId)
   const countStatus = (status) =>
     projectList.filter((project) => healthOf(project).status === status).length
 
@@ -204,6 +208,16 @@ export default function ProjectsPage({
                   <dd>{project.owner}</dd>
                 </div>
 
+                {objectiveOf(project) && (
+                  <div>
+                    <dt>
+                      <Flag size={15} aria-hidden="true" />
+                      Objetivo
+                    </dt>
+                    <dd>{objectiveOf(project).title}</dd>
+                  </div>
+                )}
+
                 <div>
                   <dt>
                     <CalendarClock size={15} aria-hidden="true" />
@@ -237,7 +251,12 @@ export default function ProjectsPage({
       </div>
 
       {showForm && (
-        <ProjectFormModal project={editingProject} onClose={closeForm} onSave={saveProject} />
+        <ProjectFormModal
+          project={editingProject}
+          objectives={objectives}
+          onClose={closeForm}
+          onSave={saveProject}
+        />
       )}
 
       {selectedProject && !showDeleteConfirm && (

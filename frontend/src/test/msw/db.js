@@ -56,6 +56,8 @@ export function resetDb({ withOrganization = true } = {}) {
   db.pullRequests = []
   db.branches = []
   db.commits = []
+  // Objetivos estratégicos (E10)
+  db.objectives = []
   // Execuções do GitHub Actions (G11)
   db.ciRuns = []
   // Índice de Governança (gravado pela Edge Function de verdade)

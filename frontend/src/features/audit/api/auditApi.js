@@ -12,6 +12,7 @@ export const AUDIT_TYPES = {
   project: 'Projetos',
   member: 'Membros',
   organization: 'Empresa',
+  objective: 'Objetivos',
   github: 'GitHub',
 }
 

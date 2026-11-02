@@ -12,16 +12,18 @@ const PRIORITY_OPTIONS = [
   { value: 'low', label: 'Baixa' },
 ]
 
-export default function ProjectFormModal({ project, onClose, onSave }) {
+export default function ProjectFormModal({ project, objectives = [], onClose, onSave }) {
   const [form, setForm] = useState({
     name: project?.name || '',
     description: project?.description || '',
     deadline: project?.deadline || '',
     owner: project?.owner || '',
     priority: project?.priority || 'medium',
+    objectiveId: project?.objectiveId || '',
   })
 
   const [deadlineError, setDeadlineError] = useState('')
+  const objectiveOptions = objectives.map(({ id, title }) => ({ value: id, label: title }))
 
   const setField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -89,6 +91,13 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
         </div>
 
         <div className={styles.row}>
+          <Select
+            label="Objetivo estratégico"
+            options={[{ value: '', label: 'Sem vínculo' }, ...objectiveOptions]}
+            value={form.objectiveId}
+            onChange={(value) => setField('objectiveId', value)}
+          />
+
           <label className={styles.field}>
             Responsável
             <input

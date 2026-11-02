@@ -21,6 +21,7 @@ const routeSections = {
   '/audit': 'Auditoria',
   '/repositories': 'Repositórios',
   '/projects': 'Projetos',
+  '/strategy': 'Estratégia',
   '/access': 'Acessos e RBAC',
   '/settings': 'Configurações',
 }
