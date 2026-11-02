@@ -1,4 +1,5 @@
 import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
+import { dayInCampoGrande } from '@/shared/lib/date'
 import { governanceAlerts, governanceMetrics, projectHealth } from '@/shared/lib/governance'
 import {
   latestScores,
@@ -57,7 +58,7 @@ export function buildAssistantContext({ organizationName, projects, governance, 
   const namesOf = (ids) => ids.map((id) => projectNames[id]).filter(Boolean)
 
   const context = {
-    today: now.toISOString().slice(0, 10),
+    today: dayInCampoGrande(now),
     organization: organizationName,
     index: indexSummary(governance.scores),
     metricsLast30Days: {

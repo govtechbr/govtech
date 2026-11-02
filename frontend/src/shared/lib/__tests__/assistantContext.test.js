@@ -151,6 +151,11 @@ describe('buildAssistantContext', () => {
     expect(context.pullRequests.length).toBeLessThan(30)
   })
 
+  it('dates "today" in Campo Grande, like the index days', () => {
+    // 21h de 10/11 em Campo Grande já é 11/11 em UTC
+    expect(build({ now: new Date('2026-11-11T01:00:00Z') }).today).toBe('2026-11-10')
+  })
+
   it('has no index before the first measurement', () => {
     expect(build({ governance: { ...governance, scores: [] } }).index).toBeNull()
   })

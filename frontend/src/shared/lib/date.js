@@ -47,6 +47,11 @@ export function formatDay(day) {
   return `${day.slice(8, 10)}/${day.slice(5, 7)}`
 }
 
+// "2026-11-03": o dia em Campo Grande, o mesmo fuso em que o índice é apurado
+export function dayInCampoGrande(date) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Campo_Grande' }).format(date)
+}
+
 // "14:07", no horário de quem está vendo
 export function formatTime(value) {
   return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
