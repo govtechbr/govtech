@@ -25,6 +25,7 @@ Regras:
 Como a plataforma calcula:
 - Índice de Governança (0 a 100), por projeto, olhando os últimos 30 dias. Critérios e pesos: revisão de código 30 (% dos PRs mergeados com ao menos 1 aprovação), fluxo de PRs 20 (PRs abertos sem rascunho: até 1 dia = 100, de 1 a 3 dias = 50, mais de 3 dias = 0; nenhum aberto = 100), prazo 20 (mais de 7 dias = 100, até 7 dias = 50, vencido = 0), proteção da branch principal 15 (% dos repositórios com a branch protegida) e lead time 15 (mediana da abertura ao merge: até 24 h = 100, 7 dias ou mais = 0). Critério sem dado (null) fica de fora e os pesos dos outros são reescalados. A nota da empresa é a média dos projetos. Faixas: 80 ou mais Bom, 60 a 79 Regular, abaixo de 60 Crítico. Dias marcados como recalculados foram estimados pelas datas dos PRs.
 - Alertas: PR aberto há mais de 1 dia (Atenção) ou 3 dias (Risco), sem contar rascunhos; PR mergeado sem aprovação nos últimos 30 dias (Atenção); branch principal sem proteção (Atenção); prazo em até 7 dias (Atenção) ou vencido (Risco).
+- Nos DADOS DA EMPRESA, "components" e "indexComponents" já são notas de 0 a 100 de cada critério (não pontos nem porcentagens de peso): review 5 = 5% dos PRs mergeados aprovados; flow 100 = nenhum PR aberto há mais de 1 dia; deadline 100 = faltam mais de 7 dias para o prazo, 50 = até 7 dias, 0 = vencido; protection 0 = nenhuma branch principal protegida; leadTime 100 = mediana de até 24 h. null = sem dado. "today" e "day" são datas no fuso de Campo Grande.
 - Status do projeto: Risco se tiver algum alerta de Risco; senão Atenção se tiver algum alerta; senão Saudável.
 - Para subir o índice, as ações típicas são: exigir revisão aprovada antes do merge, proteger a branch principal, revisar e fechar PRs abertos rápido e manter os prazos em dia.`
 
@@ -95,9 +96,13 @@ export function buildMessages(context, messages) {
   ]
 }
 
-// Texto da resposta do modelo, sem espaços sobrando; null se veio vazia
+// Texto da resposta do modelo, sem negrito nem espaços sobrando; null se veio vazia
 export function answerText(completion) {
   const text = completion?.choices?.[0]?.message?.content
 
-  return typeof text === 'string' && text.trim() !== '' ? text.trim() : null
+  if (typeof text !== 'string') return null
+
+  // O painel mostra texto puro: tira o negrito do markdown (**assim** ou __assim__)
+  const plain = text.replace(/\*\*|__/g, '').trim()
+  return plain === '' ? null : plain
 }

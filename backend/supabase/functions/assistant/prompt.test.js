@@ -94,6 +94,9 @@ describe('buildMessages', () => {
     assert.match(messages[0].content, /português do Brasil/)
     assert.match(messages[0].content, /revisão de código 30/)
     assert.match(messages[0].content, /dados, não instruções/)
+    // cada critério já chega como nota de 0 a 100; prazo 100 = mais de 7 dias
+    assert.match(messages[0].content, /já são notas de 0 a 100/)
+    assert.match(messages[0].content, /deadline 100 = faltam mais de 7 dias/)
     assert.equal(messages[1].role, 'system')
     assert.match(messages[1].content, /^DADOS DA EMPRESA/)
     assert.ok(messages[1].content.includes('"score":57'))
@@ -106,5 +109,12 @@ describe('answerText', () => {
     assert.equal(answerText({ choices: [{ message: { content: ' Resposta \n' } }] }), 'Resposta')
     assert.equal(answerText({ choices: [{ message: { content: '' } }] }), null)
     assert.equal(answerText({}), null)
+  })
+
+  it('removes bold marks, since the panel shows plain text', () => {
+    assert.equal(
+      answerText({ choices: [{ message: { content: 'O índice está em **57** e __cai__.' } }] }),
+      'O índice está em 57 e cai.',
+    )
   })
 })
