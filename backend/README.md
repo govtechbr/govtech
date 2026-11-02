@@ -69,6 +69,7 @@ python scripts/to_sql_editor.py tests/*.test.sql todos.editor.sql   # ou só um 
 | `assistant_usage.test.sql` | 8 | 8/8 ok (02/11/2026) |
 | `audit_events.test.sql` | 19 | 19/19 ok (02/11/2026) |
 | `ci_status.test.sql` | 7 | 7/7 ok (02/11/2026, pelo MCP) |
+| `ci_runs.test.sql` | 6 | a rodar (migration `ci_runs` ainda não aplicada) |
 
 Depois de cada execução, o banco é conferido pelo MCP: nenhum usuário `@test.local` nem a extensão `pgtap` ficam para trás.
 

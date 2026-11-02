@@ -105,6 +105,7 @@ Endereço: `/rest/v1/<tabela>`. Todas pertencem a uma organização (`organizati
 | `pull_requests` | membros | — | — | — | Os 100 mais recentes de cada repositório |
 | `branches` | membros | — | — | — | Até 100 por repositório |
 | `commits` | membros | — | — | — | Branch principal, últimos 90 dias |
+| `ci_runs` | membros | — | — | — | Execuções do GitHub Actions, últimos 90 dias (G11), sem quem disparou |
 | `governance_scores` | membros | — | — | — | Índice de Governança: uma linha por projeto e por dia (§6.6) |
 | `assistant_usage` | — | — | — | — | Perguntas ao assistente por pessoa e por dia (§6.7). Sem acesso pelo front |
 | `audit_events` | admin e stakeholder | — | — | — | Trilha de auditoria (§6.8). Gravada só pelo banco: triggers em `projects`, `organization_members` e `organizations`, e `audit_record` pela Edge Function. Imutável, nem a chave de serviço altera |
@@ -210,12 +211,14 @@ Paginação da regra G9 (E7). Os tetos ficam em `LIMITS`, em `functions/github/g
 | Branches (com proteção) | `GET /repos/{dono}/{repo}/branches?per_page=100&page=N` | páginas de 100 | 500 |
 | Commits da branch principal | `GET /repos/{dono}/{repo}/commits?since=<90 dias>&per_page=100&page=N` | páginas de 100 | 1.000 |
 | CI de cada PR (G10) | no mesmo GraphQL dos PRs: `commits(last: 1) { statusCheckRollup { state } }` | junto dos PRs | — |
+| Execuções do CI (G11) | `GET /repos/{dono}/{repo}/actions/runs?created=>=<90 dias>&per_page=100&page=N` (resposta `{ workflow_runs }`) | páginas de 100 | 1.000 |
 | CI da branch principal (G10) | GraphQL `defaultBranchRef { target { statusCheckRollup { state } } }` | 1 chamada por repositório | — |
 
 - Os abertos vêm todos, mesmo os parados há mais de 90 dias, porque ainda geram alerta.
 - Se alguma lista para no teto com a última página cheia, a sincronização grava `github_credentials.last_sync_partial = true`. O painel do projeto mostra "Dados parciais" e o evento de auditoria marca o mesmo.
 - Repositório vazio (o GitHub responde 409) conta como "sem commits", não como erro.
 - **CI (G10):** `SUCCESS` → `success`; `FAILURE` e `ERROR` → `failure`; `PENDING` e `EXPECTED` → `pending`; sem checks → `null` ("sem CI"). Vai para `pull_requests.ci_state` e `repositories.ci_state`. Se o GitHub devolver erro **só** no campo `statusCheckRollup` (chave sem permissão de *Commit statuses*/*Actions*), os dados valem e o CI fica `null`; qualquer outro erro continua falhando a sincronização.
+- **Execuções do CI (G11):** sem a permissão *Actions* (403/404), o histórico fica vazio e a sincronização segue. `actor` e `triggering_actor` não são guardados. `completed_at` = `updated_at` do GitHub quando `status = completed`. O resumo da sincronização e o evento de auditoria ganham `ciRunCount`.
 
 ### 6.6 Índice de Governança
 
