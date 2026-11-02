@@ -297,7 +297,7 @@ create policy "só admin exclui projetos" on public.projects
 
 ### 4.4 Auditoria (simples, para revisão — Q7)
 
-Trigger genérico `private.audit_row()` em `projects`, `organization_members` e `repositories` grava `action` (`INSERT/UPDATE/DELETE`), `entity`, `entity_id`, `actor_id = auth.uid()`, `diff` (jsonb `old`/`new`) e `created_at`. Sem cadeia de hash. A tela de Auditoria passa a listar esses eventos no lugar do mock.
+**Como ficou (E7, 02/11/2026):** triggers em `projects`, `organization_members` e `organizations`, mais a função `audit_record` para as ações da Edge Function `github` (conectar, escolher repositórios, sincronizar). O evento guarda a ação (`project.updated`...), quem agiu (id, nome e papel retratados), o alvo e o diff só dos campos que mudaram. Sem cadeia de hash. Imutável até para a chave de serviço. Visível para admin e stakeholder. Detalhes em `docs/API.md` §6.8.
 
 ### 4.5 Ambiente e fluxo de trabalho
 
@@ -1261,3 +1261,12 @@ Uma função com três ações. Todas conferem o login (JWT) e o papel do usuár
 - **Prompt injection:** os dados vão numa mensagem separada, marcada como "dados, não instruções".
 - **Tela:** o `ChatbotModal` (FAQ fixa, ~40 estilos inline) foi apagado; o painel novo usa o `Modal` acessível de `shared/ui`, com 4 perguntas sugeridas, aviso de IA e perguntas restantes.
 - **Testes:** 9 `node --test` da função, 7 do contexto e 4 de ponta a ponta no app (−1 do chatbot antigo). **125 testes**, lint e build verdes. pgTAP `assistant_usage` com 8 casos.
+
+**E7: Auditoria real + paginação do GitHub** (regras AU1–AU7 e G9; 02/11/2026; migration `audit_events`)
+- **Entrega integrada (decisão do dono):** a trilha registra o que o usuário faz pelo app (triggers) e o que a integração com o GitHub faz (`audit_record`, só `service_role`), inclusive o resultado de cada sincronização paginada.
+- **AGENTS.md ajustado:** `audit_events` é "escrita só pelo banco (trigger ou função `security definer`)", porque nas ações da Edge Function `auth.uid()` é nulo e quem agiu precisa ser informado.
+- **Imutabilidade:** sem policy de escrita, sem `insert/update/delete` nem para `service_role` e trigger que bloqueia `update/delete`. A exceção são as cascatas do próprio banco (`pg_trigger_depth() > 1`): excluir a empresa e limpar o `actor_id` de conta excluída. As funções de auditoria saem cedo quando a empresa está sendo excluída, como a trava do último admin.
+- **Paginação:** os abertos vêm todos (até 1.000), porque um PR parado há meses continua gerando alerta. Os mergeados e fechados vêm por `UPDATED_AT desc` até sair dos 90 dias. Bateu o teto: `last_sync_partial`.
+- **Tela:** lista paginada por `id` (cursor), cartões com `count: 'exact', head: true`, CSV no navegador com proteção contra fórmula. Saíram o mock `auditEvents`, os números fixos "34" e "92%" e o contador falso do menu.
+- **Testes:** 19 pgTAP de auditoria, 5 novos de paginação na função (41 no total) e 14 no front (8 de utilitários, 5 da tela, 1 do aviso de dados parciais). **176 testes**, lint e build verdes.
+

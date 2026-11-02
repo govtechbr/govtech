@@ -107,6 +107,7 @@ Endereço: `/rest/v1/<tabela>`. Todas pertencem a uma organização (`organizati
 | `commits` | membros | — | — | — | Branch principal, últimos 90 dias |
 | `governance_scores` | membros | — | — | — | Índice de Governança: uma linha por projeto e por dia (§6.6) |
 | `assistant_usage` | — | — | — | — | Perguntas ao assistente por pessoa e por dia (§6.7). Sem acesso pelo front |
+| `audit_events` | admin e stakeholder | — | — | — | Trilha de auditoria (§6.8). Gravada só pelo banco: triggers em `projects`, `organization_members` e `organizations`, e `audit_record` pela Edge Function. Imutável, nem a chave de serviço altera |
 
 As tabelas do GitHub são **somente leitura** para o usuário: não têm policy de escrita. Só a Edge Function grava nelas, com a chave de serviço, **depois** de conferir o papel de quem chamou.
 
@@ -144,9 +145,10 @@ Endereço: `POST /rest/v1/rpc/<nome>`. A função pública é só uma "casca" qu
 | `github_read_token` | só a Edge Function | `p_project_id` | `text` | Lê a chave do Vault |
 | `github_disconnect` | só a Edge Function | `p_project_id` | — | Apaga as ligações e a conexão; o trigger apaga a chave do Vault |
 | `github_cron_secret` | só a Edge Function | — | `text` | Lê a senha do agendador |
+| `audit_record` | só a Edge Function `github` | empresa, quem agiu (null = agendador), ação, tipo, id, nome, detalhes | — | Grava um evento de auditoria das ações do GitHub |
 | `assistant_consume` | só a Edge Function `assistant` | usuário, limite da pessoa, limite total | `integer` ou null | Conta a pergunta do dia (fuso de MS) e devolve quantas restam; null se estourou |
 
-As cinco últimas só podem ser executadas pelo papel `service_role`. Um usuário logado que tente chamá-las recebe erro de permissão.
+As seis últimas só podem ser executadas pelo papel `service_role`. Um usuário logado que tente chamá-las recebe erro de permissão.
 
 ---
 
@@ -198,14 +200,19 @@ Detalhes:
 
 Por repositório escolhido, em paralelo:
 
-| Dado | Chamada | Limite |
-|---|---|---|
-| Repositórios visíveis | `GET /user/repos?per_page=100&sort=pushed` | 100 |
-| Pull requests (com nº de aprovações) | GraphQL `repository.pullRequests` | 100 mais recentes |
-| Branches (com proteção) | `GET /repos/{dono}/{repo}/branches?per_page=100` | 100 |
-| Commits da branch principal | `GET /repos/{dono}/{repo}/commits?since=<90 dias>` | 3 páginas (300) |
+Paginação da regra G9 (E7). Os tetos ficam em `LIMITS`, em `functions/github/github.js`:
 
-Repositório vazio (GitHub responde 409) conta como "sem commits", não como erro.
+| Dado | Chamada | Paginação | Teto |
+|---|---|---|---|
+| Repositórios visíveis | `GET /user/repos?sort=pushed&per_page=100&page=N` | páginas de 100 | 500 |
+| PRs abertos (com nº de aprovações) | GraphQL `pullRequests(states: OPEN)` | cursor (`pageInfo.endCursor`) | 1.000 |
+| PRs mergeados e fechados | GraphQL `pullRequests(states: [MERGED, CLOSED], orderBy: UPDATED_AT desc)` | cursor, para ao sair dos 90 dias | 1.000 |
+| Branches (com proteção) | `GET /repos/{dono}/{repo}/branches?per_page=100&page=N` | páginas de 100 | 500 |
+| Commits da branch principal | `GET /repos/{dono}/{repo}/commits?since=<90 dias>&per_page=100&page=N` | páginas de 100 | 1.000 |
+
+- Os abertos vêm todos, mesmo os parados há mais de 90 dias, porque ainda geram alerta.
+- Se alguma lista para no teto com a última página cheia, a sincronização grava `github_credentials.last_sync_partial = true`. O painel do projeto mostra "Dados parciais" e o evento de auditoria marca o mesmo.
+- Repositório vazio (o GitHub responde 409) conta como "sem commits", não como erro.
 
 ### 6.6 Índice de Governança
 
@@ -271,6 +278,23 @@ A chave do Groq fica só no secret `GROQ_API_KEY` das Edge Functions; nunca no f
 
 ---
 
+### 6.8 Trilha de auditoria
+
+Regras AU1–AU7 de `REGRAS_DE_NEGOCIO.md` §7.
+
+| Ação (`action`) | Quem grava | Detalhes (`details`) |
+|---|---|---|
+| `project.created` / `project.updated` / `project.deleted` | trigger em `projects` | campos com `from`/`to` (só os que mudaram; `updated_at` e `status` não contam) |
+| `member.joined` / `member.role_changed` / `member.removed` / `member.left` | trigger em `organization_members` | papel (ou `from`/`to`) |
+| `organization.renamed` / `organization.join_code_regenerated` | trigger em `organizations` | nome `from`/`to`; o código **nunca** |
+| `github.connected` / `github.disconnected` | Edge Function | login do GitHub e 4 últimos caracteres da chave |
+| `github.repositories_selected` | Edge Function | nomes dos repositórios |
+| `github.synced` / `github.sync_failed` | Edge Function | `trigger` (`manual` ou `schedule`), contagens, `partial`, ou a mensagem de erro |
+
+- **Quem agiu:** `auth.uid()` nos triggers; nas ações da Edge Function, o usuário que chamou, ou null no agendador ("Sistema"). O nome e o papel ficam gravados em `actor_name` e `actor_role`.
+- **Imutável:** nenhuma policy de escrita, e nem `service_role` tem `insert`, `update` ou `delete`. Um trigger `before update or delete` dá erro, exceto nas ações em cascata do próprio banco: excluir a empresa e limpar o `actor_id` de uma conta excluída.
+- **Front:** `features/audit/api/auditApi.js` lê de 50 em 50 (cursor pelo `id`) e conta os cartões com `count: 'exact', head: true`. O CSV é gerado no navegador.
+
 ## 7. Fluxos completos
 
 **Cadastro e primeira empresa**
@@ -303,6 +327,7 @@ Cada feature tem sua pasta `api/`. Os hooks (TanStack Query) chamam essas funç�
 | `features/repositories/api/repositoriesApi.js` | `listRepositoryData` | `repositories`, `pull_requests`, `branches` |
 | `features/dashboard/api/governanceApi.js` | `loadGovernanceData` | `repositories`, `pull_requests`, `branches`, `commits`, `governance_scores` |
 | `features/assistant/api/assistantApi.js` | `askAssistant` | Edge Function `assistant` |
+| `features/audit/api/auditApi.js` | `listAuditEvents`, `listAllAuditEvents`, `countAuditEvents` | `audit_events` |
 
 Chaves de cache do TanStack Query: `['projects', orgId]`, `['members', orgId]`, `['repository-data', orgId, projectId | 'all']`, `['governance', orgId]`. Todas incluem a empresa, para os dados de duas empresas nunca se misturarem.
 
@@ -335,9 +360,8 @@ As funções de `api/` transformam o erro técnico numa mensagem em pt-BR antes 
 
 ## 11. Limites conhecidos
 
-- **Repositórios visíveis:** a lista de escolha mostra só os 100 com push mais recente.
-- **Histórico:** são guardados os 100 PRs mais recentes, até 100 branches e até 300 commits (90 dias) por repositório. Para métricas de um período maior, seria preciso paginar.
+- **Paginação com teto (G9):** até 500 repositórios visíveis e, por repositório, 1.000 PRs abertos, 1.000 PRs dos últimos 90 dias, 500 branches e 1.000 commits. Acima disso a tela avisa "dados parciais". Métricas além de 90 dias exigiriam aumentar a janela.
 - **Uma chave por projeto:** um repositório usado por dois projetos é sincronizado pela chave de qualquer um deles.
 - **Assistente:** depende da cota gratuita do Groq (cerca de 1.000 pedidos por dia, que o Groq pode mudar). Se ela acabar, o painel mostra o erro e o resto do sistema segue normal.
 - **Sem limite de taxa próprio na `github`:** a Edge Function depende do limite do GitHub (5.000 chamadas por hora por chave) e do Supabase.
-- **Auditoria:** a tabela `audit_events` prevista no plano ainda não existe; as alterações não ficam registradas.
+- **Auditoria:** registra mudanças de dados e ações do GitHub, mas não leituras nem logins. Não há cadeia de hash (decisão Q7) nem retenção automática. Mudanças feitas direto no painel do Supabase aparecem como "Sistema".
