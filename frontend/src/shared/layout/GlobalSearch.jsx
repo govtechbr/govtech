@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronRight, GitBranch, GitPullRequest, Search, Server, Target, X } from 'lucide-react'
 
-import { branches, pullRequests, services } from '@/mocks/mockData'
 import { formatProjectDate } from '@/shared/lib/projectUtils'
 
 export default function GlobalSearch({ open, ...props }) {
@@ -11,7 +10,15 @@ export default function GlobalSearch({ open, ...props }) {
   return <SearchPanel {...props} />
 }
 
-function SearchPanel({ onClose, projects = [], onNavigate, onSelectProject }) {
+function SearchPanel({
+  onClose,
+  projects = [],
+  repositories = [],
+  pullRequests = [],
+  branches = [],
+  onNavigate,
+  onSelectProject,
+}) {
   const [query, setQuery] = useState('')
   const inputRef = useRef(null)
 
@@ -21,6 +28,9 @@ function SearchPanel({ onClose, projects = [], onNavigate, onSelectProject }) {
   }, [])
 
   const search = query.toLowerCase().trim()
+  const repositoryNames = new Map(
+    repositories.map((repository) => [repository.id, repository.name]),
+  )
 
   const results =
     search.length === 0
@@ -44,15 +54,17 @@ function SearchPanel({ onClose, projects = [], onNavigate, onSelectProject }) {
               },
             })),
 
-          ...services
-            .filter((service) =>
-              `${service.name} ${service.team} ${service.language}`.toLowerCase().includes(search),
+          ...repositories
+            .filter((repository) =>
+              `${repository.full_name} ${repository.description ?? ''} ${repository.language ?? ''}`
+                .toLowerCase()
+                .includes(search),
             )
             .slice(0, 4)
-            .map((service) => ({
+            .map((repository) => ({
               type: 'Repositório',
-              title: service.name,
-              subtitle: `${service.team} · ${service.language}`,
+              title: repository.full_name,
+              subtitle: repository.language || 'Sem linguagem definida',
               icon: Server,
               action: () => {
                 onNavigate('Repositórios')
@@ -62,13 +74,15 @@ function SearchPanel({ onClose, projects = [], onNavigate, onSelectProject }) {
 
           ...pullRequests
             .filter((pr) =>
-              `${pr.id} ${pr.title} ${pr.author} ${pr.repository}`.toLowerCase().includes(search),
+              `${pr.number} ${pr.title} ${pr.author_login} ${repositoryNames.get(pr.repository_id) ?? ''}`
+                .toLowerCase()
+                .includes(search),
             )
             .slice(0, 4)
             .map((pr) => ({
               type: 'Pull Request',
-              title: `#${pr.id} · ${pr.title}`,
-              subtitle: `${pr.repository} · ${pr.author}`,
+              title: `#${pr.number} · ${pr.title}`,
+              subtitle: `${repositoryNames.get(pr.repository_id) ?? ''} · ${pr.author_login ?? 'autor desconhecido'}`,
               icon: GitPullRequest,
               action: () => {
                 onNavigate('Repositórios')
@@ -78,13 +92,15 @@ function SearchPanel({ onClose, projects = [], onNavigate, onSelectProject }) {
 
           ...branches
             .filter((branch) =>
-              `${branch.name} ${branch.repository} ${branch.author}`.toLowerCase().includes(search),
+              `${branch.name} ${repositoryNames.get(branch.repository_id) ?? ''}`
+                .toLowerCase()
+                .includes(search),
             )
             .slice(0, 4)
             .map((branch) => ({
               type: 'Branch',
               title: branch.name,
-              subtitle: `${branch.repository} · ${branch.author}`,
+              subtitle: repositoryNames.get(branch.repository_id) ?? '',
               icon: GitBranch,
               action: () => {
                 onNavigate('Repositórios')

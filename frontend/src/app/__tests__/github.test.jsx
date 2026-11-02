@@ -394,3 +394,64 @@ describe('Overview with synced data', () => {
     expect(within(panel).getByText('Crítico')).toBeInTheDocument()
   })
 })
+
+describe('Global search with synced data', () => {
+  function seedPullRequestAndBranch() {
+    linkRepository(privateRepo, 0)
+    db.branches.push({
+      id: 'branch-feat',
+      repository_id: `repo-${privateRepo.id}`,
+      organization_id: db.projects[0].organization_id,
+      name: 'feat/busca-real',
+      last_commit_sha: 'abc1234',
+      protected: false,
+    })
+    db.pullRequests.push({
+      id: 'pr-search',
+      repository_id: `repo-${privateRepo.id}`,
+      organization_id: db.projects[0].organization_id,
+      number: 9,
+      title: 'Ajustar relatório mensal',
+      state: 'open',
+      draft: false,
+      author_login: 'dono-gh',
+      approval_count: 0,
+      html_url: 'https://github.com/dono-gh/govtech/pull/9',
+      created_at_github: new Date().toISOString(),
+      merged_at: null,
+      closed_at: null,
+    })
+  }
+
+  async function search(user, text) {
+    await user.click(screen.getByRole('button', { name: 'Buscar' }))
+    await user.type(screen.getByRole('searchbox'), text)
+  }
+
+  it('finds the synced repository, pull request and branch', async () => {
+    seedPullRequestAndBranch()
+    const { user } = await renderAs(testUser, '/dashboard')
+
+    await search(user, 'govtech')
+    expect(await screen.findByRole('button', { name: /dono-gh\/govtech/ })).toBeInTheDocument()
+
+    await user.clear(screen.getByRole('searchbox'))
+    await user.type(screen.getByRole('searchbox'), 'relatório')
+    expect(
+      await screen.findByRole('button', { name: /#9 · Ajustar relatório mensal/ }),
+    ).toBeInTheDocument()
+
+    await user.clear(screen.getByRole('searchbox'))
+    await user.type(screen.getByRole('searchbox'), 'busca-real')
+    expect(await screen.findByRole('button', { name: /feat\/busca-real/ })).toBeInTheDocument()
+  })
+
+  it('never shows the fictitious sample services', async () => {
+    seedPullRequestAndBranch()
+    const { user } = await renderAs(testUser, '/dashboard')
+
+    await search(user, 'billing-orchestrator')
+
+    expect(await screen.findByText('Nenhum resultado encontrado.')).toBeInTheDocument()
+  })
+})

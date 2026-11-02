@@ -5,6 +5,7 @@ import AssistantDialog from '@/app/AssistantDialog'
 import { signOut } from '@/features/auth/api/authApi'
 import { useSession } from '@/features/auth/hooks/useAuth'
 import { useProjects } from '@/features/projects/hooks/useProjects'
+import { useRepositoryData } from '@/features/repositories/hooks/useRepositoryData'
 import { defaultSettings } from '@/shared/constants/defaultSettings'
 import { storageKeys } from '@/shared/constants/storageKeys'
 import { useCurrentOrganization } from '@/shared/hooks/useCurrentOrganization'
@@ -49,6 +50,20 @@ function useAccount() {
     // Só o admin vê o código de convite (é quem chama a equipe)
     joinCode: organization.role === 'admin' ? organization.joinCode : null,
   }
+}
+
+// Os dados do GitHub só são buscados quando a busca abre (o painel não monta fechado)
+function SearchWithData(props) {
+  const { data } = useRepositoryData()
+
+  return (
+    <GlobalSearch
+      {...props}
+      repositories={data?.repositories}
+      pullRequests={data?.pullRequests}
+      branches={data?.branches}
+    />
+  )
 }
 
 const sectionRoutes = Object.fromEntries(
@@ -138,13 +153,15 @@ export default function AppLayout() {
           onSignOut={handleSignOut}
         />
 
-        <GlobalSearch
-          open={searchOpen}
-          onClose={() => setSearchOpen(false)}
-          projects={projectList}
-          onNavigate={handleNavigate}
-          onSelectProject={handleSelectProject}
-        />
+        {searchOpen && (
+          <SearchWithData
+            open
+            onClose={() => setSearchOpen(false)}
+            projects={projectList}
+            onNavigate={handleNavigate}
+            onSelectProject={handleSelectProject}
+          />
+        )}
 
         <Outlet context={{ settings, onSaveSettings: handleSaveSettings }} />
       </div>
