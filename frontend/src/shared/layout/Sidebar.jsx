@@ -43,6 +43,11 @@ const menuItems = [
     icon: 'Flag',
     path: '/strategy',
   },
+  {
+    label: 'Processos',
+    icon: 'ShieldCheck',
+    path: '/processes',
+  },
 ]
 
 const adminItems = [
