@@ -59,6 +59,8 @@ export function resetDb({ withOrganization = true } = {}) {
   // Índice de Governança (gravado pela Edge Function de verdade)
   db.governanceScores = []
   // Assistente: o que a Edge Function simulada recebeu e quantas perguntas restam hoje
+  // Auditoria (no banco de verdade, gravada por triggers e pela Edge Function)
+  db.auditEvents = []
   db.assistantRequests = []
   db.assistantRemaining = 20
 }

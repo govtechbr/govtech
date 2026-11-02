@@ -52,6 +52,17 @@ export function dayInCampoGrande(date) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Campo_Grande' }).format(date)
 }
 
+// "02/11/2026 14:07", no horário de quem está vendo
+export function formatDateTime(value) {
+  return new Date(value).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 // "14:07", no horário de quem está vendo
 export function formatTime(value) {
   return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })

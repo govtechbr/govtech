@@ -198,38 +198,3 @@ export const branches = [
     status: 'active',
   },
 ]
-
-export const auditEvents = [
-  {
-    action: 'Deploy aprovado',
-    service: 'identity-gateway',
-    actor: 'ana.silva',
-    hash: 'a82f91c0…7d2e',
-    time: '09:42:18',
-    status: 'success',
-  },
-  {
-    action: 'Política alterada',
-    service: 'billing-orchestrator',
-    actor: 'carlos.melo',
-    hash: '0f4a2b31…9c1b',
-    time: '09:31:06',
-    status: 'info',
-  },
-  {
-    action: 'Falha de pipeline',
-    service: 'observability-api',
-    actor: 'ci/github-actions',
-    hash: 'd9317e8a…4fe0',
-    time: '08:57:44',
-    status: 'danger',
-  },
-  {
-    action: 'Acesso concedido',
-    service: 'notification-hub',
-    actor: 'marina.costa',
-    hash: 'b11caa4d…0ef1',
-    time: '08:44:21',
-    status: 'warning',
-  },
-]

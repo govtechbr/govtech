@@ -16,7 +16,6 @@ import { useCurrentOrganization } from '@/shared/hooks/useCurrentOrganization'
 import Brand from '@/shared/ui/Brand'
 import Icon from '@/shared/ui/Icon'
 import styles from './Sidebar.module.css'
-import { auditEvents } from '@/mocks/mockData'
 
 const menuItems = [
   {
@@ -64,6 +63,10 @@ export default function Sidebar({ open, setOpen, account, onOpenAssistant }) {
 
   const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false)
   const { organization, organizations, switchOrganization } = useCurrentOrganization()
+  // Auditoria só para admin e stakeholder (regra AU4)
+  const visibleMenuItems = menuItems.filter(
+    (item) => item.path !== '/audit' || organization.role !== 'developer',
+  )
 
   function isActive(path) {
     return location.pathname === path
@@ -178,7 +181,7 @@ export default function Sidebar({ open, setOpen, account, onOpenAssistant }) {
         <nav className="side-nav">
           <span className="nav-label">OBSERVABILIDADE</span>
 
-          {menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
@@ -188,10 +191,6 @@ export default function Sidebar({ open, setOpen, account, onOpenAssistant }) {
               <Icon name={item.icon} size={18} />
 
               <span>{item.label}</span>
-
-              {item.label === 'Auditoria' && (
-                <span className="nav-count">{auditEvents.length}</span>
-              )}
             </button>
           ))}
 
