@@ -71,7 +71,7 @@ export default function OverviewPage({ projectList, governance = emptyGovernance
 
       <ProjectStatusSummary health={health} />
 
-      <div className="metric-grid">
+      <div className={`metric-grid ${styles.metrics}`}>
         <StatCard
           title="Quantidade de PRs"
           value={metrics.pullRequestCount}
@@ -106,6 +106,18 @@ export default function OverviewPage({ projectList, governance = emptyGovernance
           subtext="Abertos há mais de 3 dias"
           icon="Bell"
           color={COLORS.danger}
+        />
+
+        <StatCard
+          title="CI verde no merge"
+          value={metrics.ciSuccessRate === null ? '—' : `${metrics.ciSuccessRate}%`}
+          subtext={
+            metrics.ciSuccessRate === null
+              ? 'Nenhum PR mergeado com CI no período'
+              : 'Mergeados com os testes automáticos verdes'
+          }
+          icon="Zap"
+          color={COLORS.success}
         />
       </div>
 

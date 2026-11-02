@@ -301,6 +301,21 @@
   margin-top: var(--space-3);
 }
 
+/* 5 números em destaque: o quinto ocupa a linha até caber em 5 colunas */
+.metrics > :last-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 1280px) {
+  .metrics {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .metrics > :last-child {
+    grid-column: auto;
+  }
+}
+
 .statusDot {
   width: 12px;
   height: 12px;

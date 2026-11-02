@@ -490,6 +490,7 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 - **Lead time médio:** média de horas da abertura ao merge dos PRs mergeados no período.
 - **Taxa de aprovação:** % dos mergeados no período com `approval_count` ≥ 1; "—" se nenhum foi mergeado.
 - **PRs em risco:** abertos (sem rascunhos) há mais de 3 dias.
+- **CI verde no merge** (desde 02/11/2026, regra G10): % dos mergeados no período **com CI** (`ci_state` não nulo) que estavam com `ci_state = 'success'`; "—" se nenhum tinha CI. Os alertas de CI (branch principal, PR mergeado e PR aberto com CI falhando) também saem de `governanceAlerts`.
 - **Contribuidores:** logins distintos de commits e de PRs criados no período.
 
 ---

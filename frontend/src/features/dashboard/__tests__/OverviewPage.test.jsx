@@ -47,7 +47,7 @@ const governance = {
   commits: [{ repository_id: 'r1', author_login: 'ana', committed_at: daysAgo(2) }],
   pullRequests: [
     // 2 dias da abertura ao merge, com aprovação
-    pr({ number: 1, created_at_github: daysAgo(6), merged_at: daysAgo(4) }),
+    pr({ number: 1, created_at_github: daysAgo(6), merged_at: daysAgo(4), ci_state: 'success' }),
     // 1 dia, sem aprovação, há 20 dias (fora do período de 7)
     pr({ number: 2, created_at_github: daysAgo(21), merged_at: daysAgo(20), approval_count: 0 }),
     pr({ number: 3, state: 'open', created_at_github: daysAgo(5), merged_at: null }),
@@ -89,6 +89,19 @@ describe('OverviewPage', () => {
     expect(card('Lead time médio')).toHaveTextContent('1,5 dias')
     expect(card('Taxa de aprovação')).toHaveTextContent('50%')
     expect(card('PRs em risco')).toHaveTextContent('1')
+    expect(card('CI verde no merge')).toHaveTextContent('100%')
+  })
+
+  it('says when no merged PR of the period has CI', async () => {
+    renderOverview({
+      governance: {
+        ...governance,
+        pullRequests: governance.pullRequests.map((item) => ({ ...item, ci_state: null })),
+      },
+    })
+
+    expect(card('CI verde no merge')).toHaveTextContent('—')
+    expect(card('CI verde no merge')).toHaveTextContent('Nenhum PR mergeado com CI')
   })
 
   it('recomputes the numbers when the period changes', async () => {

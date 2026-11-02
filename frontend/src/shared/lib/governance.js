@@ -50,6 +50,8 @@ export function governanceMetrics({ pullRequests, repositories, branches, commit
   const merged = pullRequests.filter(
     (pr) => pr.state === 'merged' && isWithinDays(pr.merged_at, days, now),
   )
+  // CI verde no merge (G10): só os mergeados que tinham CI
+  const mergedWithCi = merged.filter((pr) => pr.ci_state != null)
   const recentCommits = commits.filter((commit) => isWithinDays(commit.committed_at, days, now))
   const contributors = new Set(
     [
@@ -65,6 +67,13 @@ export function governanceMetrics({ pullRequests, repositories, branches, commit
     approvalRate:
       merged.length > 0
         ? Math.round((merged.filter((pr) => pr.approval_count > 0).length / merged.length) * 100)
+        : null,
+    ciSuccessRate:
+      mergedWithCi.length > 0
+        ? Math.round(
+            (mergedWithCi.filter((pr) => pr.ci_state === 'success').length / mergedWithCi.length) *
+              100,
+          )
         : null,
     atRiskCount: pullRequests.filter(
       (pr) => isOpen(pr) && ageInDays(pr.created_at_github, now) > OPEN_DANGER_DAYS,
@@ -119,6 +128,9 @@ function daysUntil(deadline, now) {
 
 // Por que cada alerta importa (§6), mostrado junto do alerta
 const REASONS = {
+  ciMain: 'A versão atual da branch principal não passa nos testes automáticos.',
+  ciMerged: 'Entrou na branch principal código que não passou nos testes automáticos.',
+  ciOpen: 'O PR precisa de correção antes de ser revisado e mergeado.',
   branch:
     'Sem proteção, qualquer pessoa com acesso pode fazer push direto na branch principal ou reescrever o histórico, sem PR nem revisão.',
   unapproved:
@@ -129,7 +141,7 @@ const REASONS = {
 }
 
 // Dentro do mesmo nível, os riscos estruturais primeiro (§6)
-const KIND_ORDER = ['branch', 'unapproved', 'deadline', 'open']
+const KIND_ORDER = ['ciMain', 'branch', 'ciMerged', 'unapproved', 'deadline', 'ciOpen', 'open']
 
 function pullRequestDetail(pr) {
   return `#${pr.number} · ${pr.repositoryName} · ${pr.title}`
@@ -149,6 +161,25 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
         title: `PR aberto há ${plural(Math.floor(age), 'dia', 'dias')}`,
         detail: pullRequestDetail(pr),
         reason: REASONS.open,
+        href: pr.html_url,
+        projectIds: pr.projectIds,
+      })
+    }
+  }
+
+  // CI (G10): o estado do último commit na hora da sincronização
+  for (const pr of pullRequests) {
+    const recentMerge =
+      pr.state === 'merged' && isWithinDays(pr.merged_at, UNAPPROVED_WINDOW_DAYS, now)
+
+    if (pr.ci_state === 'failure' && (isOpen(pr) || recentMerge)) {
+      alerts.push({
+        id: `pr-ci-${pr.id}`,
+        kind: isOpen(pr) ? 'ciOpen' : 'ciMerged',
+        level: isOpen(pr) ? 'warning' : 'danger',
+        title: isOpen(pr) ? 'PR com CI falhando' : 'PR mergeado com CI falhando',
+        detail: pullRequestDetail(pr),
+        reason: isOpen(pr) ? REASONS.ciOpen : REASONS.ciMerged,
         href: pr.html_url,
         projectIds: pr.projectIds,
       })
@@ -179,6 +210,18 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
       (branch) =>
         branch.repository_id === repository.id && branch.name === repository.default_branch,
     )
+
+    if (repository.ci_state === 'failure') {
+      alerts.push({
+        id: `ci-main-${repository.id}`,
+        kind: 'ciMain',
+        level: 'danger',
+        title: 'CI falhando na branch principal',
+        detail: `${repository.name} · ${repository.default_branch}`,
+        reason: REASONS.ciMain,
+        projectIds: repository.projectIds,
+      })
+    }
 
     if (main && !main.protected) {
       alerts.push({

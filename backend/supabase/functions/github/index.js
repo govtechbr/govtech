@@ -305,14 +305,26 @@ async function sync({ project, asServer }) {
   let partial = false
   const since = new Date(Date.now() - COMMIT_DAYS * 24 * 60 * 60 * 1000).toISOString()
 
-  for (const { repo, pulls, branches, commits, partial: repoPartial } of await fetchRepositoryData(
-    token,
-    visible,
-    fetch,
-    since,
-  )) {
+  for (const {
+    repo,
+    pulls,
+    branches,
+    commits,
+    mainCiState,
+    partial: repoPartial,
+  } of await fetchRepositoryData(token, visible, fetch, since)) {
     const repoIds = { ...ids, repositoryId: linkedIds.get(repo.id) }
     const scope = ['repository_id', repoIds.repositoryId]
+
+    // CI da branch principal (regra G10): foto da hora da sincronização
+    check(
+      (
+        await asServer
+          .from('repositories')
+          .update({ ci_state: mainCiState })
+          .eq('id', repoIds.repositoryId)
+      ).error,
+    )
 
     await replaceRows(
       asServer,
