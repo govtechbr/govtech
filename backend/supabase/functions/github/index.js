@@ -17,6 +17,7 @@ import {
   listRepositories,
   toAvailableRepository,
   toBranchRow,
+  toCiRunRow,
   toCommitRow,
   toPullRequestRow,
   toRepositoryRow,
@@ -302,6 +303,7 @@ async function sync({ project, asServer }) {
   let pullRequestCount = 0
   let branchCount = 0
   let commitCount = 0
+  let ciRunCount = 0
   let partial = false
   const since = new Date(Date.now() - COMMIT_DAYS * 24 * 60 * 60 * 1000).toISOString()
 
@@ -311,6 +313,7 @@ async function sync({ project, asServer }) {
     branches,
     commits,
     mainCiState,
+    ciRuns,
     partial: repoPartial,
   } of await fetchRepositoryData(token, visible, fetch, since)) {
     const repoIds = { ...ids, repositoryId: linkedIds.get(repo.id) }
@@ -348,10 +351,19 @@ async function sync({ project, asServer }) {
       scope,
       'repository_id,sha',
     )
+    // histórico do CI (G11): as de mais de 90 dias saem por não virem mais
+    await replaceRows(
+      asServer,
+      'ci_runs',
+      ciRuns.map((run) => toCiRunRow(run, repoIds)),
+      scope,
+      'repository_id,github_run_id',
+    )
 
     pullRequestCount += pulls.length
     branchCount += branches.length
     commitCount += commits.length
+    ciRunCount += ciRuns.length
     partial ||= repoPartial
   }
 
@@ -372,6 +384,7 @@ async function sync({ project, asServer }) {
     pullRequestCount,
     branchCount,
     commitCount,
+    ciRunCount,
     // algum teto da paginação (G9) foi atingido
     partial,
     syncedAt,

@@ -73,6 +73,25 @@ describe('describeEvent', () => {
     )
   })
 
+  // G11: sincronizações novas contam também as execuções do CI
+  it('counts the CI runs of a sync when the event has them', () => {
+    const described = describeEvent(
+      event('github.synced', {
+        trigger: 'manual',
+        repositoryCount: 1,
+        pullRequestCount: 2,
+        branchCount: 1,
+        commitCount: 5,
+        ciRunCount: 1,
+        partial: false,
+      }),
+    )
+
+    expect(described.what).toBe(
+      'Sincronização manual: 1 repositório, 2 PRs, 1 branch, 5 commits, 1 execução do CI',
+    )
+  })
+
   it('shows the GitHub key only by its last 4 characters', () => {
     expect(
       describeEvent(event('github.connected', { githubLogin: 'dono-gh', tokenLast4: 'abcd' })).what,

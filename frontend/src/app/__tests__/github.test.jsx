@@ -344,6 +344,35 @@ describe('Overview with synced data', () => {
     ).toBeInTheDocument()
   })
 
+  it('shows the CI run history synced from GitHub Actions (G11)', async () => {
+    linkRepository(privateRepo, 0)
+    const minutesAgo = (minutes) => new Date(Date.now() - minutes * 60 * 1000).toISOString()
+    const ciRun = (runNumber, conclusion, minutes) => ({
+      id: `run-${runNumber}`,
+      repository_id: `repo-${privateRepo.id}`,
+      organization_id: db.projects[0].organization_id,
+      run_number: runNumber,
+      workflow_name: 'CI',
+      head_branch: 'fix/x',
+      status: 'completed',
+      conclusion,
+      html_url: `https://github.com/dono-gh/govtech/actions/runs/${runNumber}`,
+      started_at: minutesAgo(minutes),
+      completed_at: minutesAgo(minutes - 1),
+    })
+    db.ciRuns.push(ciRun(60, 'failure', 70), ciRun(61, 'success', 66))
+    await renderAs(testUser, '/dashboard')
+
+    const panel = (await screen.findByRole('heading', { name: 'Histórico do CI' })).closest(
+      'section',
+    )
+    expect(await within(panel).findByRole('link', { name: 'Execução #60 · CI' })).toHaveAttribute(
+      'href',
+      'https://github.com/dono-gh/govtech/actions/runs/60',
+    )
+    expect(within(panel).getByText('Corrigida em 4 min')).toBeInTheDocument()
+  })
+
   it('shows the governance index stored by the sync, only for the chosen company', async () => {
     const row = (organizationId, score) => ({
       project_id: db.projects[0].id,

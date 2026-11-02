@@ -490,6 +490,7 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 - **Taxa de aprovação:** % dos mergeados no período com `approval_count` ≥ 1; "—" se nenhum foi mergeado.
 - **PRs em risco:** abertos (sem rascunhos) há mais de 3 dias.
 - **CI verde no merge** (desde 02/11/2026, regra G10): % dos mergeados no período **com CI** (`ci_state` não nulo) que estavam com `ci_state = 'success'`; "—" se nenhum tinha CI. Os alertas de CI (branch principal, PR mergeado e PR aberto com CI falhando) também saem de `governanceAlerts`.
+- **Histórico do CI** (desde 02/11/2026, regra G11, `ciIncidents` e painel `CiHistoryPanel` na Visão geral): % das execuções concluídas no período que passaram (canceladas não contam), tempo médio de correção (do fim da primeira falha ao fim da próxima execução que passou, no mesmo workflow e branch; falhas seguidas contam como uma) e as últimas falhas, com link. Durações abaixo de 1 hora aparecem em minutos.
 - **Contribuidores:** logins distintos de commits e de PRs criados no período.
 
 ---

@@ -51,7 +51,8 @@ Esconder um botão na tela é só conveniência: quem bloqueia de verdade é o b
 | G7 | Dados buscados: repositórios, PRs (com **revisões/aprovações**), branches (com proteção), **commits da branch principal** e **contribuidores** | ✅ E3 (aprovações dos PRs, commits dos últimos 90 dias; contribuidores = logins distintos de commits e PRs) |
 | G8 | **LGPD:** de pessoas de fora (autores, contribuidores), guardar só o **login** e o **avatar público** do GitHub. Nada de e-mail | ✅ (commits sem nome, e-mail nem mensagem) |
 | G9 | **Paginação:** repositórios visíveis até 500; PRs **abertos** (até 1.000) mais os atualizados nos **últimos 90 dias** (até 1.000 por repositório); branches até 500; commits da branch principal de 90 dias, até 1.000. Se algum teto for atingido, a sincronização marca **dados parciais** e o painel do projeto e a auditoria avisam | 🔜 E7 |
-| G10 | **Status do CI** (decisão de 02/11/2026): a cada sincronização, o resultado combinado dos checks (GitHub Actions ou outro CI) do **último commit** de cada PR e da **branch principal**: **verde**, **falhou** ou **rodando**. Repositório sem CI fica "sem CI" e não gera alerta nem entra na taxa. É uma **foto da hora da sincronização, não um histórico**: uma falha corrigida antes da sincronização seguinte não fica registrada. Se a chave não tiver permissão de leitura de *Commit statuses* e *Checks*, o CI vem como "sem CI" e a sincronização segue | ✅ E8 |
+| G10 | **Status do CI** (decisão de 02/11/2026): a cada sincronização, o resultado combinado dos checks (GitHub Actions ou outro CI) do **último commit** de cada PR e da **branch principal**: **verde**, **falhou** ou **rodando**. Repositório sem CI fica "sem CI" e não gera alerta nem entra na taxa. É uma **foto da hora da sincronização, não um histórico**: uma falha corrigida antes da sincronização seguinte não fica registrada. Se a chave não tiver permissão de leitura de *Commit statuses* e *Actions*, o CI vem como "sem CI" e a sincronização segue | ✅ E8 |
+| G11 | **Histórico de execuções do CI** (decisão de 02/11/2026): a cada sincronização, as execuções do **GitHub Actions** dos **últimos 90 dias** de cada repositório (até 1.000), com número, workflow, evento, branch, commit, resultado e horários. **Sem quem disparou** (LGPD). Mais antigas que 90 dias saem. Cobre só o GitHub Actions; outro CI continua só pelo estado atual (G10). Exige a permissão *Actions* (Read) na chave; sem ela, o histórico fica vazio e a sincronização segue. Não gera alerta: falha já corrigida não é risco atual | ✅ E9 |
 
 ## 5. Métricas de governança (Visão geral)
 
@@ -65,6 +66,9 @@ Calculadas dos dados sincronizados, nunca valores fixos. **Período:** seletor 7
 | CI verde no merge | % dos PRs **mergeados** no período, **com CI**, cujo último commit estava **verde** (G10). Sem PR mergeado com CI = "sem dados" |
 | Evolução dos PRs | Gráfico **por semana**: PRs abertos × PRs mergeados |
 | Eventos de desenvolvimento | Repositórios, commits (branch principal), branches e contribuidores no período |
+| Execuções com sucesso | % das execuções do CI **concluídas** no período (G11) que passaram; canceladas e puladas não contam. Sem execução = "sem dados" |
+| Tempo médio de correção | Média, nas falhas **corrigidas** que começaram no período, do fim da **primeira execução que falhou** ao fim da **próxima que passou**, no mesmo workflow e na mesma branch (falhas seguidas contam como uma só). É o "tempo de recuperação" das métricas DORA |
+| Falhas recentes do CI | As falhas do período (uma por sequência de execuções falhando), com o tempo até a correção ou "ainda falhando" e o link para a execução |
 | Alertas | Lista dos alertas ativos (§6) |
 
 **Números em destaque na primeira tela** (decisão de 04/11/2026): Quantidade de PRs, Lead time médio, Taxa de aprovação e **PRs em risco** (abertos há mais de 3 dias, sem rascunhos); desde 02/11/2026 também **CI verde no merge**. O gráfico semanal mostra pelo menos 4 semanas, mesmo no período de 7 dias.
@@ -139,7 +143,7 @@ Trilha simples, para revisão (sem cadeia de hash, decisão Q7 do plano técnico
 
 ## 8. Fora do escopo até 18/11/2026
 
-Convite por e-mail, webhook ou GitHub App (atualização instantânea), histórico de cada execução do CI e CI no Índice de Governança, separar PRs por projeto dentro de um repositório compartilhado, cadeia de hash e retenção automática na auditoria, histórico salvo de conversas com o assistente.
+Convite por e-mail, webhook ou GitHub App (atualização instantânea), CI no Índice de Governança, separar PRs por projeto dentro de um repositório compartilhado, cadeia de hash e retenção automática na auditoria, histórico salvo de conversas com o assistente.
 
 ## 9. Entregas
 
@@ -153,4 +157,5 @@ Convite por e-mail, webhook ou GitHub App (atualização instantânea), históri
 | E6 | Assistente de Governança com IA (Groq) | IA1–IA6 | 08/11 |
 | E7 | Auditoria real + paginação do GitHub | AU1–AU7, G9 | 10/11 |
 | E8 | Status do CI: coleta, alertas e taxa de CI verde | G10, §5, §6 | 03/11 |
+| E9 | Histórico de execuções do CI e tempo de correção | G11, §5 | 04/11 |
 | — | Folga: testes, documentação do TCC, ensaio | — | 13–18/11 |

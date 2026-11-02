@@ -171,6 +171,55 @@ describe('OverviewPage', () => {
     expect(within(panel).getAllByRole('listitem')).toHaveLength(8)
   })
 
+  it('shows the CI run history: success rate, time to fix and recent failures', () => {
+    const minutesAgo = (minutes) => new Date(now.getTime() - minutes * 60 * 1000).toISOString()
+    const ciRun = (overrides) => ({
+      workflow_name: 'CI',
+      head_branch: 'fix/x',
+      status: 'completed',
+      repositoryName: 'app',
+      html_url: `https://github.com/o/app/actions/runs/${overrides.run_number}`,
+      ...overrides,
+    })
+    renderOverview({
+      governance: {
+        ...governance,
+        ciRuns: [
+          ciRun({
+            id: 'a',
+            run_number: 60,
+            conclusion: 'failure',
+            started_at: minutesAgo(70),
+            completed_at: minutesAgo(69),
+          }),
+          ciRun({
+            id: 'b',
+            run_number: 61,
+            conclusion: 'success',
+            started_at: minutesAgo(66),
+            completed_at: minutesAgo(65),
+          }),
+        ],
+      },
+    })
+    const panel = screen.getByRole('heading', { name: 'Histórico do CI' }).closest('section')
+
+    expect(within(panel).getByText('Execuções com sucesso').closest('div')).toHaveTextContent('50%')
+    expect(within(panel).getByText('Tempo médio de correção').closest('div')).toHaveTextContent(
+      '4 min',
+    )
+    const failure = within(panel).getByRole('link', { name: /Execução #60/ })
+    expect(failure).toHaveAttribute('href', 'https://github.com/o/app/actions/runs/60')
+    expect(failure.closest('li')).toHaveTextContent('Corrigida em 4 min')
+  })
+
+  it('says when there is no CI run history', () => {
+    renderOverview()
+    const panel = screen.getByRole('heading', { name: 'Histórico do CI' }).closest('section')
+
+    expect(within(panel).getByText(/Nenhuma execução do GitHub Actions/)).toBeInTheDocument()
+  })
+
   it('tells the user to connect GitHub when nothing is synced', () => {
     renderOverview({
       governance: { pullRequests: [], repositories: [], branches: [], commits: [], scores: [] },

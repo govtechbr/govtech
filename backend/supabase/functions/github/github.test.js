@@ -5,6 +5,7 @@ import { describe, it } from 'node:test'
 import {
   checkToken,
   ciState,
+  toCiRunRow,
   fetchPullRequests,
   fetchRepositoryData,
   GitHubError,
@@ -240,6 +241,7 @@ describe('CI status (rule G10)', () => {
       '/graphql': graphqlPages({ mainCi: 'FAILURE' }),
       '/repos/dono/app/branches': [200, []],
       '/repos/dono/app/commits': [200, []],
+      '/repos/dono/app/actions/runs': [200, { total_count: 0, workflow_runs: [] }],
     })
 
     const [data] = await fetchRepositoryData('t', [repo], impl, 'x')
@@ -252,6 +254,7 @@ describe('CI status (rule G10)', () => {
       '/graphql': graphqlPages({ mainCi: null }),
       '/repos/dono/app/branches': [200, []],
       '/repos/dono/app/commits': [200, []],
+      '/repos/dono/app/actions/runs': [200, { total_count: 0, workflow_runs: [] }],
     })
 
     const [data] = await fetchRepositoryData('t', [repo], impl, 'x')
@@ -259,7 +262,7 @@ describe('CI status (rule G10)', () => {
     assert.equal(data.mainCiState, null)
   })
 
-  // Chave sem permissão de Checks/Commit statuses: o GitHub devolve os dados com
+  // Chave sem permissão de Commit statuses/Actions: o GitHub devolve os dados com
   // erro só no campo do CI. A sincronização segue, com o CI "sem CI"
   it('keeps syncing when the token cannot read the CI', async () => {
     const forbidden = {
@@ -297,12 +300,119 @@ describe('CI status (rule G10)', () => {
       },
       '/repos/dono/app/branches': [200, []],
       '/repos/dono/app/commits': [200, []],
+      '/repos/dono/app/actions/runs': [200, { total_count: 0, workflow_runs: [] }],
     })
 
     const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-01T00:00:00.000Z')
 
     assert.equal(data.mainCiState, null)
     assert.equal(toPullRequestRow(data.pulls[0], ids).ci_state, null)
+  })
+})
+
+// Execução do GitHub Actions como vem de GET /repos/{dono}/{repo}/actions/runs
+function run(overrides = {}) {
+  return {
+    id: 9060,
+    run_number: 60,
+    name: 'CI',
+    event: 'pull_request',
+    head_branch: 'fix/x',
+    head_sha: 'abc',
+    status: 'completed',
+    conclusion: 'failure',
+    html_url: 'https://github.com/dono/app/actions/runs/9060',
+    created_at: '2026-11-02T06:32:33Z',
+    run_started_at: '2026-11-02T06:32:35Z',
+    updated_at: '2026-11-02T06:33:40Z',
+    actor: { login: 'ana' },
+    triggering_actor: { login: 'ana' },
+    ...overrides,
+  }
+}
+
+describe('CI run history (rule G11)', () => {
+  it('maps a finished run without who triggered it', () => {
+    const row = toCiRunRow(run(), ids)
+
+    assert.deepEqual(row, {
+      repository_id: 'r1',
+      organization_id: 'o1',
+      github_run_id: 9060,
+      run_number: 60,
+      workflow_name: 'CI',
+      event: 'pull_request',
+      head_branch: 'fix/x',
+      head_sha: 'abc',
+      status: 'completed',
+      conclusion: 'failure',
+      html_url: 'https://github.com/dono/app/actions/runs/9060',
+      started_at: '2026-11-02T06:32:35Z',
+      completed_at: '2026-11-02T06:33:40Z',
+    })
+    assert.equal(JSON.stringify(row).includes('ana'), false)
+  })
+
+  it('leaves a running run without end time', () => {
+    const row = toCiRunRow(
+      run({ status: 'in_progress', conclusion: null, run_started_at: null }),
+      ids,
+    )
+
+    assert.equal(row.completed_at, null)
+    assert.equal(row.conclusion, null)
+    assert.equal(row.started_at, '2026-11-02T06:32:33Z')
+  })
+
+  it('fetches the runs created in the window, page by page', async () => {
+    const full = Array.from({ length: 100 }, (_, index) => run({ id: index, run_number: index }))
+    const { impl, calls } = fakeFetch({
+      '/graphql': graphqlPages(),
+      '/repos/dono/app/branches': [200, []],
+      '/repos/dono/app/commits': [200, []],
+      '/repos/dono/app/actions/runs': (path) => {
+        const page = Number(new URL(path, 'https://x').searchParams.get('page'))
+        return [200, { total_count: 101, workflow_runs: page === 1 ? full : [run({ id: 500 })] }]
+      },
+    })
+
+    const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-04T12:00:00.000Z')
+
+    const runCalls = calls.filter(({ url }) => url.includes('/actions/runs'))
+    assert.equal(runCalls.length, 2)
+    assert.match(decodeURIComponent(runCalls[0].url), /created=>=2026-08-04/)
+    assert.match(runCalls[1].url, /per_page=100&page=2/)
+    assert.equal(data.ciRuns.length, 101)
+    assert.equal(data.partial, false)
+  })
+
+  it('marks partial data when the run cap is reached', async () => {
+    const full = Array.from({ length: 100 }, (_, index) => run({ id: index }))
+    const { impl } = fakeFetch({
+      '/graphql': graphqlPages(),
+      '/repos/dono/app/branches': [200, []],
+      '/repos/dono/app/commits': [200, []],
+      '/repos/dono/app/actions/runs': [200, { total_count: 5000, workflow_runs: full }],
+    })
+
+    const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-04T12:00:00.000Z')
+
+    assert.equal(data.ciRuns.length, LIMITS.ciRuns)
+    assert.equal(data.partial, true)
+  })
+
+  // Chave sem a permissão Actions: o histórico fica vazio e a sincronização segue
+  it('keeps syncing when the token cannot read Actions', async () => {
+    const { impl } = fakeFetch({
+      '/graphql': graphqlPages(),
+      '/repos/dono/app/branches': [200, []],
+      '/repos/dono/app/commits': [200, []],
+      '/repos/dono/app/actions/runs': [403, { message: 'Resource not accessible' }],
+    })
+
+    const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-04T12:00:00.000Z')
+
+    assert.deepEqual(data.ciRuns, [])
   })
 })
 
@@ -325,6 +435,7 @@ describe('GitHub calls', () => {
       '/graphql': pullsResponse,
       '/repos/dono/app/branches': [200, [{ name: 'main', commit: { sha: 'abc' } }]],
       '/repos/dono/app/commits': [200, [commit]],
+      '/repos/dono/app/actions/runs': [200, { total_count: 0, workflow_runs: [] }],
     })
 
     const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-01T00:00:00.000Z')
@@ -364,6 +475,7 @@ describe('GitHub calls', () => {
       '/graphql': graphqlPages(),
       '/repos/dono/app/branches': [200, []],
       '/repos/dono/app/commits': [409, { message: 'Git Repository is empty.' }],
+      '/repos/dono/app/actions/runs': [200, { total_count: 0, workflow_runs: [] }],
     })
 
     const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-01T00:00:00.000Z')
@@ -376,6 +488,7 @@ describe('GitHub calls', () => {
       '/graphql': [200, { errors: [{ type: 'FORBIDDEN', message: 'Resource not accessible' }] }],
       '/repos/dono/app/branches': [200, []],
       '/repos/dono/app/commits': [200, []],
+      '/repos/dono/app/actions/runs': [200, { total_count: 0, workflow_runs: [] }],
     })
 
     await assert.rejects(fetchRepositoryData('t', [repo], impl, 'x'), (error) => {
@@ -478,6 +591,7 @@ describe('pagination (rule G9)', () => {
       '/graphql': graphqlPages(),
       '/repos/dono/app/branches': restPagesOf([branchPage(100), branchPage(30)]),
       '/repos/dono/app/commits': [200, commitPage],
+      '/repos/dono/app/actions/runs': [200, { total_count: 0, workflow_runs: [] }],
     })
 
     const [data] = await fetchRepositoryData('t', [repo], impl, since)

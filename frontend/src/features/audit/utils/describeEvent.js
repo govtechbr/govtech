@@ -43,6 +43,7 @@ function describeSync({
   pullRequestCount,
   branchCount,
   commitCount,
+  ciRunCount,
   partial,
 }) {
   const how = trigger === 'schedule' ? 'Sincronização automática' : 'Sincronização manual'
@@ -51,6 +52,8 @@ function describeSync({
     plural(pullRequestCount ?? 0, 'PR', 'PRs'),
     plural(branchCount ?? 0, 'branch', 'branches'),
     plural(commitCount ?? 0, 'commit', 'commits'),
+    // eventos de antes da G11 não têm a contagem
+    ...(ciRunCount === undefined ? [] : [plural(ciRunCount, 'execução do CI', 'execuções do CI')]),
   ].join(', ')
 
   return `${how}: ${counts}${partial ? ' (dados parciais: limite atingido)' : ''}`

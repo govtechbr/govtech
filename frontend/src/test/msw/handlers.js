@@ -359,6 +359,10 @@ export const handlers = [
     rows(request, byOrganizationParam(request, db.commits)),
   ),
 
+  http.get(rest('ci_runs'), ({ request }) =>
+    rows(request, withRepository(request, byOrganizationParam(request, db.ciRuns))),
+  ),
+
   http.get(rest('governance_scores'), ({ request }) =>
     rows(request, byOrganizationParam(request, db.governanceScores)),
   ),

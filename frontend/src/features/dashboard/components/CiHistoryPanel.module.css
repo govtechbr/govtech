@@ -1,0 +1,32 @@
+.stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.muted {
+  display: block;
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  gap: var(--space-1);
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-sm);
+}
+
+.failing {
+  color: var(--color-danger);
+}
+
+.fixed {
+  color: var(--color-success);
+}
