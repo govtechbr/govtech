@@ -34,6 +34,8 @@
 16. [Linha do tempo e rastreabilidade](#16-linha-do-tempo-e-rastreabilidade)
 17. [Referências técnicas](#17-referências-técnicas)
 
+[Apêndice A. Dicionário dos campos e indicadores da tela](#apêndice-a-dicionário-dos-campos-e-indicadores-da-tela)
+
 ---
 
 ## 1. Contexto e ponto de partida
@@ -207,7 +209,7 @@ Antes de qualquer mudança, o código foi lido por inteiro e os problemas foram 
 | **Membros (RBAC real)** | Lista real de membros, troca de papel, remoção e código de convite. Um trigger impede a empresa de ficar sem admin. Botões aparecem conforme o papel |
 | **GitHub** | Chave por projeto no **Vault**, Edge Function `github` (conectar, sincronizar, desconectar) e tabelas de repositórios, PRs e branches, só leitura para o front |
 
-### Entregas de produto (E1 a E7)
+### Entregas de produto (E1 a E9)
 
 | # | Entrega | Destaques |
 |---|---|---|
@@ -218,6 +220,8 @@ Antes de qualquer mudança, o código foi lido por inteiro e os problemas foram 
 | **E5** | **Índice de Governança (0–100)** | Nota diária por projeto e por empresa, com 5 critérios e pesos, histórico de 30 dias e gráfico acessível. Os pesos dão mais importância à revisão de código, o controle central de governança segundo ISO/IEC 38500 e COBIT; a faixa de lead time segue as métricas DORA |
 | **E6** | **Assistente de Governança com IA** | O chatbot de respostas fixas virou um assistente que responde sobre os dados reais da empresa, com limite de uso, sem dados pessoais e com defesa contra *prompt injection* |
 | **E7** | **Auditoria real + paginação do GitHub** | Trilha imutável de quem fez o quê (projetos, membros, empresa e GitHub), com filtros e CSV seguro. A busca no GitHub passou a ser paginada, com aviso de "dados parciais" |
+| **E8** | **Status do CI** | Resultado do CI (GitHub Actions ou outro) do último commit de cada PR e da branch principal; 3 alertas (main com CI quebrado, PR mergeado e PR aberto com CI falhando) e o indicador "CI verde no merge". Saiu também o campo de progresso manual, que não tinha regra de cálculo |
+| **E9** | **Histórico do CI** | Execuções do GitHub Actions de 90 dias, com taxa de sucesso e **tempo médio de correção** (DORA). Nasceu de um caso real: a execução #60 falhou e foi corrigida 4 minutos depois, entre duas sincronizações, e a foto do E8 não a registrava |
 
 Cada entrega teve suas regras em `docs/REGRAS_DE_NEGOCIO.md`, um plano aprovado, um PR com CI verde e um registro em `docs/PLANO_TECNICO.md` (§16 a §18.8).
 
@@ -663,3 +667,113 @@ Documentação oficial e referências usadas (para citar no TCC):
 - WCAG 2.2 — https://www.w3.org/TR/WCAG22/
 - Conventional Commits — https://www.conventionalcommits.org
 - Lei Geral de Proteção de Dados (Lei nº 13.709/2018) — https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm
+
+---
+
+## Apêndice A. Dicionário dos campos e indicadores da tela
+
+Cada número da tela vem de um cálculo sobre os dados sincronizados do GitHub ou gravados no banco; nenhum é digitado nem fixo. As regras completas estão em `docs/REGRAS_DE_NEGOCIO.md` (o código da regra aparece entre parênteses). Convenções:
+
+- **Período:** a Visão geral tem o seletor **7 / 30 / 90 dias** (padrão 30). Onde a tabela diz "fixo", o número **não** muda com o seletor.
+- **"—" ou "sem dados":** não há base para o cálculo (por exemplo, nenhum PR mergeado no período). O sistema não troca a falta de dado por zero.
+- **Sincronização:** de hora em hora (minuto 7) ou pelo botão "Sincronizar"; os dados do GitHub valem para a hora da última sincronização.
+
+### A.1 Visão geral: Índice de Governança
+
+| Campo | O que é | Como é calculado | Período |
+|---|---|---|---|
+| Índice de Governança (empresa) | Nota de 0 a 100 da governança da empresa | Média simples dos índices dos projetos que têm nota (I4) | Fixo: últimos 30 dias, apurado de hora em hora (I5) |
+| Faixa | Leitura da nota | **Bom** ≥ 80; **Regular** 60 a 79; **Crítico** < 60 (I3) | — |
+| Variação em 7 dias | Quanto a nota subiu ou caiu | Nota do último dia menos a de 7 dias antes (ou do dia anterior mais próximo). Com menos de 7 dias de histórico, a tela avisa em vez de calcular | — |
+| Linha de 30 dias | Evolução diária | Uma nota por dia, no fuso de MS; dias **recalculados** (I6) vêm marcados | 30 dias |
+| Critérios | De onde vem a nota | Média ponderada só dos critérios com dado (I2), pesos abaixo | 30 dias |
+
+| Critério | Peso | Nota de 0 a 100 | Sem dado quando |
+|---|---|---|---|
+| Revisão de código | 30 | % dos PRs mergeados com ao menos 1 aprovação | nenhum PR mergeado |
+| Fluxo de PRs | 20 | Média dos PRs abertos (sem rascunhos): até 1 dia = 100; 1 a 3 dias = 50; mais de 3 = 0. Nenhum aberto = 100 | projeto sem repositório |
+| Prazo | 20 | Mais de 7 dias = 100; até 7 dias = 50; vencido = 0 | projeto sem prazo |
+| Proteção da branch | 15 | % dos repositórios com a branch principal protegida | projeto sem repositório |
+| Lead time | 15 | Mediana da abertura ao merge: até 24 h = 100; 7 dias ou mais = 0; linear entre os dois | nenhum PR mergeado |
+
+O CI ainda não entra no índice: mudar os pesos agora quebraria a comparação com o histórico diário já apurado.
+
+### A.2 Visão geral: status e números em destaque
+
+| Campo | O que é | Como é calculado | Período |
+|---|---|---|---|
+| Status do projeto (Saudável / Atenção / Risco) | Situação do projeto | **Risco** se houver algum alerta de Risco; senão **Atenção** se houver algum de Atenção; senão **Saudável** (P3). Não há status manual | Fixo (os alertas têm janelas próprias) |
+| Resumo de status | Quantos projetos em cada situação | Contagem dos status acima | Fixo |
+| Quantidade de PRs | Volume de trabalho | PRs **abertos agora** + PRs **criados no período**, sem contar duas vezes | Seletor |
+| Lead time médio | Velocidade de entrega | Média do tempo da abertura ao merge dos PRs mergeados no período | Seletor |
+| Taxa de aprovação | Quanto do código foi revisado | % dos PRs mergeados no período com ao menos 1 aprovação | Seletor |
+| PRs em risco | Trabalho parado | PRs abertos (sem rascunhos) há mais de 3 dias | Agora |
+| CI verde no merge | Quanto código entrou na branch principal com o CI passando | % dos PRs mergeados no período **que tinham CI** cujo último commit estava verde (G10). PR sem CI não entra na conta | Seletor |
+
+### A.3 Visão geral: fluxo, atividade e CI
+
+| Campo | O que é | Como é calculado | Período |
+|---|---|---|---|
+| Evolução das Pull Requests | Ritmo semanal | Por semana: PRs abertos × PRs mergeados. Mostra pelo menos 4 semanas | Seletor (mín. 4 semanas) |
+| Distribuição | Situação dos PRs | **Abertos** e **rascunhos** agora; **mergeados** e **fechados sem merge** no período | Misto |
+| Repositórios | Escopo monitorado | Repositórios escolhidos pelo admin nos projetos | Agora |
+| Commits | Atividade de código | Commits da branch principal | Seletor |
+| Branches | Linhas de trabalho | Branches existentes | Agora |
+| Contribuidores | Quem participou | Logins distintos de quem fez commit ou abriu PR (G7). Só login, sem e-mail (LGPD) | Seletor |
+| Execuções com sucesso | Estabilidade do CI | % das execuções do GitHub Actions **concluídas** no período que passaram; canceladas e puladas não contam (G11) | Seletor |
+| Tempo médio de correção | Rapidez para consertar o CI ("tempo de recuperação" das métricas DORA) | Média, nas falhas **corrigidas**, do fim da primeira execução que falhou ao fim da próxima que passou, no mesmo workflow e branch. Falhas seguidas contam como uma | Seletor |
+| Falhas no período / lista de falhas | Incidentes do CI | Uma linha por sequência de falhas, com repositório, branch, data, link e "Corrigida em X" ou "Ainda falhando" | Seletor |
+
+**Por que "CI verde no merge" e "Execuções com sucesso" dão números diferentes.** Eles medem coisas diferentes. O primeiro conta **PRs** e pergunta se o código **entrou** na branch principal com o CI verde: mostra o risco que chegou à produção. O segundo conta **execuções** e pergunta quantas vezes o CI passou: mostra a estabilidade do processo. Uma falha corrigida antes do merge derruba o segundo e não o primeiro. Exemplo real em 02/11/2026: 39 de 40 PRs mergeados com CI verde (98%; o que falhou foi o PR #3) e 86 de 87 execuções com sucesso (99%; a que falhou foi a execução #60, corrigida pela #61 antes do merge do PR #25).
+
+### A.4 Alertas automatizados
+
+Ordem na tela: Risco antes de Atenção; no mesmo nível, dos riscos estruturais aos operacionais (ordem da tabela). Cada alerta mostra o motivo.
+
+| Alerta | Atenção | Risco | Por que importa |
+|---|---|---|---|
+| CI falhando na branch principal | — | sempre | A versão atual da branch principal não passa nos testes automáticos |
+| Branch principal sem proteção | sempre | — | Qualquer pessoa com acesso pode fazer push direto ou reescrever o histórico, sem PR nem revisão |
+| PR mergeado com CI falhando (30 dias, fixo) | — | sempre | Entrou na branch principal código que não passou nos testes |
+| PR mergeado sem aprovação (30 dias, fixo) | sempre | — | O código entrou sem passar pela revisão |
+| Prazo do projeto | vence em até 7 dias | vencido | Replanejar ou confirmar que o que falta cabe no prazo |
+| PR aberto com CI falhando (sem rascunhos) | sempre | — | Precisa de correção antes de ser revisado |
+| PR aberto há muito tempo (sem rascunhos) | mais de 1 dia | mais de 3 dias | PR parado acumula conflitos e atrasa a entrega |
+
+Uma falha de CI já corrigida **não** gera alerta: ela aparece no histórico do CI, mas não é um risco atual.
+
+### A.5 Projetos
+
+| Campo | O que é | Observação |
+|---|---|---|
+| Nome, objetivo, prazo, responsável, prioridade | Cadastro do projeto (P2) | Preenchidos por admin ou developer |
+| Status | Saudável / Atenção / Risco | Calculado pelos alertas (A.2); não é editável |
+| Índice de Governança (cartão e detalhe) | Nota do projeto e de cada critério | Mesmo cálculo de A.1, só com os repositórios do projeto |
+| Progresso | **Removido** em 02/11/2026 | Era um número digitado à mão, sem regra de cálculo, exibido ao lado de números calculados. A coluna ficou sem uso no banco |
+
+### A.6 Repositórios
+
+| Campo | O que é | Como é calculado |
+|---|---|---|
+| Repositórios / PRs abertos / Branches | Totais da empresa ou do projeto filtrado | Contagem dos dados sincronizados; cada item conta uma vez (G4) |
+| Mergeados | Entregas recentes | PRs mergeados nos últimos 30 dias (fixo) |
+| Tempo médio até o merge | Velocidade de entrega | Média da abertura ao merge dos PRs mergeados nos últimos 30 dias (fixo) |
+| Protegidas | Branches com proteção | Branches marcadas como protegidas pelo GitHub |
+
+### A.7 Auditoria
+
+| Campo | O que é | Como é calculado |
+|---|---|---|
+| Eventos registrados | Volume de ações | Eventos da trilha no período (7, 30 ou 90 dias) |
+| Mudanças de acesso | Entradas, saídas e trocas de papel | Eventos de membros no período |
+| Sincronizações com falha | Problemas na integração | Sincronizações do GitHub que falharam no período |
+| Linha do evento | Quem fez o quê, quando | Nome e papel de quem agiu, gravados no evento (AU2); "Sistema" para o agendador. Sem e-mail nem chave (AU7) |
+
+### A.8 Painel do GitHub (detalhe do projeto)
+
+| Campo | O que é |
+|---|---|
+| Chave conectada | Login do GitHub e os **4 últimos caracteres** da chave (G1). A chave fica criptografada no Vault |
+| Última sincronização | Hora da última sincronização que deu certo, e o erro da última automática, se houver |
+| Dados parciais | Algum limite de paginação foi atingido (G9): até 500 repositórios, 1.000 PRs, 500 branches, 1.000 commits e 1.000 execuções do CI por repositório |
+| Permissões da chave | *Contents*, *Pull requests*, *Commit statuses* e *Actions*, só leitura. Sem as duas últimas, o CI aparece como "sem CI" e a sincronização segue |
