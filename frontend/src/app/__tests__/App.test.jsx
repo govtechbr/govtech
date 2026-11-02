@@ -42,7 +42,8 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /novo projeto/i }))
     await user.type(screen.getByLabelText('Nome do Projeto'), 'Projeto Persistido')
     await user.type(screen.getByLabelText('Objetivo do Projeto'), 'Teste de persistência')
-    await user.type(screen.getByLabelText('Deadline'), '2026-12-20')
+    await user.click(screen.getByLabelText('Deadline'))
+    await user.keyboard('{PageDown}{Enter}') // um mês depois de hoje
     await user.type(screen.getByLabelText('Responsável'), 'Dev')
     await user.click(screen.getByRole('button', { name: /criar projeto/i }))
     await screen.findByText('Projeto criado com sucesso.')
@@ -59,7 +60,8 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /novo projeto/i }))
     await user.type(screen.getByLabelText('Nome do Projeto'), 'Projeto Avisado')
     await user.type(screen.getByLabelText('Objetivo do Projeto'), 'Teste do aviso')
-    await user.type(screen.getByLabelText('Deadline'), '2026-12-20')
+    await user.click(screen.getByLabelText('Deadline'))
+    await user.keyboard('{PageDown}{Enter}') // um mês depois de hoje
     await user.type(screen.getByLabelText('Responsável'), 'Dev')
     await user.click(screen.getByRole('button', { name: /criar projeto/i }))
 

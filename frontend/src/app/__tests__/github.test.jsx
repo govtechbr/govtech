@@ -285,7 +285,8 @@ describe('Repositories page', () => {
 
     expect(await screen.findByRole('link', { name: publicRepo.full_name })).toBeInTheDocument()
 
-    await user.selectOptions(screen.getByLabelText('Projeto'), 'Plataforma de Pagamentos')
+    await user.click(screen.getByLabelText('Projeto'))
+    await user.click(screen.getByRole('option', { name: 'Plataforma de Pagamentos' }))
 
     expect(
       await screen.findByRole('heading', { name: 'Nenhum repositório sincronizado' }),

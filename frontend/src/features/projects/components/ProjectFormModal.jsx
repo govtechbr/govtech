@@ -1,8 +1,16 @@
 import { Check } from 'lucide-react'
 import { useState } from 'react'
 
+import DatePicker from '@/shared/ui/DatePicker'
 import Modal from '@/shared/ui/Modal'
+import Select from '@/shared/ui/Select'
 import styles from './ProjectModals.module.css'
+
+const PRIORITY_OPTIONS = [
+  { value: 'high', label: 'Alta' },
+  { value: 'medium', label: 'Média' },
+  { value: 'low', label: 'Baixa' },
+]
 
 export default function ProjectFormModal({ project, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -14,12 +22,23 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
     progress: project?.progress ?? 0,
   })
 
-  const updateField = (field) => (event) => {
-    setForm((current) => ({ ...current, [field]: event.target.value }))
+  const [deadlineError, setDeadlineError] = useState('')
+
+  const setField = (field, value) => {
+    setForm((current) => ({ ...current, [field]: value }))
   }
+
+  const updateField = (field) => (event) => setField(field, event.target.value)
 
   const submit = (event) => {
     event.preventDefault()
+
+    // O DatePicker não é um input nativo: o "required" do deadline é conferido aqui
+    if (!form.deadline) {
+      setDeadlineError('Informe o deadline.')
+      return
+    }
+
     onSave(form)
   }
 
@@ -52,29 +71,22 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
         </label>
 
         <div className={styles.row}>
-          <label className={styles.field}>
-            Deadline
-            <input
-              className={styles.input}
-              required
-              type="date"
-              value={form.deadline}
-              onChange={updateField('deadline')}
-            />
-          </label>
+          <DatePicker
+            label="Deadline"
+            value={form.deadline}
+            error={deadlineError}
+            onChange={(value) => {
+              setField('deadline', value)
+              setDeadlineError('')
+            }}
+          />
 
-          <label className={styles.field}>
-            Prioridade
-            <select
-              className={styles.input}
-              value={form.priority}
-              onChange={updateField('priority')}
-            >
-              <option value="high">Alta</option>
-              <option value="medium">Média</option>
-              <option value="low">Baixa</option>
-            </select>
-          </label>
+          <Select
+            label="Prioridade"
+            options={PRIORITY_OPTIONS}
+            value={form.priority}
+            onChange={(value) => setField('priority', value)}
+          />
         </div>
 
         <div className={styles.row}>
