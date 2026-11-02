@@ -1,81 +1,108 @@
+import { useState } from 'react'
 import { Target } from 'lucide-react'
 
+import AutomatedAlerts from '@/features/dashboard/components/AutomatedAlerts'
+import ProjectStatusSummary from '@/features/dashboard/components/ProjectStatusSummary'
+import PullRequestDistribution from '@/features/dashboard/components/PullRequestDistribution'
+import PullRequestFlowChart from '@/features/dashboard/components/PullRequestFlowChart'
+import RecentActivityPanel from '@/features/dashboard/components/RecentActivityPanel'
+import styles from '@/features/dashboard/OverviewPage.module.css'
 import { COLORS } from '@/shared/constants/colors'
-import { pullRequests } from '@/mocks/mockData'
+import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
+import { formatDuration } from '@/shared/lib/date'
+import {
+  DEFAULT_PERIOD,
+  emptyGovernance,
+  governanceAlerts,
+  governanceMetrics,
+  PERIODS,
+  projectHealth,
+  weeklyFlow,
+} from '@/shared/lib/governance'
+import { formatProjectDate } from '@/shared/lib/projectUtils'
 import StatCard from '@/shared/ui/StatCard'
-import ProjectStatusSummary from './components/ProjectStatusSummary'
-import PullRequestFlowChart from './components/PullRequestFlowChart'
-import PullRequestDistribution from './components/PullRequestDistribution'
-import AutomatedAlerts from './components/AutomatedAlerts'
-import RecentActivityPanel from './components/RecentActivityPanel'
-import { formatProjectDate, getProjectStatus } from '@/shared/lib/projectUtils'
-import styles from './OverviewPage.module.css'
 
-export default function OverviewPage({ projectList }) {
-  const prSummary = {
-    open: pullRequests.filter((pr) => pr.status === 'open').length,
-    inReview: pullRequests.filter((pr) => pr.status === 'in_review').length,
-    approved: pullRequests.filter((pr) => pr.status === 'approved').length,
-    merged: pullRequests.filter((pr) => pr.status === 'merged').length,
-    total: pullRequests.length,
-  }
+const statusOrder = { danger: 0, warning: 1, success: 2 }
 
-  const approvalRate = Math.round(((prSummary.approved + prSummary.merged) / prSummary.total) * 100)
+// governance: dados sincronizados do GitHub (vêm por prop do adaptador em app/routes.jsx)
+export default function OverviewPage({ projectList, governance = emptyGovernance, isLoading }) {
+  const [days, setDays] = useState(DEFAULT_PERIOD)
+  const now = new Date()
 
-  const projectsWithStatus = projectList
-    .map((project) => ({
-      ...project,
-      calculatedStatus: getProjectStatus(project),
-    }))
-    .sort((a, b) => {
-      const order = {
-        delayed: 1,
-        at_risk: 2,
-        on_track: 3,
-      }
+  const metrics = governanceMetrics(governance, days, now)
+  const alerts = governanceAlerts(governance, projectList, now)
+  const health = projectHealth(projectList, governance, now)
+  // Pelo menos 4 semanas no gráfico, para a tendência aparecer mesmo no período de 7 dias
+  const weeks = weeklyFlow(governance.pullRequests, Math.max(4, Math.ceil(days / 7)), now)
+  const noGitHub = !isLoading && governance.repositories.length === 0
 
-      return order[a.calculatedStatus.semanticKey] - order[b.calculatedStatus.semanticKey]
-    })
+  const projects = [...projectList].sort(
+    (a, b) => statusOrder[health[a.id].status] - statusOrder[health[b.id].status],
+  )
 
   return (
     <main className="dashboard-content">
-      <ProjectStatusSummary projectList={projectList} />
+      <div className={styles.toolbar}>
+        <p className={styles.muted}>
+          {isLoading
+            ? 'Carregando os dados do GitHub…'
+            : noGitHub
+              ? 'Nenhum repositório sincronizado: conecte o GitHub em um projeto para ver as métricas.'
+              : 'Calculado dos dados sincronizados do GitHub (atualiza a cada hora).'}
+        </p>
+
+        <div className={styles.periods} role="group" aria-label="Período">
+          {PERIODS.map((period) => (
+            <button
+              key={period}
+              type="button"
+              className={styles.period}
+              aria-pressed={days === period}
+              onClick={() => setDays(period)}
+            >
+              {period} dias
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <ProjectStatusSummary health={health} />
 
       <div className="metric-grid">
         <StatCard
-          title="PRs integradas"
-          value={prSummary.merged}
-          subtext="Pull Requests concluídas"
+          title="Quantidade de PRs"
+          value={metrics.pullRequestCount}
+          subtext={`Abertos agora + criados em ${days} dias`}
           icon="GitPullRequest"
-          trend={20}
-          color={COLORS.success}
+          color={COLORS.info}
         />
 
         <StatCard
           title="Lead time médio"
-          value="4.2 dias"
-          subtext="Meta: até 5 dias"
+          value={formatDuration(metrics.leadTimeHours)}
+          subtext="Da abertura ao merge"
           icon="TimerReset"
-          trend={-12}
           color={COLORS.primary}
         />
 
         <StatCard
           title="Taxa de aprovação"
-          value={`${approvalRate}%`}
-          subtext="Aprovadas ou integradas"
+          value={metrics.approvalRate === null ? '—' : `${metrics.approvalRate}%`}
+          subtext={
+            metrics.approvalRate === null
+              ? 'Nenhum PR mergeado no período'
+              : 'Mergeados com ao menos 1 aprovação'
+          }
           icon="ShieldCheck"
-          trend={8}
-          color={COLORS.info}
+          color={COLORS.success}
         />
 
         <StatCard
-          title="Alertas ativos"
-          value="3"
-          subtext="1 crítico e 2 de atenção"
+          title="PRs em risco"
+          value={metrics.atRiskCount}
+          subtext="Abertos há mais de 3 dias"
           icon="Bell"
-          trend={-25}
-          color={COLORS.warning}
+          color={COLORS.danger}
         />
       </div>
 
@@ -88,14 +115,8 @@ export default function OverviewPage({ projectList }) {
         </div>
 
         <div className={styles.flowGrid}>
-          <PullRequestFlowChart />
-
-          <PullRequestDistribution
-            open={prSummary.open}
-            inReview={prSummary.inReview}
-            approved={prSummary.approved}
-            merged={prSummary.merged}
-          />
+          <PullRequestFlowChart weeks={weeks} />
+          <PullRequestDistribution distribution={metrics.distribution} days={days} />
         </div>
       </section>
 
@@ -110,17 +131,15 @@ export default function OverviewPage({ projectList }) {
         </div>
 
         <div className={styles.projectList}>
-          {projectsWithStatus.map((project) => {
-            const status = project.calculatedStatus
+          {projects.map((project) => {
+            const { status, alerts: projectAlerts } = health[project.id]
 
             return (
               <article
                 key={project.id}
-                className={`elevation-1 ${styles.projectRow} ${styles[status.key]}`}
+                className={`elevation-1 ${styles.projectRow} ${styles[status]}`}
               >
-                <span className={styles.statusIcon} aria-hidden="true">
-                  {status.icon}
-                </span>
+                <span className={styles.statusDot} aria-hidden="true" />
 
                 <div>
                   <strong className={styles.projectName}>{project.name}</strong>
@@ -131,9 +150,13 @@ export default function OverviewPage({ projectList }) {
                 </div>
 
                 <div className={styles.deadline}>
-                  <strong className={styles.deadlineLabel}>{status.label}</strong>
+                  <strong className={styles.deadlineLabel}>{PROJECT_STATUS[status]}</strong>
 
-                  <small className={styles.muted}>{status.message}</small>
+                  <small className={styles.muted}>
+                    {projectAlerts.length === 0
+                      ? 'Nenhum alerta'
+                      : `${projectAlerts.length} alerta(s): ${projectAlerts[0].title}`}
+                  </small>
                 </div>
 
                 <div className={styles.progress}>
@@ -147,8 +170,8 @@ export default function OverviewPage({ projectList }) {
       </section>
 
       <section className={styles.bottomGrid}>
-        <AutomatedAlerts />
-        <RecentActivityPanel />
+        <AutomatedAlerts alerts={alerts} />
+        <RecentActivityPanel events={metrics.events} days={days} />
       </section>
     </main>
   )

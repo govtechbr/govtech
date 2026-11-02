@@ -292,3 +292,42 @@ describe('Repositories page', () => {
     ).toBeInTheDocument()
   })
 })
+
+describe('Overview with synced data', () => {
+  it('computes the numbers and alerts from the synced pull requests', async () => {
+    linkRepository(privateRepo, 0)
+    db.branches.push({
+      id: 'branch-main',
+      repository_id: `repo-${privateRepo.id}`,
+      organization_id: db.projects[0].organization_id,
+      name: 'main',
+      last_commit_sha: 'abc1234',
+      protected: false,
+    })
+    db.pullRequests.push({
+      id: 'pr-old',
+      repository_id: `repo-${privateRepo.id}`,
+      organization_id: db.projects[0].organization_id,
+      number: 9,
+      title: 'Parado',
+      state: 'open',
+      draft: false,
+      author_login: 'dono-gh',
+      approval_count: 0,
+      html_url: 'https://github.com/dono-gh/govtech/pull/9',
+      created_at_github: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      merged_at: null,
+      closed_at: null,
+    })
+    await renderAs(testUser, '/dashboard')
+
+    const alerts = (await screen.findByRole('heading', { name: 'Alertas Automatizados' })).closest(
+      'section',
+    )
+    expect(await within(alerts).findByText('Risco: PR aberto há 5 dias')).toBeInTheDocument()
+    expect(within(alerts).getByText('Atenção: Branch principal sem proteção')).toBeInTheDocument()
+    expect(
+      within(screen.getByText('PRs em risco').closest('article')).getByText('1'),
+    ).toBeInTheDocument()
+  })
+})

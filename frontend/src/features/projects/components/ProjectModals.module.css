@@ -43,6 +43,15 @@
   margin-top: var(--space-5);
 }
 
+.alerts {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-sm);
+}
+
 .sectionTitle {
   margin: 0 0 var(--space-2);
   font-size: var(--font-size-sm);

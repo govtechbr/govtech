@@ -57,6 +57,34 @@ beforeEach(() => {
   db.projects = structuredClone(initialProjects)
 })
 
+// Status calculado pelos alertas (regra P3); a página só exibe
+const health = {
+  1: {
+    status: 'danger',
+    alerts: [
+      {
+        id: 'a1',
+        level: 'danger',
+        title: 'Prazo vencido',
+        detail: 'Plataforma · venceu há 2 dias',
+        projectIds: [1],
+      },
+    ],
+  },
+  2: {
+    status: 'warning',
+    alerts: [
+      {
+        id: 'a2',
+        level: 'warning',
+        title: 'Branch principal sem proteção',
+        detail: 'app · main',
+        projectIds: [2],
+      },
+    ],
+  },
+}
+
 async function renderPage({ initialProjectId } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
@@ -64,7 +92,7 @@ async function renderPage({ initialProjectId } = {}) {
     <QueryClientProvider client={queryClient}>
       <CurrentOrganizationContext.Provider value={currentOrganization}>
         <ToastProvider>
-          <ProjectsPage initialProjectId={initialProjectId} />
+          <ProjectsPage initialProjectId={initialProjectId} health={health} />
         </ToastProvider>
       </CurrentOrganizationContext.Provider>
     </QueryClientProvider>,
@@ -81,19 +109,30 @@ function metric(label) {
 }
 
 describe('ProjectsPage', () => {
-  it('lists projects with their manual status and counters', async () => {
+  it('lists projects with the status computed from their alerts', async () => {
     await renderPage()
 
     expect(screen.getByRole('heading', { name: 'Plataforma de Pagamentos' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Sistema de Notificações' })).toBeInTheDocument()
     expect(screen.getByText('Risco')).toBeInTheDocument()
     expect(screen.getByText('Atenção')).toBeInTheDocument()
+    expect(screen.getByText('Prazo vencido')).toBeInTheDocument()
     expect(metric('Projetos ativos')).toHaveTextContent('2')
     expect(metric('Em atenção')).toHaveTextContent('1')
-    expect(metric('Riscos críticos')).toHaveTextContent('1')
+    expect(metric('Em risco')).toHaveTextContent('1')
   })
 
-  it('creates a project with the chosen status', async () => {
+  it('shows the alerts behind the status in the project detail', async () => {
+    const { user } = await renderPage()
+
+    await user.click(screen.getByRole('button', { name: 'Sistema de Notificações' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Sistema de Notificações' })
+    expect(within(dialog).getByText('Atenção: Branch principal sem proteção')).toBeInTheDocument()
+    expect(within(dialog).getByText('app · main')).toBeInTheDocument()
+  })
+
+  it('creates a project without a manual status (it is computed)', async () => {
     const { user } = await renderPage()
 
     await user.click(screen.getByRole('button', { name: /novo projeto/i }))
@@ -101,12 +140,12 @@ describe('ProjectsPage', () => {
     await user.type(screen.getByLabelText('Objetivo do Projeto'), 'Atendimento online')
     await user.type(screen.getByLabelText('Deadline'), '2026-12-20')
     await user.type(screen.getByLabelText('Responsável'), 'Carla')
-    await user.selectOptions(screen.getByLabelText('Status'), 'Atenção')
+    expect(screen.queryByLabelText('Status')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /criar projeto/i }))
 
     expect(await screen.findByRole('heading', { name: 'Portal do Cidadão' })).toBeInTheDocument()
     expect(metric('Projetos ativos')).toHaveTextContent('3')
-    expect(metric('Em atenção')).toHaveTextContent('2')
+    expect(metric('Em atenção')).toHaveTextContent('1')
     expect(screen.getByRole('status')).toHaveTextContent('Projeto criado com sucesso.')
   })
 

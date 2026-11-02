@@ -301,6 +301,10 @@ export const handlers = [
     rows(request, withRepository(request, byOrganizationParam(request, db.pullRequests))),
   ),
 
+  http.get(rest('commits'), ({ request }) =>
+    rows(request, byOrganizationParam(request, db.commits)),
+  ),
+
   http.get(rest('branches'), ({ request }) =>
     rows(request, withRepository(request, byOrganizationParam(request, db.branches))),
   ),

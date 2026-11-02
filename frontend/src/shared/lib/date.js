@@ -36,3 +36,8 @@ export function hoursBetween(start, end) {
 export function isWithinDays(value, days, now = new Date()) {
   return Boolean(value) && now.getTime() - new Date(value).getTime() <= days * DAY
 }
+
+// "03/11" (dia/mês), para eixos de gráfico
+export function formatShortDate(date) {
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+}

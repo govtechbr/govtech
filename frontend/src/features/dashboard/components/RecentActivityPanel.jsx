@@ -1,14 +1,22 @@
-import { Check, GitFork, GitPullRequest } from 'lucide-react'
+import { GitFork } from 'lucide-react'
 
-import { COLORS } from '@/shared/constants/colors'
-import { repoStats } from '@/mocks/mockData'
+import styles from '@/features/dashboard/OverviewPage.module.css'
 
-export default function RecentActivityPanel() {
+// events: governanceMetrics().events. Contribuidores = logins distintos de commits
+// e PRs no período (regra G7); commits só da branch principal
+export default function RecentActivityPanel({ events, days }) {
+  const items = [
+    { label: 'Repositórios', value: events.repositories },
+    { label: 'Commits', value: events.commits },
+    { label: 'Branches', value: events.branches },
+    { label: 'Contribuidores', value: events.contributors },
+  ]
+
   return (
     <section className="panel repo-panel elevation-1">
       <div className="panel-heading">
         <div>
-          <span className="section-kicker">ATIVIDADE RECENTE</span>
+          <span className="section-kicker">ATIVIDADE · {days} DIAS</span>
           <h2>Eventos de Desenvolvimento</h2>
         </div>
 
@@ -16,48 +24,18 @@ export default function RecentActivityPanel() {
       </div>
 
       <div className="repo-stats">
-        <div>
-          <span>{repoStats.repositories}</span>
-          <small>Repositórios</small>
-        </div>
-
-        <div>
-          <span>{repoStats.commits}</span>
-          <small>Commits</small>
-        </div>
-
-        <div>
-          <span>{repoStats.branches}</span>
-          <small>Branches</small>
-        </div>
-
-        <div>
-          <span>{repoStats.contributors}</span>
-          <small>Contribuidores</small>
-        </div>
+        {items.map(({ label, value }) => (
+          <div key={label}>
+            <span>{value}</span>
+            <small>{label}</small>
+          </div>
+        ))}
       </div>
 
-      <div className="commit-line">
-        <span className="commit-avatar">AS</span>
-
-        <span>
-          <b>ana.silva</b> criou PR <strong>#856 · feature/payment-gateway</strong>
-          <small className="mono">identity-gateway · 8 min atrás</small>
-        </span>
-
-        <GitPullRequest size={15} style={{ color: COLORS.info }} />
-      </div>
-
-      <div className="commit-line">
-        <span className="commit-avatar teal">CM</span>
-
-        <span>
-          <b>carlos.melo</b> aprovou PR <strong>#842 · fix/billing-logic</strong>
-          <small className="mono">billing-orchestrator · 21 min atrás</small>
-        </span>
-
-        <Check size={15} style={{ color: COLORS.success }} />
-      </div>
+      <p className={styles.muted}>
+        Commits da branch principal e contribuidores (quem fez commit ou abriu PR) nos últimos{' '}
+        {days} dias. Repositórios e branches: total atual.
+      </p>
     </section>
   )
 }

@@ -1,7 +1,6 @@
 import { Check } from 'lucide-react'
 import { useState } from 'react'
 
-import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
 import Modal from '@/shared/ui/Modal'
 import styles from './ProjectModals.module.css'
 
@@ -12,7 +11,6 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
     deadline: project?.deadline || '',
     owner: project?.owner || '',
     priority: project?.priority || 'medium',
-    status: project?.status || 'success',
     progress: project?.progress ?? 0,
   })
 
@@ -78,17 +76,6 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
             </select>
           </label>
         </div>
-
-        <label className={styles.field}>
-          Status
-          <select className={styles.input} value={form.status} onChange={updateField('status')}>
-            {Object.entries(PROJECT_STATUS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
 
         <div className={styles.row}>
           <label className={styles.field}>
