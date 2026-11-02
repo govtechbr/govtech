@@ -47,6 +47,7 @@ Ao rodar testes ou build, mostre só o resumo/erros (`| tail -30`), não o log i
 - Mobile-first; breakpoints só 640 / 768 / 1024 / 1280.
 - Estado de servidor via TanStack Query; estado de UI via `useState`. Sem `useEffect` para buscar dados.
 - Formulários: react-hook-form + zod.
+- Campos de escolha e data: use `Select` e `DatePicker` de `shared/ui` (com react-hook-form, via `Controller`), **nunca** `<select>` ou `<input type="date">` nativos.
 - Ícones: importar de `lucide-react` direto (não usar mapa por string).
 - Sem `console.log` em código commitado.
 - Datas: sempre via `shared/lib/date`; testes de data com `vi.setSystemTime`.

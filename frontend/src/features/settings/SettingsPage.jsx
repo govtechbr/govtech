@@ -17,7 +17,14 @@ import {
 import { Link } from 'react-router-dom'
 
 import { useToast } from '@/shared/hooks/useToast'
+import Select from '@/shared/ui/Select'
 import StatusBadge from '@/shared/ui/StatusBadge'
+
+const TIMEZONE_OPTIONS = [
+  { value: 'America/Sao_Paulo', label: 'Brasília (UTC-3)' },
+  { value: 'America/New_York', label: 'New York (UTC-5)' },
+  { value: 'Europe/London', label: 'London (UTC+0)' },
+]
 
 function toDraft(settings) {
   return {
@@ -214,43 +221,13 @@ export default function SettingsPage({ settings, onSaveSettings }) {
               </div>
             </label>
 
-            <label>
-              <strong
-                style={{
-                  display: 'block',
-                  marginBottom: '7px',
-                  fontSize: '13px',
-                }}
-              >
-                Fuso horário
-              </strong>
-
-              <div className="input-wrap">
-                <TimerReset size={17} />
-
-                <select
-                  value={draft.timezone || 'America/Sao_Paulo'}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      timezone: event.target.value,
-                    }))
-                  }
-                  style={{
-                    flex: 1,
-                    border: 0,
-                    outline: 0,
-                    background: 'transparent',
-                  }}
-                >
-                  <option value="America/Sao_Paulo">Brasília (UTC-3)</option>
-
-                  <option value="America/New_York">New York (UTC-5)</option>
-
-                  <option value="Europe/London">London (UTC+0)</option>
-                </select>
-              </div>
-            </label>
+            <Select
+              label="Fuso horário"
+              icon={TimerReset}
+              options={TIMEZONE_OPTIONS}
+              value={draft.timezone || 'America/Sao_Paulo'}
+              onChange={(timezone) => setDraft((current) => ({ ...current, timezone }))}
+            />
 
             <div>
               <strong

@@ -6,6 +6,7 @@ import PullRequestsList from '@/features/repositories/components/PullRequestsLis
 import RepositoriesList from '@/features/repositories/components/RepositoriesList'
 import { useRepositoryData } from '@/features/repositories/hooks/useRepositoryData'
 import styles from '@/features/repositories/RepositoriesPage.module.css'
+import Select from '@/shared/ui/Select'
 
 const tabs = [
   { id: 'repositorios', label: 'Repositórios', icon: Folder },
@@ -20,6 +21,10 @@ export default function RepositoriesPage({ projects = [] }) {
   const data = useRepositoryData(projectId)
 
   const projectNames = Object.fromEntries(projects.map((project) => [project.id, project.name]))
+  const projectOptions = [
+    { value: '', label: 'Todos os projetos' },
+    ...projects.map((project) => ({ value: project.id, label: project.name })),
+  ]
 
   return (
     <main className="dashboard-content">
@@ -29,17 +34,13 @@ export default function RepositoriesPage({ projects = [] }) {
           <p>Repositórios, Pull Requests e branches sincronizados do GitHub.</p>
         </div>
 
-        <label className={styles.filter}>
-          <span>Projeto</span>
-          <select value={projectId} onChange={(event) => setProjectId(event.target.value)}>
-            <option value="">Todos os projetos</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          className={styles.filter}
+          label="Projeto"
+          options={projectOptions}
+          value={projectId}
+          onChange={setProjectId}
+        />
       </div>
 
       <section className={`panel elevation-1 ${styles.tabsPanel}`}>

@@ -173,11 +173,9 @@ govtech/
         │   └── settings/      SettingsPage.jsx.
         │
         ├── shared/       ← O que mais de uma área usa. Não importa de features/.
-        │   ├── layout/        Sidebar, Topbar, GlobalSearch e ChatbotModal.
-        │   ├── ui/            Brand, Icon, Modal, StatCard, StatusBadge, Toast/ToastProvider, Tooltip.
         │   ├── layout/        Sidebar, Topbar e GlobalSearch.
-        │   ├── ui/            Brand, Icon, Modal, StatCard, StatusBadge, Toast/ToastProvider.
-        │   ├── hooks/         useLocalStorage (estado salvo no navegador), useTheme (tema claro/escuro).
+        │   ├── ui/            Brand, Icon, Modal, Select, DatePicker, StatCard, StatusBadge, Toast/ToastProvider, Tooltip.
+        │   ├── hooks/         useLocalStorage (estado salvo no navegador), useTheme (tema claro/escuro), usePopover (posição das listas e calendários).
         │   ├── lib/           projectUtils.js (normaliza projetos e datas), governance.js (métricas, alertas e status dos projetos), supabase.js (único client), zodResolver.js.
         │   └── constants/     colors, defaultSettings, projectStatus (Saudável/Atenção/Risco), storageKeys.
         │
@@ -363,6 +361,23 @@ Aberto pelo botão "Assistente com IA" do menu lateral (`app/AssistantDialog.jsx
 | `Toast` | Aviso que some sozinho após alguns segundos. Exibido pelo `ToastProvider`; as páginas chamam `const { showToast } = useToast()` (`src/shared/hooks/useToast.js`). A área do aviso tem `role="status"`, então leitores de tela anunciam a mensagem. |
 | `Modal` | Diálogo acessível usado por todos os modais (projetos, RBAC): `role="dialog"`, título ligado por `aria-labelledby`, foco entra no diálogo e fica preso nele (Tab), `Esc` fecha e o foco volta para quem abriu. No celular (< 640 px) abre como folha a partir da parte de baixo. Substituiu o `ModalShell` em 01/11/2026. Props: `title`, `kicker`, `size` (`sm`/`md`/`lg`), `onClose`. |
 
+#### Campos de formulário: `Select` e `DatePicker`
+
+Desde 02/11/2026 nenhuma tela usa `<select>` nem `<input type="date">` nativos: o visual deles muda de navegador para navegador e não segue os tokens. No lugar, use os dois componentes de `src/shared/ui/`. Os dois:
+
+- desenham um botão no estilo dos inputs do sistema; o rótulo (`label`) fica ligado ao botão, então `getByLabelText('Prioridade')` encontra o campo;
+- abrem um popover em **portal** com `position: fixed`, posicionado pelo hook `shared/hooks/usePopover.js`: abre para baixo, ou para cima quando falta espaço, encosta nas bordas laterais e nunca sai da tela (nem dentro do `Modal`, que tem rolagem própria);
+- fecham com clique fora ou `Esc` (o `Esc` não chega ao `Modal` em volta) e devolvem o foco ao botão;
+- chamam `onChange(valor)` com o **valor**, não com o evento. Com react-hook-form, use `<Controller render={({ field }) => <Select {...field} … />} />` (`ref` e `onBlur` já são aceitos);
+- aceitam `error` (texto ligado ao campo por `aria-describedby`), `disabled`, `id` e `name` (gera um `<input type="hidden">` para formulários nativos). Não existe `required` nativo: valide no submit (ex.: deadline em `ProjectFormModal`).
+
+| Componente | Props próprias | Teclado |
+|---|---|---|
+| `Select` | `options` (`[{ value, label }]`), `value`, `placeholder`, `size` (`md`/`sm`, este para tabelas), `icon` (componente do lucide à esquerda), `aria-label` quando não há rótulo visível. Padrão ARIA: botão com `aria-haspopup="listbox"` + `aria-expanded`; lista `role="listbox"` com `aria-activedescendant`; opções `role="option"` com `aria-selected`. | Setas, Home/End, Enter/Espaço escolhem, Esc fecha, Tab fecha, digitar letras pula para a opção que começa com elas. |
+| `DatePicker` | `value` em ISO `YYYY-MM-DD` (mesmo contrato do input nativo), `min`, `max`, `placeholder` (padrão `dd/mm/aaaa`). Mostra a data como `20/12/2026`; o calendário é um `role="dialog"` com grade `role="grid"`, título “novembro de 2026”, hoje marcado com `aria-current="date"` e cada dia com nome completo (“20 de dezembro de 2026”). Dias fora de `min`/`max` ficam desabilitados. | Setas mudam o dia (←/→) ou a semana (↑/↓), PageUp/PageDown mudam o mês, Enter/Espaço escolhem, Esc fecha, Tab circula entre os botões de mês e o dia ativo. |
+
+As contas de data do calendário ficam em `shared/lib/date.js` (`todayIso`, `addDays`, `addMonths`, `clampIsoDay`, `monthWeeks`, `formatIsoDay`, `formatLongDay`, `formatMonthYear`), todas sobre strings ISO e em UTC para não sofrer com horário de verão.
+
 ### 9.3 Dashboard
 
 | Componente | O que mostra |
@@ -377,7 +392,7 @@ Aberto pelo botão "Assistente com IA" do menu lateral (`app/AssistantDialog.jsx
 
 | Componente | Função |
 |---|---|
-| `ProjectFormModal` | Formulário de criar/editar: nome, objetivo, deadline, prioridade, responsável, progresso (0–100) e repositórios vinculados (checkboxes vindos de `services`). |
+| `ProjectFormModal` | Formulário de criar/editar: nome, objetivo, deadline (`DatePicker`, obrigatório: o aviso “Informe o deadline.” aparece no submit), prioridade (`Select`), responsável, progresso (0–100) e repositórios vinculados (checkboxes vindos de `services`). |
 | `ProjectDetailModal` | Detalhes com status calculado e botões Editar/Excluir. |
 | `DeleteProjectModal` | Confirmação de exclusão. |
 
