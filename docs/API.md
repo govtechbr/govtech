@@ -117,7 +117,7 @@ As tabelas do GitHub são **somente leitura** para o usuário: não têm policy 
 // frontend/src/features/projects/api/projectsApi.js
 supabase
   .from('projects')
-  .select('id, name, description, deadline, owner, priority, progress')
+  .select('id, name, description, deadline, owner, priority')
   .eq('organization_id', organizationId)
   .order('created_at')
 ```
@@ -125,7 +125,7 @@ supabase
 Equivale a:
 
 ```http
-GET /rest/v1/projects?select=id,name,description,deadline,owner,priority,progress&organization_id=eq.<id>&order=created_at
+GET /rest/v1/projects?select=id,name,description,deadline,owner,priority&organization_id=eq.<id>&order=created_at
 ```
 
 O filtro `organization_id` **não é segurança** (o RLS já garante isso). Ele serve para quem participa de várias empresas ver só a empresa escolhida na tela.

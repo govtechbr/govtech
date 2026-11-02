@@ -55,7 +55,6 @@ export const projects = [
     owner: 'Marina Costa',
     priority: 'high',
     status: 'danger',
-    progress: 68,
   },
   {
     id: 2,
@@ -65,7 +64,6 @@ export const projects = [
     owner: 'Carlos Melo',
     priority: 'medium',
     status: 'warning',
-    progress: 45,
   },
   {
     id: 3,
@@ -75,7 +73,6 @@ export const projects = [
     owner: 'Ana Silva',
     priority: 'medium',
     status: 'success',
-    progress: 82,
   },
   {
     id: 4,
@@ -85,7 +82,6 @@ export const projects = [
     owner: 'João Santos',
     priority: 'low',
     status: 'danger',
-    progress: 35,
   },
 ]
 

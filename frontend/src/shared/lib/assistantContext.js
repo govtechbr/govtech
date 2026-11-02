@@ -85,7 +85,6 @@ export function buildAssistantContext({ organizationName, projects, governance, 
       status: PROJECT_STATUS[health[project.id].status],
       deadline: project.deadline || null,
       priority: project.priority ?? null,
-      progressPercent: project.progress ?? null,
       index: scores[project.id]?.score ?? null,
       indexComponents: scores[project.id]?.components ?? null,
       repositories: governance.repositories

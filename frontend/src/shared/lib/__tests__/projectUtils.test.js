@@ -13,7 +13,6 @@ describe('normalizeProject', () => {
       deadline: '',
       owner: 'Não definido',
       priority: 'medium',
-      progress: 0,
     })
   })
 
@@ -25,11 +24,9 @@ describe('normalizeProject', () => {
     expect(normalizeProject({ priority: 'urgent' }).priority).toBe('medium')
   })
 
-  it('clamps progress between 0 and 100', () => {
-    expect(normalizeProject({ progress: 150 }).progress).toBe(100)
-    expect(normalizeProject({ progress: -5 }).progress).toBe(0)
-    expect(normalizeProject({ progress: '42' }).progress).toBe(42)
-    expect(normalizeProject({ progress: 'abc' }).progress).toBe(0)
+  // Regra P2: o progresso manual foi removido; a coluna antiga fica sem uso no banco
+  it('drops the legacy progress field', () => {
+    expect(normalizeProject({ progress: 40 })).not.toHaveProperty('progress')
   })
 })
 

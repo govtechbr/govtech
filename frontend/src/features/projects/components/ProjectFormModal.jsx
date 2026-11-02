@@ -19,7 +19,6 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
     deadline: project?.deadline || '',
     owner: project?.owner || '',
     priority: project?.priority || 'medium',
-    progress: project?.progress ?? 0,
   })
 
   const [deadlineError, setDeadlineError] = useState('')
@@ -97,19 +96,6 @@ export default function ProjectFormModal({ project, onClose, onSave }) {
               required
               value={form.owner}
               onChange={updateField('owner')}
-            />
-          </label>
-
-          <label className={styles.field}>
-            Progresso (%)
-            <input
-              className={styles.input}
-              required
-              type="number"
-              min="0"
-              max="100"
-              value={form.progress}
-              onChange={updateField('progress')}
             />
           </label>
         </div>

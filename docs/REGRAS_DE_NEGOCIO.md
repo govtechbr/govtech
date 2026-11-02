@@ -33,7 +33,7 @@ Esconder um botão na tela é só conveniência: quem bloqueia de verdade é o b
 | # | Regra | Situação |
 |---|---|---|
 | P1 | O **admin cria o projeto**: é o ponto de partida de tudo | ✅ (developer também cria) |
-| P2 | Campos: nome, objetivo, prazo, responsável, prioridade, progresso | ✅ |
+| P2 | Campos: nome, objetivo, prazo, responsável e prioridade. **Sem progresso** (decisão de 02/11/2026): era um número digitado à mão, sem regra de cálculo, e aparecia ao lado de números calculados. A coluna `progress` fica sem uso no banco, como a de `status` | ✅ |
 | P3 | O **status** (Saudável / Atenção / Risco) é **calculado pelos alertas** (§6). O campo manual deixa de existir | ✅ E4 (o formulário não tem mais o campo; a coluna antiga fica sem uso no banco) |
 | P4 | Um **cartão na tela explica** como o status é calculado | ✅ E4 (Visão geral e detalhe do projeto) |
 | P5 | Só o admin exclui projeto | ✅ |
@@ -97,7 +97,7 @@ Substitui o assistente simulado da barra lateral. Provedor: **Groq** (plano grat
 | # | Regra | Situação |
 |---|---|---|
 | IA1 | Responde **só sobre a empresa atual**, com os dados que a pessoa já vê na tela. Só lê e explica, não altera nada. **Todos os papéis** usam | ✅ E6 |
-| IA2 | **O que vai para a IA:** índice e critérios (empresa e projetos), alertas, métricas de 30 dias, nome, prazo, prioridade e progresso dos projetos, e número, título, estado, idade e aprovações dos PRs. **Nunca** login, avatar, e-mail ou chave. Títulos de PR podem citar pessoas: risco aceito | ✅ E6 |
+| IA2 | **O que vai para a IA:** índice e critérios (empresa e projetos), alertas, métricas de 30 dias, nome, prazo e prioridade dos projetos, e número, título, estado, idade e aprovações dos PRs. **Nunca** login, avatar, e-mail ou chave. Títulos de PR podem citar pessoas: risco aceito | ✅ E6 |
 | IA3 | **Limite:** 20 perguntas por pessoa por dia e 200 por dia no sistema todo (dia no fuso de MS). Ao estourar, a tela avisa | ✅ E6 |
 | IA4 | A **conversa não é guardada**: some ao fechar o painel. O banco guarda só a contagem de uso (quem e quantas, sem o texto) | ✅ E6 |
 | IA5 | A tela avisa que a resposta é gerada por IA (Groq, EUA, sem treino com os dados) e que os números oficiais estão nos painéis | ✅ E6 |

@@ -161,11 +161,6 @@ export default function OverviewPage({ projectList, governance = emptyGovernance
                       : `${projectAlerts.length} alerta(s): ${projectAlerts[0].title}`}
                   </small>
                 </div>
-
-                <div className={styles.progress}>
-                  <strong>{project.progress}%</strong>
-                  <small className={styles.muted}>progresso</small>
-                </div>
               </article>
             )
           })}

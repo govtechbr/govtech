@@ -4,8 +4,9 @@ import { supabase } from '@/shared/lib/supabase'
 // Único ponto de acesso aos dados de projeto. As regras de quem vê e quem
 // altera ficam no banco (RLS): aqui só se pede, e o banco decide.
 
-// Sem `status`: o status é calculado pelos alertas (regra P3); a coluna antiga fica sem uso
-const columns = ['name', 'description', 'deadline', 'owner', 'priority', 'progress']
+// Sem `status` (calculado pelos alertas, regra P3) e sem `progress` (removido, regra P2):
+// as colunas antigas ficam sem uso no banco
+const columns = ['name', 'description', 'deadline', 'owner', 'priority']
 const selectColumns = ['id', ...columns].join(', ')
 
 // Normaliza só os campos enviados, para uma edição parcial não sobrescrever o resto

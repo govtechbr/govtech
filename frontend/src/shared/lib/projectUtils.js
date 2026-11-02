@@ -12,7 +12,6 @@ export function formatProjectDate(date) {
 
 export function normalizeProject(project, index = 0) {
   const validPriorities = ['high', 'medium', 'low']
-  const parsedProgress = Number(project?.progress)
 
   return {
     id: project?.id ?? Date.now() + index,
@@ -24,6 +23,5 @@ export function normalizeProject(project, index = 0) {
     owner:
       typeof project?.owner === 'string' && project.owner.trim() ? project.owner : 'Não definido',
     priority: validPriorities.includes(project?.priority) ? project.priority : 'medium',
-    progress: Number.isFinite(parsedProgress) ? Math.max(0, Math.min(100, parsedProgress)) : 0,
   }
 }

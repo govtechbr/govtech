@@ -320,10 +320,6 @@
   font-size: var(--font-size-sm);
 }
 
-.progress {
-  grid-column: 2;
-}
-
 .bottomGrid {
   display: grid;
   gap: var(--space-6);
@@ -332,11 +328,10 @@
 
 @media (min-width: 768px) {
   .projectRow {
-    grid-template-columns: auto minmax(0, 1fr) minmax(130px, auto) 70px;
+    grid-template-columns: auto minmax(0, 1fr) minmax(130px, auto);
   }
 
-  .deadline,
-  .progress {
+  .deadline {
     grid-column: auto;
     text-align: right;
   }

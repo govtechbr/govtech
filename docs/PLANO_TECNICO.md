@@ -1270,3 +1270,6 @@ Uma função com três ações. Todas conferem o login (JWT) e o papel do usuár
 - **Tela:** lista paginada por `id` (cursor), cartões com `count: 'exact', head: true`, CSV no navegador com proteção contra fórmula. Saíram o mock `auditEvents`, os números fixos "34" e "92%" e o contador falso do menu.
 - **Testes:** 19 pgTAP de auditoria, 5 novos de paginação na função (41 no total) e 14 no front (8 de utilitários, 5 da tela, 1 do aviso de dados parciais). **176 testes**, lint e build verdes.
 
+**Ajustes da revisão do dono (02/11/2026)**: três PRs empilhados sobre a E7 (`refactor/remove-progress` → `feat/alert-reasons` → `feat/ci-status`)
+- **Progresso removido (P2):** era digitado à mão, sem regra, e ia para a tela e para a IA ao lado de números calculados. Saiu do formulário, dos cartões de Projetos e da Visão geral, do detalhe, do contexto da IA (IA2) e dos mocks. **A coluna `projects.progress` continua no banco, sem uso** (mesmo tratamento do `status`, sem migration destrutiva); o trigger de auditoria ainda a lista, então eventos antigos ("progresso de 0% para 40%") seguem legíveis. Na landing, "Progresso do projeto" virou "Índice de Governança".
+

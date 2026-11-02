@@ -1,6 +1,6 @@
 # GovTech MS — Documentação do Projeto
 
-Plataforma web de **governança e monitoramento de projetos de TI**: painel com indicadores, lista de projetos com prazo e progresso, visão de repositórios/Pull Requests/branches, auditoria, controle de acesso (RBAC) e configurações.
+Plataforma web de **governança e monitoramento de projetos de TI**: painel com indicadores, lista de projetos com prazo, status e Índice de Governança, visão de repositórios/Pull Requests/branches, auditoria, controle de acesso (RBAC) e configurações.
 
 > **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações, membros, projetos e os dados do GitHub (repositórios, PRs e branches) são reais** e ficam no banco. Desde 04/11/2026 a **Visão geral** também usa dados reais (métricas, alertas e status calculado). Desde a E7 a **Auditoria** também é real (trilha gravada pelo banco). A busca global ainda mostra dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
 
@@ -297,7 +297,7 @@ Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir
 
 ### 8.5 `ProjectsPage.jsx` — Projetos
 É o módulo mais completo para o usuário final:
-- **Cards** de projeto com nome, responsável, prazo, barra de progresso e alerta se o status for `danger`.
+- **Cards** de projeto com nome, responsável, prazo e alerta se o status for `danger`. A barra de progresso manual saiu em 02/11/2026 (regra P2).
 - **Status calculado** (desde 04/11/2026): Saudável, Atenção ou Risco, a partir dos alertas do projeto (PR parado, PR sem aprovação, branch sem proteção, prazo). O formulário não tem mais o campo Status. O cartão mostra o primeiro alerta e o detalhe do projeto lista todos, com a explicação da regra.
 - **Índice de Governança** (desde 02/11/2026): o cartão mostra a nota mais recente e a faixa; o detalhe mostra a nota de cada critério.
 - **3 indicadores**: total, “em atenção” (`status === 'warning'`), “riscos críticos” (`status === 'danger'`).
@@ -395,7 +395,7 @@ As contas de data do calendário ficam em `shared/lib/date.js` (`todayIso`, `add
 
 | Componente | Função |
 |---|---|
-| `ProjectFormModal` | Formulário de criar/editar: nome, objetivo, deadline (`DatePicker`, obrigatório: o aviso “Informe o deadline.” aparece no submit), prioridade (`Select`), responsável, progresso (0–100) e repositórios vinculados (checkboxes vindos de `services`). |
+| `ProjectFormModal` | Formulário de criar/editar: nome, objetivo, deadline (`DatePicker`, obrigatório: o aviso “Informe o deadline.” aparece no submit), prioridade (`Select`), responsável e repositórios vinculados (checkboxes vindos de `services`). |
 | `ProjectDetailModal` | Detalhes com status calculado e botões Editar/Excluir. |
 | `DeleteProjectModal` | Confirmação de exclusão. |
 
@@ -467,7 +467,7 @@ Todas em `utils/projectUtils.js`.
 Garante que um projeto sempre tenha campos válidos, mesmo que os dados salvos estejam incompletos ou corrompidos:
 - `name` vazio → `"Projeto sem nome"`.
 - `priority` fora de `high | medium | low` → `"medium"`.
-- `progress` → número entre 0 e 100 (valores inválidos viram 0).
+- `progress` não existe mais (regra P2); a coluna antiga fica sem uso no banco.
 - `repositories` → só strings.
 
 ### 11.2 Status do projeto e alertas (`src/shared/lib/governance.js`)

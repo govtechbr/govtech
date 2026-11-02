@@ -8,9 +8,9 @@ const now = new Date('2026-11-10T12:00:00Z')
 const daysAgo = (days) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString()
 
 const projectList = [
-  { id: 'p1', name: 'Portal', deadline: '2026-12-31', owner: 'Ana', progress: 10 },
-  { id: 'p2', name: 'Folha', deadline: '2026-11-08', owner: 'Bruno', progress: 50 },
-  { id: 'p3', name: 'Ouvidoria', deadline: '2026-11-14', owner: 'Carla', progress: 80 },
+  { id: 'p1', name: 'Portal', deadline: '2026-12-31', owner: 'Ana' },
+  { id: 'p2', name: 'Folha', deadline: '2026-11-08', owner: 'Bruno' },
+  { id: 'p3', name: 'Ouvidoria', deadline: '2026-11-14', owner: 'Carla' },
 ]
 
 function pr(overrides) {

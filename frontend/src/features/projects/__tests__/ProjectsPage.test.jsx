@@ -39,7 +39,6 @@ const initialProjects = [
     owner: 'Ana',
     priority: 'high',
     status: 'danger',
-    progress: 40,
   },
   {
     id: 2,
@@ -49,7 +48,6 @@ const initialProjects = [
     owner: 'Bruno',
     priority: 'medium',
     status: 'warning',
-    progress: 70,
   },
 ]
 
@@ -144,6 +142,7 @@ describe('ProjectsPage', () => {
     const dialog = screen.getByRole('dialog', { name: 'Sistema de Notificações' })
     expect(within(dialog).getByText('Atenção: Branch principal sem proteção')).toBeInTheDocument()
     expect(within(dialog).getByText('app · main')).toBeInTheDocument()
+    expect(within(dialog).queryByText('Progresso')).not.toBeInTheDocument()
   })
 
   it('shows the governance index on the card and its criteria in the detail', async () => {
@@ -187,6 +186,7 @@ describe('ProjectsPage', () => {
     await user.click(screen.getByRole('option', { name: 'Alta' }))
     await user.type(screen.getByLabelText('Responsável'), 'Carla')
     expect(screen.queryByLabelText('Status')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/Progresso/)).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /criar projeto/i }))
 
     expect(await screen.findByRole('heading', { name: 'Portal do Cidadão' })).toBeInTheDocument()
