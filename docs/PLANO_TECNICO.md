@@ -72,7 +72,7 @@
 | Q6 | Status do projeto | **Manual** | ✅ Já implementado (`constants/projectStatus.js`). O semáforo de prazo continua como informação separada |
 | Q7 | Auditoria | **Só para revisão** | Log simples por trigger, sem cadeia de hash |
 | Q8 | Dados pessoais | **Nome, e-mail e chave de API do GitHub**. A chave **entra no escopo até 18/11**: "sem ela o projeto não avança" | Ver §4.7: chave no Vault + Edge Function `github-sync` que busca repositórios, PRs e branches sob demanda |
-| Q9 | Chatbot com IA | **A definir** | Fora do escopo até 18/11 |
+| Q9 | Chatbot com IA | **Sim, com Groq (plano gratuito)**, decidido em 02/11/2026 | Entrega E6 (`REGRAS_DE_NEGOCIO.md` §5.2) |
 | Q10 | Landing page | **Fica, em pastas separadas**; o botão de login chama o sistema | `frontend/src/landing/` separado de `frontend/src/app/` |
 | Q11 | Pausa do Supabase Free | **Ok** | Reativar na véspera da defesa |
 | Q12 | Pessoas no projeto | **2** | Branch por tarefa + PR revisado pelo colega |
