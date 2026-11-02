@@ -561,11 +561,39 @@ A acessibilidade passou a ser **verificada por testes**: buscar elementos por pa
 - Ainda usam estilo inline: Configurações, RBAC, Repositórios e partes da barra lateral.
 
 **Trabalhos futuros:**
-- GitHub App com *webhooks* (atualização instantânea) e status do CI.
+- **GitHub App com *webhooks***, no lugar da chave pessoal (análise na §14.1).
 - Cadeia de *hash* na auditoria (evidência de que nada foi apagado) e auditoria de login.
 - Testes de ponta a ponta (Playwright) e de acessibilidade automatizada (axe).
 - Relatório de transparência (página imprimível do índice e da auditoria).
 - Convite por e-mail e "último acesso" real dos membros.
+
+### 14.1 Integração com o GitHub: chave pessoal, *webhook* ou GitHub App
+
+**Como é hoje.** Um admin da empresa cria no próprio perfil do GitHub uma chave *fine-grained*, só de leitura, e cola no sistema. A chave fica criptografada no Vault do Supabase e nunca chega ao navegador. Com ela, a Edge Function consulta o GitHub de hora em hora (e no botão "Sincronizar").
+
+**A fragilidade.** A chave é **de uma pessoa**, não da empresa. Se essa pessoa sai da empresa, perde o acesso ao repositório ou a chave vence, a integração para até alguém cadastrar outra. Além disso, a tela pode ficar até uma hora atrasada.
+
+**Alternativas avaliadas:**
+
+| | Chave pessoal (atual) | *Webhook* do repositório | GitHub App (com *webhooks*) |
+|---|---|---|---|
+| Como funciona | O sistema pergunta ao GitHub de hora em hora | O GitHub avisa o sistema na hora em que algo acontece | A empresa "instala" o sistema nos repositórios escolhidos; o GitHub avisa e o sistema também consulta |
+| De quem é o acesso | De uma pessoa | Ainda precisa de uma chave para o histórico | Da empresa (instalação) |
+| Validade da chave | Longa, definida por quem criou | — | Gerada pelo sistema, vale **1 hora** |
+| Atraso da tela | Até 1 hora | Segundos | Segundos |
+| Histórico (90 dias) | Sim | **Não**: só avisa o que acontece depois de ligado | Sim, pela API com a chave do App |
+| Configuração | Criar e colar a chave | Um por repositório, feito por quem é admin dele, cada um com seu segredo | Um App, um endereço e um segredo para todas as instalações |
+| Permissões | Escolhidas por quem cria a chave | — | Declaradas no App e mostradas à empresa na instalação |
+
+**O que chegaria pelos *webhooks*:** PR aberto, fechado ou mergeado (`pull_request`); revisão aprovada ou com pedido de mudança (`pull_request_review`); commits enviados (`push`); branch criada ou apagada (`create`/`delete`); mudança na proteção da branch (`branch_protection_rule`); e o resultado do CI (`check_suite`, `workflow_run`). Cobre todos os dados que o sistema usa hoje.
+
+**Cuidados que a evolução exigiria:**
+- **Conferir a assinatura** de cada aviso (cabeçalho `X-Hub-Signature-256`, HMAC-SHA256 com o segredo do App) e ignorar avisos repetidos pelo id de entrega (`X-GitHub-Delivery`).
+- **LGPD:** o aviso de `push` traz nome e e-mail de quem fez o commit. Continuaria valendo a regra atual de gravar só login, sha e data.
+- **Manter a sincronização periódica**, com menos frequência: o GitHub não reenvia sozinho um aviso que falhou, e o histórico só vem pela API. O *webhook* deixa a tela em tempo real; a sincronização garante que nada se perca.
+- A chave privada do App ficaria só nos *secrets* do Supabase, como a do Groq.
+
+**Por que ficou para depois.** Com o prazo de 18/11, a troca mexeria no fluxo de conexão, no banco e na Edge Function (estimativa de 2 a 3 dias) logo antes da banca, e não eliminaria a sincronização periódica. A chave pessoal atual reduz o risco com permissão só de leitura, escolha explícita dos repositórios (regra G2) e guarda no Vault. O GitHub App é a evolução natural, a mesma arquitetura usada por ferramentas de mercado que se integram ao GitHub (Vercel, Codecov, entre outras).
 
 ---
 
@@ -624,6 +652,7 @@ Documentação oficial e referências usadas (para citar no TCC):
 - Supabase (Auth, RLS, Vault, Edge Functions, Cron) — https://supabase.com/docs
 - PostgreSQL: Row Security Policies — https://www.postgresql.org/docs/current/ddl-rowsecurity.html
 - pgTAP — https://pgtap.org
+- GitHub Apps (sobre os Apps e quando usar) — https://docs.github.com/apps/creating-github-apps/about-creating-github-apps/about-creating-github-apps · Webhooks e validação da assinatura — https://docs.github.com/webhooks/using-webhooks/validating-webhook-deliveries
 - GitHub REST API — https://docs.github.com/rest · GitHub GraphQL API (paginação) — https://docs.github.com/graphql/guides/using-pagination-in-the-graphql-api
 - Groq: dados e privacidade — https://console.groq.com/docs/your-data · Services Agreement — https://console.groq.com/docs/legal/services-agreement
 - OWASP Top 10 para aplicações com LLM (*prompt injection*) — https://genai.owasp.org
