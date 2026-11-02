@@ -1,5 +1,16 @@
-import { useState } from 'react'
-import { Building2, Download, FolderKanban, GitBranch, Lock, Users } from 'lucide-react'
+import { useId, useState } from 'react'
+import {
+  Activity,
+  Building2,
+  Download,
+  FolderKanban,
+  GitBranch,
+  Lock,
+  RefreshCw,
+  TriangleAlert,
+  UserCog,
+  Users,
+} from 'lucide-react'
 
 import styles from '@/features/audit/AuditPage.module.css'
 import { AUDIT_TYPES, listAllAuditEvents } from '@/features/audit/api/auditApi'
@@ -30,12 +41,25 @@ function download(fileName, content) {
   URL.revokeObjectURL(url)
 }
 
-function MetricCard({ label, value, hint }) {
+// alert: o card ganha a cor de perigo (e um ícone, para não depender só da cor)
+function KpiCard({ icon: Icon, label, value, hint, alert = false }) {
+  const labelId = useId()
+
   return (
-    <article className="metric-card elevation-1">
-      <span>{label}</span>
-      <strong>{value ?? '–'}</strong>
-      <small>{hint}</small>
+    <article className={`${styles.kpi} ${alert ? styles.kpiAlert : ''}`} aria-labelledby={labelId}>
+      <div className={styles.kpiHeader}>
+        <span className={styles.kpiIcon} aria-hidden="true">
+          <Icon size={16} />
+        </span>
+        <span id={labelId} className={styles.kpiLabel}>
+          {label}
+        </span>
+      </div>
+      <p className={styles.kpiValue}>
+        {value ?? '–'}
+        {alert && <TriangleAlert size={18} role="img" aria-label="Requer atenção" />}
+      </p>
+      <p className={styles.kpiHint}>{hint}</p>
     </article>
   )
 }
@@ -139,25 +163,29 @@ function AuditTrail({ organization }) {
         </div>
       </div>
 
-      <div className="dashboard-grid three-columns">
-        <MetricCard
+      <div className={styles.kpis}>
+        <KpiCard
+          icon={Activity}
           label="Eventos registrados"
           value={counts.data?.total}
           hint={`Nos últimos ${days} dias`}
         />
-        <MetricCard
+        <KpiCard
+          icon={UserCog}
           label="Mudanças de acesso"
           value={counts.data?.accessChanges}
           hint="Entradas, saídas e trocas de papel"
         />
-        <MetricCard
+        <KpiCard
+          icon={RefreshCw}
           label="Sincronizações com falha"
           value={counts.data?.failedSyncs}
           hint="Integração com o GitHub"
+          alert={counts.data?.failedSyncs > 0}
         />
       </div>
 
-      <article className="content-card elevation-1">
+      <article className={`content-card elevation-1 ${styles.events}`}>
         <div className="content-card-header">
           <div>
             <h2 className={styles.title}>Eventos</h2>
@@ -165,14 +193,14 @@ function AuditTrail({ organization }) {
           </div>
         </div>
 
-        {events.isPending && <p className={styles.muted}>Carregando a auditoria…</p>}
+        {events.isPending && <p className={styles.state}>Carregando a auditoria…</p>}
         {events.isError && (
-          <p className={styles.error} role="alert">
+          <p className={`${styles.state} ${styles.error}`} role="alert">
             {events.error.message}
           </p>
         )}
         {events.isSuccess && list.length === 0 && (
-          <p className={styles.muted}>Nenhum evento neste período.</p>
+          <p className={styles.state}>Nenhum evento neste período.</p>
         )}
 
         {list.length > 0 && (
