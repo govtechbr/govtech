@@ -223,6 +223,9 @@ Antes de qualquer mudança, o código foi lido por inteiro e os problemas foram 
 | **E8** | **Status do CI** | Resultado do CI (GitHub Actions ou outro) do último commit de cada PR e da branch principal; 3 alertas (main com CI quebrado, PR mergeado e PR aberto com CI falhando) e o indicador "CI verde no merge". Saiu também o campo de progresso manual, que não tinha regra de cálculo |
 | **E9** | **Histórico do CI** | Execuções do GitHub Actions de 90 dias, com taxa de sucesso e **tempo médio de correção** (DORA). Nasceu de um caso real: a execução #60 falhou e foi corrigida 4 minutos depois, entre duas sincronizações, e a foto do E8 não a registrava |
 
+| **E10** | Direcionadores estratégicos (RF03/RF07 do TCC) | Missão e visão por empresa, objetivos estratégicos e vínculo opcional do projeto a um objetivo (chave composta: nunca de outra empresa). O objetivo mostra o pior status entre os projetos e os alertas que o causam. Auditoria dos objetivos, da missão/visão e do vínculo. Regras S1–S7 |
+| **E11** | Página Processos (objetivo 5 do TCC) | Os 5 critérios do Índice de Governança agrupados por área do CMMI-DEV 1.3 (VER, CM, PMC, MA) e pelos processos da ISO/IEC/IEEE 12207 (base do SPICE). Evidência de apoio, **não** avaliação de maturidade. Regras C1–C6 |
+
 Cada entrega teve suas regras em `docs/REGRAS_DE_NEGOCIO.md`, um plano aprovado, um PR com CI verde e um registro em `docs/PLANO_TECNICO.md` (§16 a §18.8).
 
 ### 5.1 Detalhe: Índice de Governança (E5)

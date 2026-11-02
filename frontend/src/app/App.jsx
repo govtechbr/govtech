@@ -7,6 +7,7 @@ import { createQueryClient } from '@/app/queryClient'
 import {
   AccessRoute,
   OverviewRoute,
+  ProcessesRoute,
   ProjectsRoute,
   RepositoriesRoute,
   SettingsRoute,
@@ -51,6 +52,7 @@ export default function App() {
                 <Route path="/repositories" element={<RepositoriesRoute />} />
                 <Route path="/projects" element={<ProjectsRoute />} />
                 <Route path="/strategy" element={<StrategyRoute />} />
+                <Route path="/processes" element={<ProcessesRoute />} />
                 <Route path="/access" element={<AccessRoute />} />
                 <Route path="/settings" element={<SettingsRoute />} />
               </Route>

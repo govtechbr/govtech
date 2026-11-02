@@ -7,12 +7,13 @@ import { useGovernanceData } from '@/features/dashboard/hooks/useGovernanceData'
 import OverviewPage from '@/features/dashboard/OverviewPage'
 import { useProjects } from '@/features/projects/hooks/useProjects'
 import ProjectsPage from '@/features/projects/ProjectsPage'
+import ProcessesPage from '@/features/processes/ProcessesPage'
 import RbacPage from '@/features/rbac/RbacPage'
 import RepositoriesPage from '@/features/repositories/RepositoriesPage'
 import SettingsPage from '@/features/settings/SettingsPage'
 import { useCurrentOrganization } from '@/shared/hooks/useCurrentOrganization'
 import { emptyGovernance, projectHealth } from '@/shared/lib/governance'
-import { latestScores } from '@/shared/lib/governanceScore'
+import { latestScores, scoreHistory } from '@/shared/lib/governanceScore'
 
 // Adaptadores entre rotas e páginas. Uma feature não importa de outra, então o
 // que vem de outra feature (projetos, sessão, papel) chega às páginas por prop.
@@ -78,6 +79,14 @@ export function StrategyRoute() {
   return (
     <StrategyPage projects={projectList} health={health} canEdit={organization.role === 'admin'} />
   )
+}
+
+// Evidências por área de processo: as notas por critério do índice da empresa (regra C3)
+export function ProcessesRoute() {
+  const governance = useGovernanceData()
+  const components = scoreHistory(governance.data?.scores ?? []).at(-1)?.components ?? {}
+
+  return <ProcessesPage components={components} isLoading={governance.isPending} />
 }
 
 export function RepositoriesRoute() {

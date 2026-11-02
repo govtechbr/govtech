@@ -22,6 +22,7 @@ const routeSections = {
   '/repositories': 'Repositórios',
   '/projects': 'Projetos',
   '/strategy': 'Estratégia',
+  '/processes': 'Processos',
   '/access': 'Acessos e RBAC',
   '/settings': 'Configurações',
 }
