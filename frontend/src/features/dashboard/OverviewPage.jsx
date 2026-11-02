@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Target } from 'lucide-react'
 
 import AutomatedAlerts from '@/features/dashboard/components/AutomatedAlerts'
+import CiHistoryPanel from '@/features/dashboard/components/CiHistoryPanel'
 import GovernanceIndex from '@/features/dashboard/components/GovernanceIndex'
 import ProjectStatusSummary from '@/features/dashboard/components/ProjectStatusSummary'
 import PullRequestDistribution from '@/features/dashboard/components/PullRequestDistribution'
@@ -12,6 +13,7 @@ import { COLORS } from '@/shared/constants/colors'
 import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
 import { formatDuration } from '@/shared/lib/date'
 import {
+  ciIncidents,
   DEFAULT_PERIOD,
   emptyGovernance,
   governanceAlerts,
@@ -183,6 +185,15 @@ export default function OverviewPage({ projectList, governance = emptyGovernance
         <AutomatedAlerts alerts={alerts} />
         <RecentActivityPanel events={metrics.events} days={days} />
       </section>
+
+      <div className={styles.section}>
+        <CiHistoryPanel
+          metrics={metrics}
+          incidents={ciIncidents(governance.ciRuns, days, now)}
+          days={days}
+          hasRuns={(governance.ciRuns ?? []).length > 0}
+        />
+      </div>
     </main>
   )
 }

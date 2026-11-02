@@ -3,7 +3,7 @@ import { formatShortDate, hoursBetween, isWithinDays } from '@/shared/lib/date'
 // Métricas, alertas e status de governança (docs/REGRAS_DE_NEGOCIO.md §5 e §6).
 // Tudo calculado dos dados sincronizados do GitHub e do prazo dos projetos.
 //
-// `data`: { pullRequests, repositories, branches, commits }, como devolve a API
+// `data`: { pullRequests, repositories, branches, commits, ciRuns }, como devolve a API
 // da Visão geral (cada PR e repositório com `projectIds`).
 
 const DAY = 24 * 60 * 60 * 1000
@@ -24,6 +24,7 @@ export const emptyGovernance = {
   repositories: [],
   branches: [],
   commits: [],
+  ciRuns: [],
   scores: [],
 }
 
@@ -45,11 +46,69 @@ function isOpen(pr) {
   return pr.state === 'open' && !pr.draft
 }
 
-export function governanceMetrics({ pullRequests, repositories, branches, commits }, days, now) {
+// Falhas do CI (G11): uma por sequência de execuções falhando no mesmo workflow e
+// branch, até a próxima que passou. Canceladas, puladas e as em andamento não
+// interrompem a sequência. Só as que começaram no período, da mais recente à mais antiga
+export function ciIncidents(ciRuns = [], days, now) {
+  const finished = ciRuns
+    .filter(({ conclusion }) => conclusion === 'success' || conclusion === 'failure')
+    .sort((a, b) => new Date(a.started_at) - new Date(b.started_at))
+  const open = new Map()
+  const incidents = []
+
+  for (const run of finished) {
+    const key = `${run.repositoryName}|${run.workflow_name}|${run.head_branch}`
+    const current = open.get(key)
+
+    if (run.conclusion === 'failure') {
+      if (current) {
+        current.failedRuns += 1
+      } else {
+        const incident = {
+          id: run.id,
+          runNumber: run.run_number,
+          workflow: run.workflow_name,
+          branch: run.head_branch,
+          repositoryName: run.repositoryName,
+          href: run.html_url,
+          startedAt: run.started_at,
+          failedAt: run.completed_at,
+          failedRuns: 1,
+          recoveryHours: null,
+        }
+        open.set(key, incident)
+        incidents.push(incident)
+      }
+    } else if (current) {
+      current.recoveryHours = hoursBetween(current.failedAt, run.completed_at)
+      open.delete(key)
+    }
+  }
+
+  return incidents
+    .filter((incident) => isWithinDays(incident.startedAt, days, now))
+    .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt))
+}
+
+export function governanceMetrics(
+  { pullRequests, repositories, branches, commits, ciRuns = [] },
+  days,
+  now,
+) {
   const createdInPeriod = (pr) => isWithinDays(pr.created_at_github, days, now)
   const merged = pullRequests.filter(
     (pr) => pr.state === 'merged' && isWithinDays(pr.merged_at, days, now),
   )
+  // Execuções do CI no período (G11): só as concluídas com sucesso ou falha
+  const runsInPeriod = ciRuns.filter(
+    (run) =>
+      (run.conclusion === 'success' || run.conclusion === 'failure') &&
+      isWithinDays(run.started_at, days, now),
+  )
+  const recovered = ciIncidents(ciRuns, days, now).filter(
+    ({ recoveryHours }) => recoveryHours !== null,
+  )
+
   // CI verde no merge (G10): só os mergeados que tinham CI
   const mergedWithCi = merged.filter((pr) => pr.ci_state != null)
   const recentCommits = commits.filter((commit) => isWithinDays(commit.committed_at, days, now))
@@ -75,6 +134,15 @@ export function governanceMetrics({ pullRequests, repositories, branches, commit
               100,
           )
         : null,
+    ciRunSuccessRate:
+      runsInPeriod.length > 0
+        ? Math.round(
+            (runsInPeriod.filter((run) => run.conclusion === 'success').length /
+              runsInPeriod.length) *
+              100,
+          )
+        : null,
+    ciRecoveryHours: average(recovered.map(({ recoveryHours }) => recoveryHours)),
     atRiskCount: pullRequests.filter(
       (pr) => isOpen(pr) && ageInDays(pr.created_at_github, now) > OPEN_DANGER_DAYS,
     ).length,

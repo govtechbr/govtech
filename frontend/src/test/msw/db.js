@@ -56,6 +56,8 @@ export function resetDb({ withOrganization = true } = {}) {
   db.pullRequests = []
   db.branches = []
   db.commits = []
+  // Execuções do GitHub Actions (G11)
+  db.ciRuns = []
   // Índice de Governança (gravado pela Edge Function de verdade)
   db.governanceScores = []
   // Assistente: o que a Edge Function simulada recebeu e quantas perguntas restam hoje

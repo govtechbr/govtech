@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  ciIncidents,
   governanceAlerts,
   governanceMetrics,
   projectHealth,
@@ -232,6 +233,128 @@ describe('CI status (rule G10)', () => {
     expect(governanceMetrics(ci, 30, now).ciSuccessRate).toBe(67)
     expect(governanceMetrics(ci, 90, now).ciSuccessRate).toBe(50)
     expect(governanceMetrics(data, 30, now).ciSuccessRate).toBeNull()
+  })
+})
+
+describe('CI run history (rule G11)', () => {
+  const minutesAgo = (minutes) => new Date(now.getTime() - minutes * 60 * 1000).toISOString()
+  function run(overrides) {
+    return {
+      id: `run-${overrides.run_number}`,
+      run_number: overrides.run_number,
+      workflow_name: 'CI',
+      head_branch: 'fix/x',
+      status: 'completed',
+      html_url: `https://github.com/o/app/actions/runs/${overrides.run_number}`,
+      repositoryName: 'app',
+      ...overrides,
+    }
+  }
+  const ciRuns = [
+    // falhou e foi corrigida 4 min depois (o caso #60 → #61)
+    run({
+      run_number: 60,
+      conclusion: 'failure',
+      started_at: minutesAgo(70),
+      completed_at: minutesAgo(69),
+    }),
+    run({
+      run_number: 61,
+      conclusion: 'success',
+      started_at: minutesAgo(66),
+      completed_at: minutesAgo(65),
+    }),
+    // duas falhas seguidas na main contam como uma, ainda sem correção
+    run({
+      run_number: 62,
+      head_branch: 'main',
+      conclusion: 'failure',
+      started_at: minutesAgo(30),
+      completed_at: minutesAgo(29),
+    }),
+    run({
+      run_number: 63,
+      head_branch: 'main',
+      conclusion: 'failure',
+      started_at: minutesAgo(20),
+      completed_at: minutesAgo(19),
+    }),
+    // outro workflow na mesma branch não corrige a falha do CI
+    run({
+      run_number: 64,
+      head_branch: 'main',
+      workflow_name: 'Deploy',
+      conclusion: 'success',
+      started_at: minutesAgo(10),
+      completed_at: minutesAgo(9),
+    }),
+    // cancelada e rodando não contam na taxa
+    run({
+      run_number: 65,
+      conclusion: 'cancelled',
+      started_at: minutesAgo(8),
+      completed_at: minutesAgo(7),
+    }),
+    run({
+      run_number: 66,
+      status: 'in_progress',
+      conclusion: null,
+      started_at: minutesAgo(2),
+      completed_at: null,
+    }),
+    // fora do período de 7 dias
+    run({
+      run_number: 1,
+      conclusion: 'failure',
+      started_at: daysAgo(20),
+      completed_at: daysAgo(20),
+    }),
+    run({
+      run_number: 2,
+      conclusion: 'success',
+      started_at: daysAgo(19),
+      completed_at: daysAgo(19),
+    }),
+  ]
+
+  it('groups consecutive failures of a workflow and branch until the next success', () => {
+    const incidents = ciIncidents(ciRuns, 7, now)
+
+    expect(
+      incidents.map(({ runNumber, branch, failedRuns, recoveryHours }) => ({
+        runNumber,
+        branch,
+        failedRuns,
+        recoveryHours,
+      })),
+    ).toEqual([
+      { runNumber: 62, branch: 'main', failedRuns: 2, recoveryHours: null },
+      { runNumber: 60, branch: 'fix/x', failedRuns: 1, recoveryHours: 4 / 60 },
+    ])
+    expect(incidents[1]).toMatchObject({
+      workflow: 'CI',
+      repositoryName: 'app',
+      href: 'https://github.com/o/app/actions/runs/60',
+    })
+  })
+
+  it('computes the share of successful runs and the mean time to fix', () => {
+    const week = governanceMetrics({ ...data, ciRuns }, 7, now)
+    // concluídas com sucesso ou falha no período: 61, 64 ok; 60, 62, 63 falharam
+    expect(week.ciRunSuccessRate).toBe(40)
+    expect(week.ciRecoveryHours).toBeCloseTo(4 / 60)
+
+    const month = governanceMetrics({ ...data, ciRuns }, 30, now)
+    expect(month.ciRunSuccessRate).toBe(43)
+    expect(month.ciRecoveryHours).toBeCloseTo((4 / 60 + 24) / 2)
+  })
+
+  it('has no CI numbers without runs', () => {
+    const metrics = governanceMetrics(data, 30, now)
+
+    expect(metrics.ciRunSuccessRate).toBeNull()
+    expect(metrics.ciRecoveryHours).toBeNull()
+    expect(ciIncidents(undefined, 30, now)).toEqual([])
   })
 })
 

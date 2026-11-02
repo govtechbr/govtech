@@ -34,6 +34,14 @@ export async function loadGovernanceData(organizationId, now = new Date()) {
       .select('repository_id, author_login, committed_at')
       .eq('organization_id', organizationId)
       .gte('committed_at', since),
+    // Execuções do GitHub Actions (G11): a Edge Function guarda as de 90 dias
+    supabase
+      .from('ci_runs')
+      .select(
+        'id, run_number, workflow_name, head_branch, status, conclusion, html_url, started_at, completed_at, repository:repositories!inner (name)',
+      )
+      .eq('organization_id', organizationId)
+      .gte('started_at', since),
     // Índice de Governança: a Edge Function grava um dia por projeto; a tela mostra 30
     supabase
       .from('governance_scores')
@@ -47,7 +55,7 @@ export async function loadGovernanceData(organizationId, now = new Date()) {
     throw new Error('Não foi possível carregar os dados do GitHub. Tente de novo.')
   }
 
-  const [repositories, pullRequests, branches, commits, scores] = results.map(
+  const [repositories, pullRequests, branches, commits, ciRuns, scores] = results.map(
     (result) => result.data,
   )
 
@@ -63,6 +71,7 @@ export async function loadGovernanceData(organizationId, now = new Date()) {
     })),
     branches,
     commits,
+    ciRuns: ciRuns.map(({ repository, ...run }) => ({ ...run, repositoryName: repository.name })),
     scores,
   }
 }

@@ -23,6 +23,7 @@ export function timeAgo(value, now = new Date()) {
 // Duração em horas → "5 h" ou "2,5 dias"
 export function formatDuration(hours) {
   if (hours === null || hours === undefined) return '—'
+  if (hours < 1) return `${Math.max(1, Math.round(hours * 60))} min`
   if (hours < 24) return `${Math.max(1, Math.round(hours))} h`
 
   const days = Math.round((hours / 24) * 10) / 10

@@ -54,6 +54,9 @@ describe('date helpers', () => {
 
   it('formats a duration in hours or days', () => {
     expect(formatDuration(5.4)).toBe('5 h')
+    // menos de 1 hora vira minutos (tempo de correção do CI, G11)
+    expect(formatDuration(4 / 60)).toBe('4 min')
+    expect(formatDuration(0.001)).toBe('1 min')
     expect(formatDuration(60)).toBe('2,5 dias')
     expect(formatDuration(null)).toBe('—')
   })
