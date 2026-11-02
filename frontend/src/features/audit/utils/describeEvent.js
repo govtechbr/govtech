@@ -11,6 +11,10 @@ const FIELD_LABELS = {
   owner: 'responsável',
   priority: 'prioridade',
   progress: 'progresso',
+  objective: 'objetivo estratégico',
+  title: 'título',
+  mission: 'missão',
+  vision: 'visão',
 }
 
 const role = (value) => ROLE_LABELS[value] ?? value
@@ -21,7 +25,7 @@ function fieldValue(field, value) {
   if (field === 'deadline') return formatIsoDay(value)
   if (field === 'priority') return PRIORITY_LABELS[value] ?? value
   if (field === 'progress') return `${value}%`
-  if (field === 'description') return 'texto novo'
+  if (field === 'description' || field === 'mission' || field === 'vision') return 'texto novo'
   return `"${value}"`
 }
 
@@ -30,8 +34,8 @@ function describeChanges(details) {
   return Object.entries(details)
     .filter(([field]) => FIELD_LABELS[field])
     .map(([field, { from, to }]) =>
-      field === 'description'
-        ? 'descrição alterada'
+      ['description', 'mission', 'vision'].includes(field)
+        ? `${FIELD_LABELS[field]} alterada`
         : `${FIELD_LABELS[field]} de ${fieldValue(field, from)} para ${fieldValue(field, to)}`,
     )
     .join('; ')
@@ -71,6 +75,12 @@ const describers = {
   'organization.renamed': (event) =>
     `Renomeou a empresa de "${event.details.from}" para "${event.details.to}"`,
   'organization.join_code_regenerated': () => 'Gerou um novo código de convite',
+  'organization.strategy_updated': (event) =>
+    `Alterou a missão e a visão da empresa: ${describeChanges(event.details)}`,
+  'objective.created': () => 'Criou o objetivo estratégico',
+  'objective.updated': (event) =>
+    `Alterou o objetivo estratégico: ${describeChanges(event.details)}`,
+  'objective.deleted': () => 'Excluiu o objetivo estratégico',
   'github.connected': (event) =>
     `Conectou a chave do GitHub de ${event.details.githubLogin} (final ${event.details.tokenLast4})`,
   'github.disconnected': () => 'Removeu a chave do GitHub',

@@ -18,6 +18,25 @@ function event(action, details = {}, overrides = {}) {
 }
 
 describe('describeEvent', () => {
+  it('describes the strategic objectives events (rule S7)', () => {
+    expect(describeEvent(event('objective.created')).what).toBe('Criou o objetivo estratégico')
+    expect(describeEvent(event('objective.deleted')).what).toBe('Excluiu o objetivo estratégico')
+    expect(describeEvent(event('objective.updated', { title: { from: 'A', to: 'B' } })).what).toBe(
+      'Alterou o objetivo estratégico: título de "A" para "B"',
+    )
+    expect(eventType(event('objective.created'))).toBe('objective')
+  })
+
+  it('shows the objective link and the mission change (rule S7)', () => {
+    expect(
+      describeEvent(event('project.updated', { objective: { from: null, to: 'Crescer' } })).what,
+    ).toBe('Alterou o projeto: objetivo estratégico de vazio para "Crescer"')
+    expect(
+      describeEvent(event('organization.strategy_updated', { mission: { from: '', to: 'X' } }))
+        .what,
+    ).toBe('Alterou a missão e a visão da empresa: missão alterada')
+  })
+
   it('says who did what, and where (rules AU1, AU2)', () => {
     expect(describeEvent(event('project.created'))).toEqual({
       who: 'Alice Souza (admin)',

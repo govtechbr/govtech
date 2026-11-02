@@ -13,6 +13,7 @@ describe('normalizeProject', () => {
       deadline: '',
       owner: 'Não definido',
       priority: 'medium',
+      objectiveId: '',
     })
   })
 

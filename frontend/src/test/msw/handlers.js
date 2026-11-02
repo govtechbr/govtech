@@ -531,4 +531,77 @@ export const handlers = [
       deleted.map((project) => ({ id: project.id })),
     )
   }),
+
+  // Missão e visão (E10): colunas da organização
+  http.get(rest('organizations'), ({ request }) => {
+    const id = eqParam(request, 'id')
+
+    return rows(
+      request,
+      db.organizations.filter((organization) => organization.id === id),
+    )
+  }),
+
+  http.patch(rest('organizations'), async ({ request }) => {
+    const id = eqParam(request, 'id')
+    const caller = callerId(request)
+
+    // Igual ao RLS: só o admin altera; quem não pode recebe lista vazia
+    if (memberOf(id, caller)?.role !== 'admin') return rows(request, [])
+
+    Object.assign(
+      db.organizations.find((organization) => organization.id === id),
+      await request.json(),
+    )
+    return rows(
+      request,
+      db.organizations.filter((organization) => organization.id === id),
+    )
+  }),
+
+  // Objetivos estratégicos (E10)
+  http.get(rest('strategic_objectives'), ({ request }) =>
+    rows(request, byOrganizationParam(request, db.objectives)),
+  ),
+
+  http.post(rest('strategic_objectives'), async ({ request }) => {
+    const body = await request.json()
+
+    if (memberOf(body.organization_id, callerId(request))?.role !== 'admin') {
+      return HttpResponse.json({ code: '42501', message: 'RLS' }, { status: 403 })
+    }
+
+    const objective = { id: crypto.randomUUID(), description: '', ...body }
+
+    db.objectives.push(objective)
+    return rows(request, [objective], 201)
+  }),
+
+  http.patch(rest('strategic_objectives'), async ({ request }) => {
+    const id = eqParam(request, 'id')
+    const target = db.objectives.find((objective) => objective.id === id)
+
+    if (!target || memberOf(target.organization_id, callerId(request))?.role !== 'admin') {
+      return rows(request, [])
+    }
+
+    Object.assign(target, await request.json())
+    return rows(request, [target])
+  }),
+
+  http.delete(rest('strategic_objectives'), ({ request }) => {
+    const id = eqParam(request, 'id')
+    const target = db.objectives.find((objective) => objective.id === id)
+
+    if (!target || memberOf(target.organization_id, callerId(request))?.role !== 'admin') {
+      return rows(request, [])
+    }
+
+    db.objectives = db.objectives.filter((objective) => objective.id !== id)
+    // Igual ao banco: excluir o objetivo desfaz o vínculo dos projetos
+    db.projects = db.projects.map((project) =>
+      project.objective_id === id ? { ...project, objective_id: null } : project,
+    )
+    return rows(request, [{ id }])
+  }),
 ]

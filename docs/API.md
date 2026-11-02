@@ -109,6 +109,7 @@ Endereço: `/rest/v1/<tabela>`. Todas pertencem a uma organização (`organizati
 | `governance_scores` | membros | — | — | — | Índice de Governança: uma linha por projeto e por dia (§6.6) |
 | `assistant_usage` | — | — | — | — | Perguntas ao assistente por pessoa e por dia (§6.7). Sem acesso pelo front |
 | `audit_events` | admin e stakeholder | — | — | — | Trilha de auditoria (§6.8). Gravada só pelo banco: triggers em `projects`, `organization_members` e `organizations`, e `audit_record` pela Edge Function. Imutável, nem a chave de serviço altera |
+| `strategic_objectives` | membros | admin | admin | admin | Objetivos estratégicos da empresa (regras S2–S3). Colunas: `title`, `description`. Auditoria: `objective.created`, `objective.updated`, `objective.deleted` |
 
 As tabelas do GitHub são **somente leitura** para o usuário: não têm policy de escrita. Só a Edge Function grava nelas, com a chave de serviço, **depois** de conferir o papel de quem chamou.
 
@@ -333,6 +334,7 @@ Cada feature tem sua pasta `api/`. Os hooks (TanStack Query) chamam essas funç�
 | `features/repositories/api/repositoriesApi.js` | `listRepositoryData` | `repositories`, `pull_requests`, `branches` |
 | `features/dashboard/api/governanceApi.js` | `loadGovernanceData` | `repositories`, `pull_requests`, `branches`, `commits`, `governance_scores` |
 | `features/assistant/api/assistantApi.js` | `askAssistant` | Edge Function `assistant` |
+| `features/strategy/api/strategyApi.js` | `getMissionAndVision`, `saveMissionAndVision`, `listObjectives`, `createObjective`, `updateObjective`, `deleteObjective` | `organizations` (colunas `mission` e `vision`, só o admin altera) e `strategic_objectives` |
 | `features/audit/api/auditApi.js` | `listAuditEvents`, `listAllAuditEvents`, `countAuditEvents` | `audit_events` |
 
 Chaves de cache do TanStack Query: `['projects', orgId]`, `['members', orgId]`, `['repository-data', orgId, projectId | 'all']`, `['governance', orgId]`. Todas incluem a empresa, para os dados de duas empresas nunca se misturarem.

@@ -23,5 +23,7 @@ export function normalizeProject(project, index = 0) {
     owner:
       typeof project?.owner === 'string' && project.owner.trim() ? project.owner : 'Não definido',
     priority: validPriorities.includes(project?.priority) ? project.priority : 'medium',
+    // Objetivo estratégico a que o projeto serve (regra S3); vazio = sem vínculo
+    objectiveId: typeof project?.objectiveId === 'string' ? project.objectiveId : '',
   }
 }

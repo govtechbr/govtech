@@ -38,6 +38,11 @@ const menuItems = [
     icon: 'Target',
     path: '/projects',
   },
+  {
+    label: 'Estratégia',
+    icon: 'Flag',
+    path: '/strategy',
+  },
 ]
 
 const adminItems = [

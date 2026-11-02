@@ -10,6 +10,7 @@ import {
   ProjectsRoute,
   RepositoriesRoute,
   SettingsRoute,
+  StrategyRoute,
 } from '@/app/routes'
 import AuditPage from '@/features/audit/AuditPage'
 import AuthProvider from '@/features/auth/AuthProvider'
@@ -49,6 +50,7 @@ export default function App() {
                 <Route path="/audit" element={<AuditPage />} />
                 <Route path="/repositories" element={<RepositoriesRoute />} />
                 <Route path="/projects" element={<ProjectsRoute />} />
+                <Route path="/strategy" element={<StrategyRoute />} />
                 <Route path="/access" element={<AccessRoute />} />
                 <Route path="/settings" element={<SettingsRoute />} />
               </Route>
