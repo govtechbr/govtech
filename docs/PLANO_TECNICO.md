@@ -1243,3 +1243,13 @@ Uma função com três ações. Todas conferem o login (JWT) e o papel do usuár
 - **Decisões na implementação:** "mergeado sem aprovação" olha os últimos 30 dias fixos (o status não muda com o período da tela); o gráfico mostra pelo menos 4 semanas; projeto sem prazo não gera alerta (o semáforo antigo dava "Atenção").
 - **Mocks que saíram da Visão geral:** cartões com valores fixos, gráfico semanal, distribuição de PRs, alertas e eventos de desenvolvimento. Componentes reescritos sem `style={{}}` (só a altura das barras do gráfico vai por variável CSS, por ser dado).
 - **Testes:** 10 da lógica (`governance.test.js`), 5 da Visão geral, 1 de ponta a ponta (MSW → API → tela) e os de Projetos atualizados. **103 testes**, lint e build verdes.
+
+**E5: Índice de Governança (0–100) com histórico** (regras I1–I6; 02/11/2026; migration `governance_scores`)
+
+- **Por quê:** primeiro item do pacote de diferenciais para a banca. Transforma os alertas em um número com evolução diária ("a governança subiu de 58 para 74").
+- **Pesos** (aprovados pelo dono): revisão de código 30, fluxo de PRs 20, prazo 20, proteção da branch 15, lead time 15. Critério sem dado sai da conta e os pesos são reescalados. Faixas: Bom ≥ 80, Regular 60–79, Crítico < 60.
+- **Onde está o cálculo:** **só no back-end**, em `functions/github/score.js` (puro, com 13 testes `node --test`). A Edge Function grava uma linha por projeto e por dia (fuso de MS) em `governance_scores`, depois de cada sincronização. Motivos: uma fonte de verdade, histórico sem depender de alguém abrir o app e o front não grava métrica. Efeito colateral aceito: mudar o prazo só reflete no índice na apuração seguinte (a tela mostra "apurado às HH:MM").
+- **Reconstrução (I6):** na primeira apuração, os 30 dias anteriores são recalculados pelas datas dos PRs, a partir do primeiro PR do projeto. A primeira versão começava 30 dias antes mesmo sem atividade e mostrava 73 estável em dias sem PR; corrigido com teste.
+- **Banco:** tabela `governance_scores` (PK projeto + dia), RLS de leitura para membros, sem escrita pelo front; 6 testes pgTAP.
+- **Tela:** card no topo da Visão geral (nota, faixa com ícone, variação em 7 dias, linha de 30 dias em SVG com cursor, teclado e tabela para leitor de tela, critérios com peso, explicação). Em Projetos, o índice no cartão e os critérios no detalhe (`shared/ui/ScoreBreakdown.jsx`).
+- **Testes:** 6 das funções do front (`governanceScore.test.js`), 4 da Visão geral, 1 de Projetos e 1 de ponta a ponta. **115 testes**, lint e build verdes.

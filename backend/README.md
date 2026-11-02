@@ -29,8 +29,9 @@ Conecta a chave do GitHub de um projeto, lista o que ela enxerga, salva os repos
 
 - `functions/github/index.js`: entrada (Deno). Confere o login e o papel do usuário **no banco** antes de agir; usa a chave de serviço (variável de ambiente do Supabase, nunca no front) só para o Vault e para gravar os dados.
 - `functions/github/github.js`: conversa com a API do GitHub e converte as respostas. Sem dependência do Deno.
-- Testes: `node --test backend/supabase/functions/github/github.test.js` (rodam no CI).
-- Publicação: pelo MCP do Supabase (`deploy_edge_function`), com aprovação. Versão atual: 3 (04/11/2026: PRs com aprovações pela API GraphQL, commits e ação `sync-all`).
+- `functions/github/score.js`: cálculo do **Índice de Governança** (regras I1–I6), puro. Depois de cada sincronização (manual ou do agendador), a função grava a nota do dia em `governance_scores`; na primeira apuração de um projeto, recalcula os dias anteriores desde o primeiro PR.
+- Testes: `node --test "backend/supabase/functions/github/*.test.js"` (rodam no CI).
+- Publicação: pelo MCP do Supabase (`deploy_edge_function`), com aprovação. Versão 3 (04/11/2026): PRs com aprovações pela API GraphQL, commits e ação `sync-all`. Versão 4 (02/11/2026): Índice de Governança. A correção da reconstrução (só a partir do primeiro PR, commit `a50153e`) aguarda publicação.
 - **`verify_jwt` desligado desde a versão 3:** o agendador (pg_cron) chama sem login, com a senha `github_cron_secret` do Vault no cabeçalho `x-cron-secret`. As outras ações conferem o login dentro da função (`auth.getUser`), como antes.
 - **Agendamento:** job `github-sync-hourly` (`7 * * * *`) no pg_cron, criado pela migration `github_sync_hourly`. Ver os últimos disparos: `select * from cron.job_run_details order by start_time desc limit 5;` e as respostas em `net._http_response`.
 
@@ -54,6 +55,7 @@ python scripts/to_sql_editor.py tests/*.test.sql todos.editor.sql   # ou só um 
 | `github.test.sql` | 15 | 15/15 ok (03/11/2026) |
 | `repository_selection.test.sql` | 11 | 11/11 ok (03/11/2026) |
 | `github_sync.test.sql` | 9 | a rodar (04/11/2026) |
+| `governance_scores.test.sql` | 6 | a rodar (02/11/2026) |
 
 Depois de cada execução, o banco é conferido pelo MCP: nenhum usuário `@test.local` nem a extensão `pgtap` ficam para trás.
 

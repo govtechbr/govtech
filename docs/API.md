@@ -1,6 +1,6 @@
 # API do GovTech MS
 
-Como o front-end conversa com o back-end: quais endereços existem, quem pode chamar cada um, o que entra e o que sai. Estado de E4 (Visão geral com dados reais).
+Como o front-end conversa com o back-end: quais endereços existem, quem pode chamar cada um, o que entra e o que sai. Estado de E5 (Índice de Governança).
 
 > **Resumo:** não existe um servidor próprio. A API é o **Supabase**: o banco Postgres fica exposto como API REST, e as regras de acesso ficam **no banco** (RLS). Só o que não pode rodar no navegador (falar com o GitHub usando a chave do cliente) fica numa **Edge Function**.
 
@@ -101,6 +101,7 @@ Endereço: `/rest/v1/<tabela>`. Todas pertencem a uma organização (`organizati
 | `pull_requests` | membros | — | — | — | Os 100 mais recentes de cada repositório |
 | `branches` | membros | — | — | — | Até 100 por repositório |
 | `commits` | membros | — | — | — | Branch principal, últimos 90 dias |
+| `governance_scores` | membros | — | — | — | Índice de Governança: uma linha por projeto e por dia (§6.6) |
 
 As tabelas do GitHub são **somente leitura** para o usuário: não têm policy de escrita. Só a Edge Function grava nelas, com a chave de serviço, **depois** de conferir o papel de quem chamou.
 
@@ -179,6 +180,7 @@ Detalhes:
 - **`select`** só aceita repositórios que a chave enxerga. Os desmarcados saem do projeto; se nenhum outro projeto da empresa usa o repositório, ele e seus dados são apagados (regra G5).
 - **`sync`** busca os dados atuais, grava os novos e **apaga o que não veio mais** do GitHub (PR, branch ou commit que sumiu, ou commit com mais de 90 dias). Ao terminar, grava `last_synced_at` e limpa `last_sync_error`.
 - **`unavailableCount`**: repositórios escolhidos que a chave deixou de enxergar (ex.: permissão retirada no GitHub).
+- Depois de `sync` e `select`, a função também apura o **Índice de Governança** do projeto (§6.6).
 
 ### 6.3 Sincronização automática (`sync-all`)
 
@@ -198,6 +200,14 @@ Por repositório escolhido, em paralelo:
 | Commits da branch principal | `GET /repos/{dono}/{repo}/commits?since=<90 dias>` | 3 páginas (300) |
 
 Repositório vazio (GitHub responde 409) conta como "sem commits", não como erro.
+
+### 6.6 Índice de Governança
+
+- Calculado em `functions/github/score.js` (regras I1–I6 de `REGRAS_DE_NEGOCIO.md` §5.1) e gravado em `governance_scores`: uma linha por projeto e por dia, no fuso de MS, com a nota (`score`, 0–100 ou null) e a nota de cada critério (`components`).
+- Apurado depois de cada `sync`/`select` (só o projeto da ação) e no fim de cada `sync-all` (todos os projetos, inclusive os sem GitHub, por causa do prazo). Vale a última apuração do dia.
+- Na primeira apuração de um projeto, os dias anteriores (até 30) são recalculados pelas datas dos PRs, a partir do primeiro PR, e marcados `reconstructed`.
+- Uma falha no índice não derruba a sincronização: vai só para o log da função.
+- O front lê com `loadGovernanceData` (últimos 31 dias) e só organiza para a tela (`shared/lib/governanceScore.js`).
 
 ### 6.5 Erros
 
@@ -247,7 +257,7 @@ Cada feature tem sua pasta `api/`. Os hooks (TanStack Query) chamam essas funç�
 | `features/projects/api/githubApi.js` | `connectGitHub`, `listAvailableRepositories`, `selectRepositories`, `syncGitHub`, `disconnectGitHub`, `getGitHubConnection` | Edge Function, `github_credentials`, `project_repositories` |
 | `features/rbac/api/membersApi.js` | `listMembers`, `updateMemberRole`, `removeMember`, `regenerateJoinCode` | `organization_members`, `profiles`, RPC |
 | `features/repositories/api/repositoriesApi.js` | `listRepositoryData` | `repositories`, `pull_requests`, `branches` |
-| `features/dashboard/api/governanceApi.js` | `loadGovernanceData` | `repositories`, `pull_requests`, `branches`, `commits` |
+| `features/dashboard/api/governanceApi.js` | `loadGovernanceData` | `repositories`, `pull_requests`, `branches`, `commits`, `governance_scores` |
 
 Chaves de cache do TanStack Query: `['projects', orgId]`, `['members', orgId]`, `['repository-data', orgId, projectId | 'all']`, `['governance', orgId]`. Todas incluem a empresa, para os dados de duas empresas nunca se misturarem.
 
@@ -273,7 +283,7 @@ As funções de `api/` transformam o erro técnico numa mensagem em pt-BR antes 
 | O quê | Onde | Ferramenta |
 |---|---|---|
 | Policies de RLS (positivo e negativo para cada papel), RPCs, triggers | `backend/supabase/tests/*.test.sql` | pgTAP (`npx supabase test db`) |
-| Conversão dos dados do GitHub e mensagens de erro | `backend/supabase/functions/github/github.test.js` | `node --test` (roda no CI) |
+| Conversão dos dados do GitHub, mensagens de erro e cálculo do índice | `backend/supabase/functions/github/*.test.js` | `node --test` (roda no CI) |
 | Camada `api/` do front e telas | `frontend/src/**/__tests__` | Vitest + MSW, que simula o Supabase e a Edge Function (`src/test/msw`) |
 
 ---
