@@ -292,6 +292,30 @@
   overflow-wrap: anywhere;
 }
 
+.alertReason {
+  margin: var(--space-1) 0 0;
+  color: var(--text);
+}
+
+.alertToggle {
+  margin-top: var(--space-3);
+}
+
+/* 5 números em destaque: o quinto ocupa a linha até caber em 5 colunas */
+.metrics > :last-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 1280px) {
+  .metrics {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .metrics > :last-child {
+    grid-column: auto;
+  }
+}
+
 .statusDot {
   width: 12px;
   height: 12px;
@@ -320,10 +344,6 @@
   font-size: var(--font-size-sm);
 }
 
-.progress {
-  grid-column: 2;
-}
-
 .bottomGrid {
   display: grid;
   gap: var(--space-6);
@@ -332,11 +352,10 @@
 
 @media (min-width: 768px) {
   .projectRow {
-    grid-template-columns: auto minmax(0, 1fr) minmax(130px, auto) 70px;
+    grid-template-columns: auto minmax(0, 1fr) minmax(130px, auto);
   }
 
-  .deadline,
-  .progress {
+  .deadline {
     grid-column: auto;
     text-align: right;
   }

@@ -8,9 +8,9 @@ const now = new Date('2026-11-10T12:00:00Z')
 const daysAgo = (days) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString()
 
 const projectList = [
-  { id: 'p1', name: 'Portal', deadline: '2026-12-31', owner: 'Ana', progress: 10 },
-  { id: 'p2', name: 'Folha', deadline: '2026-11-08', owner: 'Bruno', progress: 50 },
-  { id: 'p3', name: 'Ouvidoria', deadline: '2026-11-14', owner: 'Carla', progress: 80 },
+  { id: 'p1', name: 'Portal', deadline: '2026-12-31', owner: 'Ana' },
+  { id: 'p2', name: 'Folha', deadline: '2026-11-08', owner: 'Bruno' },
+  { id: 'p3', name: 'Ouvidoria', deadline: '2026-11-14', owner: 'Carla' },
 ]
 
 function pr(overrides) {
@@ -47,7 +47,7 @@ const governance = {
   commits: [{ repository_id: 'r1', author_login: 'ana', committed_at: daysAgo(2) }],
   pullRequests: [
     // 2 dias da abertura ao merge, com aprovação
-    pr({ number: 1, created_at_github: daysAgo(6), merged_at: daysAgo(4) }),
+    pr({ number: 1, created_at_github: daysAgo(6), merged_at: daysAgo(4), ci_state: 'success' }),
     // 1 dia, sem aprovação, há 20 dias (fora do período de 7)
     pr({ number: 2, created_at_github: daysAgo(21), merged_at: daysAgo(20), approval_count: 0 }),
     pr({ number: 3, state: 'open', created_at_github: daysAgo(5), merged_at: null }),
@@ -89,6 +89,19 @@ describe('OverviewPage', () => {
     expect(card('Lead time médio')).toHaveTextContent('1,5 dias')
     expect(card('Taxa de aprovação')).toHaveTextContent('50%')
     expect(card('PRs em risco')).toHaveTextContent('1')
+    expect(card('CI verde no merge')).toHaveTextContent('100%')
+  })
+
+  it('says when no merged PR of the period has CI', async () => {
+    renderOverview({
+      governance: {
+        ...governance,
+        pullRequests: governance.pullRequests.map((item) => ({ ...item, ci_state: null })),
+      },
+    })
+
+    expect(card('CI verde no merge')).toHaveTextContent('—')
+    expect(card('CI verde no merge')).toHaveTextContent('Nenhum PR mergeado com CI')
   })
 
   it('recomputes the numbers when the period changes', async () => {
@@ -122,7 +135,7 @@ describe('OverviewPage', () => {
     ).toHaveAccessibleDescription(/O status vem dos alertas automáticos/)
   })
 
-  it('lists the automated alerts, the most serious first', () => {
+  it('lists the automated alerts, the most critical first, with the reason', () => {
     renderOverview()
 
     const alerts = within(
@@ -130,15 +143,32 @@ describe('OverviewPage', () => {
     ).getAllByRole('listitem')
 
     expect(alerts.map((item) => item.querySelector('strong').textContent)).toEqual([
-      'Risco: PR aberto há 5 dias',
       'Risco: Prazo vencido',
+      'Risco: PR aberto há 5 dias',
       'Atenção: PR mergeado sem aprovação',
       'Atenção: Prazo perto do fim',
     ])
-    expect(within(alerts[0]).getByRole('link', { name: '#3 · app · PR 3' })).toHaveAttribute(
+    expect(within(alerts[1]).getByRole('link', { name: '#3 · app · PR 3' })).toHaveAttribute(
       'href',
       'https://github.com/o/app/pull/3',
     )
+    expect(alerts[2]).toHaveTextContent(/sem nenhuma revisão aprovada/)
+  })
+
+  it('shows every alert on demand instead of hiding the extra ones', async () => {
+    const stale = Array.from({ length: 10 }, (_, index) =>
+      pr({ number: 10 + index, state: 'open', created_at_github: daysAgo(2), merged_at: null }),
+    )
+    const { user } = renderOverview({ governance: { ...governance, pullRequests: stale } })
+    const panel = screen.getByRole('heading', { name: 'Alertas Automatizados' }).closest('section')
+
+    expect(within(panel).getAllByRole('listitem')).toHaveLength(8)
+
+    await user.click(within(panel).getByRole('button', { name: 'Ver todos os 12 alertas' }))
+    expect(within(panel).getAllByRole('listitem')).toHaveLength(12)
+
+    await user.click(within(panel).getByRole('button', { name: 'Mostrar menos' }))
+    expect(within(panel).getAllByRole('listitem')).toHaveLength(8)
   })
 
   it('tells the user to connect GitHub when nothing is synced', () => {

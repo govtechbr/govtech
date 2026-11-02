@@ -50,6 +50,8 @@ export function governanceMetrics({ pullRequests, repositories, branches, commit
   const merged = pullRequests.filter(
     (pr) => pr.state === 'merged' && isWithinDays(pr.merged_at, days, now),
   )
+  // CI verde no merge (G10): só os mergeados que tinham CI
+  const mergedWithCi = merged.filter((pr) => pr.ci_state != null)
   const recentCommits = commits.filter((commit) => isWithinDays(commit.committed_at, days, now))
   const contributors = new Set(
     [
@@ -65,6 +67,13 @@ export function governanceMetrics({ pullRequests, repositories, branches, commit
     approvalRate:
       merged.length > 0
         ? Math.round((merged.filter((pr) => pr.approval_count > 0).length / merged.length) * 100)
+        : null,
+    ciSuccessRate:
+      mergedWithCi.length > 0
+        ? Math.round(
+            (mergedWithCi.filter((pr) => pr.ci_state === 'success').length / mergedWithCi.length) *
+              100,
+          )
         : null,
     atRiskCount: pullRequests.filter(
       (pr) => isOpen(pr) && ageInDays(pr.created_at_github, now) > OPEN_DANGER_DAYS,
@@ -117,6 +126,23 @@ function daysUntil(deadline, now) {
   return Math.round((due.getTime() - today.getTime()) / DAY)
 }
 
+// Por que cada alerta importa (§6), mostrado junto do alerta
+const REASONS = {
+  ciMain: 'A versão atual da branch principal não passa nos testes automáticos.',
+  ciMerged: 'Entrou na branch principal código que não passou nos testes automáticos.',
+  ciOpen: 'O PR precisa de correção antes de ser revisado e mergeado.',
+  branch:
+    'Sem proteção, qualquer pessoa com acesso pode fazer push direto na branch principal ou reescrever o histórico, sem PR nem revisão.',
+  unapproved:
+    'Entrou na branch principal sem nenhuma revisão aprovada: o código não passou pelo controle de revisão.',
+  deadlineOverdue: 'O prazo passou: replaneje a entrega ou registre a nova data.',
+  deadlineSoon: 'Faltam poucos dias: confira se o que falta cabe no prazo.',
+  open: 'PR parado acumula conflitos e atrasa a entrega: revise, peça mudanças ou feche.',
+}
+
+// Dentro do mesmo nível, os riscos estruturais primeiro (§6)
+const KIND_ORDER = ['ciMain', 'branch', 'ciMerged', 'unapproved', 'deadline', 'ciOpen', 'open']
+
 function pullRequestDetail(pr) {
   return `#${pr.number} · ${pr.repositoryName} · ${pr.title}`
 }
@@ -130,9 +156,30 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
     if (age > OPEN_WARNING_DAYS) {
       alerts.push({
         id: `pr-open-${pr.id}`,
+        kind: 'open',
         level: age > OPEN_DANGER_DAYS ? 'danger' : 'warning',
         title: `PR aberto há ${plural(Math.floor(age), 'dia', 'dias')}`,
         detail: pullRequestDetail(pr),
+        reason: REASONS.open,
+        href: pr.html_url,
+        projectIds: pr.projectIds,
+      })
+    }
+  }
+
+  // CI (G10): o estado do último commit na hora da sincronização
+  for (const pr of pullRequests) {
+    const recentMerge =
+      pr.state === 'merged' && isWithinDays(pr.merged_at, UNAPPROVED_WINDOW_DAYS, now)
+
+    if (pr.ci_state === 'failure' && (isOpen(pr) || recentMerge)) {
+      alerts.push({
+        id: `pr-ci-${pr.id}`,
+        kind: isOpen(pr) ? 'ciOpen' : 'ciMerged',
+        level: isOpen(pr) ? 'warning' : 'danger',
+        title: isOpen(pr) ? 'PR com CI falhando' : 'PR mergeado com CI falhando',
+        detail: pullRequestDetail(pr),
+        reason: isOpen(pr) ? REASONS.ciOpen : REASONS.ciMerged,
         href: pr.html_url,
         projectIds: pr.projectIds,
       })
@@ -147,9 +194,11 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
     ) {
       alerts.push({
         id: `pr-unapproved-${pr.id}`,
+        kind: 'unapproved',
         level: 'warning',
         title: 'PR mergeado sem aprovação',
         detail: pullRequestDetail(pr),
+        reason: REASONS.unapproved,
         href: pr.html_url,
         projectIds: pr.projectIds,
       })
@@ -162,12 +211,26 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
         branch.repository_id === repository.id && branch.name === repository.default_branch,
     )
 
+    if (repository.ci_state === 'failure') {
+      alerts.push({
+        id: `ci-main-${repository.id}`,
+        kind: 'ciMain',
+        level: 'danger',
+        title: 'CI falhando na branch principal',
+        detail: `${repository.name} · ${repository.default_branch}`,
+        reason: REASONS.ciMain,
+        projectIds: repository.projectIds,
+      })
+    }
+
     if (main && !main.protected) {
       alerts.push({
         id: `branch-${repository.id}`,
+        kind: 'branch',
         level: 'warning',
         title: 'Branch principal sem proteção',
         detail: `${repository.name} · ${main.name}`,
+        reason: REASONS.branch,
         projectIds: repository.projectIds,
       })
     }
@@ -179,27 +242,29 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
     if (days !== null && days < 0) {
       alerts.push({
         id: `deadline-${project.id}`,
+        kind: 'deadline',
         level: 'danger',
         title: 'Prazo vencido',
         detail: `${project.name} · venceu há ${plural(-days, 'dia', 'dias')}`,
+        reason: REASONS.deadlineOverdue,
         projectIds: [project.id],
       })
     } else if (days !== null && days <= DEADLINE_WARNING_DAYS) {
       alerts.push({
         id: `deadline-${project.id}`,
+        kind: 'deadline',
         level: 'warning',
         title: 'Prazo perto do fim',
         detail: `${project.name} · ${days === 0 ? 'vence hoje' : `vence em ${plural(days, 'dia', 'dias')}`}`,
+        reason: REASONS.deadlineSoon,
         projectIds: [project.id],
       })
     }
   }
 
-  // Risco antes de Atenção; dentro de cada nível, a ordem acima
-  return [
-    ...alerts.filter(({ level }) => level === 'danger'),
-    ...alerts.filter(({ level }) => level === 'warning'),
-  ]
+  // Risco antes de Atenção; dentro de cada nível, KIND_ORDER (sort é estável)
+  const rank = ({ level, kind }) => (level === 'danger' ? 0 : 1) * 10 + KIND_ORDER.indexOf(kind)
+  return alerts.sort((a, b) => rank(a) - rank(b))
 }
 
 // Status do projeto (P3): Risco se tiver alerta de Risco; senão Atenção se tiver

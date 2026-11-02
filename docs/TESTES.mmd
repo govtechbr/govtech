@@ -67,7 +67,7 @@ flowchart TB
     subgraph U_NP["projectUtils · normalizeProject"]
       U7["nome vazio/espaços → 'Projeto sem nome'"]:::p0
       U8["priority inválida → medium"]:::p0
-      U9["progress: -5→0, 150→100, 'abc'→0, '42'→42"]:::p0
+      U9["progress removido (P2): normalizeProject não devolve o campo"]:::p0
       U10["repositories filtra não-strings; não-array → []"]:::p0
       U11["id ausente → gera id; null/undefined não quebram"]:::p0
     end
@@ -102,7 +102,7 @@ flowchart TB
     end
 
     subgraph U_ZOD["Validação — zod"]
-      U29["schema de projeto: nome 1–120, progress 0–100, prazo ISO"]:::p1
+      U29["schema de projeto: nome 1–120, prazo ISO"]:::p1
     end
   end
 
@@ -124,7 +124,7 @@ flowchart TB
     subgraph I_PRJ["Projetos — fluxo crítico"]
       I8["lista renderiza cards a partir da API"]:::p0
       I9["criar: preencher form → salvar → card aparece + toast"]:::p0
-      I10["validação: nome vazio bloqueia, progress fora de 0–100"]:::p0
+      I10["validação: nome vazio bloqueia, sem campo de progresso"]:::p0
       I11["editar: abre preenchido → salva → card atualizado"]:::p0
       I12["excluir: confirmação → some da lista; cancelar mantém"]:::p0
       I13["contadores 'Em atenção' e 'Riscos críticos' batem com o status derivado"]:::p0

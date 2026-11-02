@@ -309,7 +309,7 @@ export default function LandingPage() {
               <ul className="capability-list">
                 <li>
                   <Check size={14} />
-                  Indicadores de progresso
+                  Índice de Governança por projeto
                 </li>
                 <li>
                   <Check size={14} />
@@ -523,8 +523,8 @@ export default function LandingPage() {
             <div className="governance-card-body">
               <div className="governance-metric">
                 <div className="metric-label">
-                  <span>Progresso do projeto</span>
-                  <strong>78%</strong>
+                  <span>Índice de Governança</span>
+                  <strong>78</strong>
                 </div>
 
                 <div className="metric-bar">

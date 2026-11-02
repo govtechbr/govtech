@@ -43,11 +43,6 @@ export default function ProjectDetailModal({
           <dt>Responsável</dt>
           <dd>{project.owner}</dd>
         </div>
-
-        <div className={styles.fact}>
-          <dt>Progresso</dt>
-          <dd>{project.progress}%</dd>
-        </div>
       </dl>
 
       <section className={styles.section} aria-labelledby="project-index-title">

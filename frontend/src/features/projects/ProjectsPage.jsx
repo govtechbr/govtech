@@ -102,8 +102,8 @@ export default function ProjectsPage({
           <span className="page-eyebrow">PORTFÓLIO E ACOMPANHAMENTO</span>
 
           <p>
-            Acompanhe prazos, responsáveis, progresso e sinais de risco dos projetos monitorados
-            pela plataforma.
+            Acompanhe prazos, responsáveis, Índice de Governança e sinais de risco dos projetos
+            monitorados pela plataforma.
           </p>
         </div>
 
@@ -179,17 +179,6 @@ export default function ProjectsPage({
                   <CalendarClock size={15} />
                   {project.deadline}
                 </span>
-              </div>
-
-              <div className="project-progress">
-                <div>
-                  <span>Progresso</span>
-                  <strong>{project.progress}%</strong>
-                </div>
-
-                <div className="progress-track">
-                  <span style={{ width: `${project.progress}%` }} />
-                </div>
               </div>
 
               {score !== null && (

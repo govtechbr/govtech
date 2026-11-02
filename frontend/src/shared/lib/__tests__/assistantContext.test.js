@@ -31,9 +31,8 @@ const projects = [
     owner: 'Ana Souza',
     deadline: '2026-11-12',
     priority: 'alta',
-    progress: 40,
   },
-  { id: 'p2', name: 'Site', owner: 'Bia Lima', deadline: '', priority: 'baixa', progress: 90 },
+  { id: 'p2', name: 'Site', owner: 'Bia Lima', deadline: '', priority: 'baixa' },
 ]
 
 const governance = {
@@ -91,6 +90,7 @@ describe('buildAssistantContext', () => {
     expect(context.metricsLast30Days).toMatchObject({
       pullRequests: metrics.pullRequestCount,
       approvalRatePercent: metrics.approvalRate,
+      ciSuccessRatePercent: metrics.ciSuccessRate,
       pullRequestsAtRisk: 1,
       averageLeadTimeHours: 48,
     })
@@ -104,7 +104,6 @@ describe('buildAssistantContext', () => {
       status: 'Risco',
       deadline: '2026-11-12',
       priority: 'alta',
-      progressPercent: 40,
       index: 57,
       indexComponents: { review: 5 },
       repositories: ['app'],

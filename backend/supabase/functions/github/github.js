@@ -49,6 +49,12 @@ export async function githubGet(token, path, fetchImpl = fetch, init = {}) {
   return response.json()
 }
 
+// Erro só no campo do CI (chave sem permissão de Checks/Commit statuses): o
+// resto dos dados vale e o CI fica "sem CI" (regra G10)
+function isCiFieldError({ path }) {
+  return Array.isArray(path) && path.includes('statusCheckRollup')
+}
+
 // A API GraphQL responde 200 mesmo com erro; o erro vem no corpo
 export async function githubGraphql(token, query, variables, fetchImpl = fetch) {
   const body = await githubGet(token, '/graphql', fetchImpl, {
@@ -56,7 +62,7 @@ export async function githubGraphql(token, query, variables, fetchImpl = fetch) 
     body: JSON.stringify({ query, variables }),
   })
 
-  if (body.errors?.length) {
+  if (body.errors?.length && !(body.data && body.errors.every(isCiFieldError))) {
     const forbidden = body.errors.some(({ type }) => type === 'FORBIDDEN' || type === 'NOT_FOUND')
     throw new GitHubError(githubErrorMessage(forbidden ? 403 : 500), forbidden ? 403 : 502)
   }
@@ -112,6 +118,7 @@ const pullRequestsQuery = `
           closedAt
           author { login avatarUrl }
           reviews(states: APPROVED) { totalCount }
+          commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
         }
       }
     }
@@ -154,6 +161,35 @@ export async function fetchPullRequests(token, repo, since, fetchImpl = fetch) {
   return { pulls: [...open.pulls, ...done.pulls], partial: open.partial || done.partial }
 }
 
+// Resultado combinado dos checks do commit (regra G10). null = sem CI
+const CI_STATES = {
+  SUCCESS: 'success',
+  FAILURE: 'failure',
+  ERROR: 'failure',
+  PENDING: 'pending',
+  EXPECTED: 'pending',
+}
+
+export function ciState(rollup) {
+  return CI_STATES[rollup?.state] ?? null
+}
+
+const mainCiQuery = `
+  query ($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      defaultBranchRef { target { ... on Commit { statusCheckRollup { state } } } }
+    }
+  }
+`
+
+// CI do último commit da branch padrão; repositório vazio não tem branch
+async function fetchMainCiState(token, repo, fetchImpl) {
+  const [owner, name] = repo.full_name.split('/')
+  const data = await githubGraphql(token, mainCiQuery, { owner, name }, fetchImpl)
+
+  return ciState(data.repository?.defaultBranchRef?.target?.statusCheckRollup)
+}
+
 // GraphQL: OPEN, CLOSED ou MERGED
 export function pullRequestState(pr) {
   return pr.state.toLowerCase()
@@ -171,6 +207,7 @@ export function toPullRequestRow(pr, { repositoryId, organizationId }) {
     author_login: pr.author?.login ?? null,
     author_avatar_url: pr.author?.avatarUrl ?? null,
     approval_count: pr.reviews?.totalCount ?? 0,
+    ci_state: ciState(pr.commits?.nodes?.[0]?.commit?.statusCheckRollup),
     html_url: pr.url,
     created_at_github: pr.createdAt,
     updated_at_github: pr.updatedAt,
@@ -222,7 +259,12 @@ export async function restPages(token, path, max, fetchImpl = fetch) {
 // inclui TODOS os repositórios públicos, não só os escolhidos ao criar a chave;
 // por isso o admin seleciona (G2)
 export async function listRepositories(token, fetchImpl = fetch) {
-  const { items } = await restPages(token, '/user/repos?sort=pushed', LIMITS.repositories, fetchImpl)
+  const { items } = await restPages(
+    token,
+    '/user/repos?sort=pushed',
+    LIMITS.repositories,
+    fetchImpl,
+  )
 
   return items
 }
@@ -258,19 +300,21 @@ async function fetchCommits(token, repo, since, fetchImpl) {
   }
 }
 
-// De cada repositório escolhido: PRs (abertos + 90 dias), branches e commits da
-// branch padrão desde `since`, com partial = algum teto da regra G9 foi atingido
+// De cada repositório escolhido: PRs (abertos + 90 dias), branches, commits da
+// branch padrão desde `since` e o CI dela, com partial = algum teto da regra G9
 export function fetchRepositoryData(token, repos, fetchImpl = fetch, since) {
   return Promise.all(
     repos.map(async (repo) => {
-      const [pullData, branchData, commitData] = await Promise.all([
+      const [pullData, branchData, commitData, mainCiState] = await Promise.all([
         fetchPullRequests(token, repo, since, fetchImpl),
         restPages(token, `/repos/${repo.full_name}/branches`, LIMITS.branches, fetchImpl),
         fetchCommits(token, repo, since, fetchImpl),
+        fetchMainCiState(token, repo, fetchImpl),
       ])
 
       return {
         repo,
+        mainCiState,
         pulls: pullData.pulls,
         branches: branchData.items,
         commits: commitData.items,

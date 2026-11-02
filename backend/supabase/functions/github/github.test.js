@@ -4,6 +4,7 @@ import { describe, it } from 'node:test'
 
 import {
   checkToken,
+  ciState,
   fetchPullRequests,
   fetchRepositoryData,
   GitHubError,
@@ -67,25 +68,47 @@ const pr = {
   updatedAt: '2026-10-31T10:00:00Z',
   mergedAt: '2026-10-31T10:00:00Z',
   closedAt: '2026-10-31T10:00:00Z',
-  author: { login: 'ana', avatarUrl: 'https://avatars.githubusercontent.com/u/1' },
+  author: {
+    login: 'ana',
+    avatarUrl: 'https://avatars.githubusercontent.com/u/1',
+  },
   reviews: { totalCount: 2 },
+  commits: { nodes: [{ commit: { statusCheckRollup: { state: 'FAILURE' } } }] },
 }
 
 const commit = {
   sha: 'abc123',
-  author: { login: 'ana', avatar_url: 'https://avatars.githubusercontent.com/u/1' },
+  author: {
+    login: 'ana',
+    avatar_url: 'https://avatars.githubusercontent.com/u/1',
+  },
   commit: {
-    author: { name: 'Ana Silva', email: 'ana@empresa.com', date: '2026-10-30T09:00:00Z' },
-    committer: { name: 'GitHub', email: 'noreply@github.com', date: '2026-10-30T10:00:00Z' },
+    author: {
+      name: 'Ana Silva',
+      email: 'ana@empresa.com',
+      date: '2026-10-30T09:00:00Z',
+    },
+    committer: {
+      name: 'GitHub',
+      email: 'noreply@github.com',
+      date: '2026-10-30T10:00:00Z',
+    },
     message: 'feat: login',
   },
 }
 
 // GraphQL paginado: `open` e `done` são listas de páginas de PRs (abertos e
-// mergeados/fechados); o cursor é o número da próxima página
-function graphqlPages({ open = [[]], done = [[]] } = {}) {
+// mergeados/fechados); o cursor é o número da próxima página. `mainCi` é o
+// estado do CI da branch principal (null = repositório vazio)
+function graphqlPages({ open = [[]], done = [[]], mainCi = 'SUCCESS' } = {}) {
   return (_path, options) => {
-    const { states, after } = JSON.parse(options.body).variables
+    const { query, variables } = JSON.parse(options.body)
+    if (query.includes('defaultBranchRef')) {
+      const target = mainCi && { statusCheckRollup: { state: mainCi } }
+      return [200, { data: { repository: { defaultBranchRef: target && { target } } } }]
+    }
+
+    const { states, after } = variables
     const pages = states.includes('OPEN') ? open : done
     const index = after ? Number(after) : 0
 
@@ -96,7 +119,10 @@ function graphqlPages({ open = [[]], done = [[]] } = {}) {
           repository: {
             pullRequests: {
               nodes: pages[index] ?? [],
-              pageInfo: { hasNextPage: index < pages.length - 1, endCursor: String(index + 1) },
+              pageInfo: {
+                hasNextPage: index < pages.length - 1,
+                endCursor: String(index + 1),
+              },
             },
           },
         },
@@ -132,7 +158,13 @@ describe('row mapping', () => {
     assert.deepEqual(
       [repo, other].map((item) => toAvailableRepository(item, new Set([42]))),
       [
-        { githubId: 42, fullName: 'dono/app', description: null, private: true, selected: true },
+        {
+          githubId: 42,
+          fullName: 'dono/app',
+          description: null,
+          private: true,
+          selected: true,
+        },
         {
           githubId: 99,
           fullName: 'dono/outro',
@@ -186,6 +218,94 @@ describe('row mapping', () => {
   })
 })
 
+describe('CI status (rule G10)', () => {
+  it('maps the combined check state to green, failed or running', () => {
+    assert.equal(ciState({ state: 'SUCCESS' }), 'success')
+    assert.equal(ciState({ state: 'FAILURE' }), 'failure')
+    assert.equal(ciState({ state: 'ERROR' }), 'failure')
+    assert.equal(ciState({ state: 'PENDING' }), 'pending')
+    assert.equal(ciState({ state: 'EXPECTED' }), 'pending')
+    // repositório sem CI
+    assert.equal(ciState(null), null)
+    assert.equal(ciState(undefined), null)
+  })
+
+  it('stores the CI state of the last commit of each PR', () => {
+    assert.equal(toPullRequestRow(pr, ids).ci_state, 'failure')
+    assert.equal(toPullRequestRow({ ...pr, commits: { nodes: [] } }, ids).ci_state, null)
+  })
+
+  it('fetches the CI state of the default branch', async () => {
+    const { impl } = fakeFetch({
+      '/graphql': graphqlPages({ mainCi: 'FAILURE' }),
+      '/repos/dono/app/branches': [200, []],
+      '/repos/dono/app/commits': [200, []],
+    })
+
+    const [data] = await fetchRepositoryData('t', [repo], impl, 'x')
+
+    assert.equal(data.mainCiState, 'failure')
+  })
+
+  it('treats an empty repository as having no CI', async () => {
+    const { impl } = fakeFetch({
+      '/graphql': graphqlPages({ mainCi: null }),
+      '/repos/dono/app/branches': [200, []],
+      '/repos/dono/app/commits': [200, []],
+    })
+
+    const [data] = await fetchRepositoryData('t', [repo], impl, 'x')
+
+    assert.equal(data.mainCiState, null)
+  })
+
+  // Chave sem permissão de Checks/Commit statuses: o GitHub devolve os dados com
+  // erro só no campo do CI. A sincronização segue, com o CI "sem CI"
+  it('keeps syncing when the token cannot read the CI', async () => {
+    const forbidden = {
+      type: 'FORBIDDEN',
+      message: 'Resource not accessible by personal access token',
+    }
+    const { impl } = fakeFetch({
+      '/graphql': (path, options) => {
+        const [status, body] = graphqlPages({
+          done: [
+            [
+              {
+                ...pr,
+                commits: { nodes: [{ commit: { statusCheckRollup: null } }] },
+              },
+            ],
+          ],
+          mainCi: null,
+        })(path, options)
+        const isMain = JSON.parse(options.body).query.includes('defaultBranchRef')
+        const field = isMain
+          ? ['repository', 'defaultBranchRef', 'target', 'statusCheckRollup']
+          : [
+              'repository',
+              'pullRequests',
+              'nodes',
+              0,
+              'commits',
+              'nodes',
+              0,
+              'commit',
+              'statusCheckRollup',
+            ]
+        return [status, { ...body, errors: [{ ...forbidden, path: field }] }]
+      },
+      '/repos/dono/app/branches': [200, []],
+      '/repos/dono/app/commits': [200, []],
+    })
+
+    const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-01T00:00:00.000Z')
+
+    assert.equal(data.mainCiState, null)
+    assert.equal(toPullRequestRow(data.pulls[0], ids).ci_state, null)
+  })
+})
+
 describe('GitHub calls', () => {
   it('checks a token and counts the repositories it can read', async () => {
     const { impl, calls } = fakeFetch({
@@ -210,12 +330,21 @@ describe('GitHub calls', () => {
     const [data] = await fetchRepositoryData('t', [repo], impl, '2026-08-01T00:00:00.000Z')
 
     // abertos, depois mergeados/fechados; uma página de branches e uma de commits
+    // mais uma chamada GraphQL para o CI da branch principal (regra G10)
     const graphql = calls.filter(({ url }) => url.endsWith('/graphql'))
+    assert.equal(graphql.length, 3)
     assert.deepEqual(
-      graphql.map(({ options }) => JSON.parse(options.body).variables),
+      graphql
+        .map(({ options }) => JSON.parse(options.body).variables)
+        .filter((variables) => variables.states),
       [
         { owner: 'dono', name: 'app', states: ['OPEN'], after: null },
-        { owner: 'dono', name: 'app', states: ['MERGED', 'CLOSED'], after: null },
+        {
+          owner: 'dono',
+          name: 'app',
+          states: ['MERGED', 'CLOSED'],
+          after: null,
+        },
       ],
     )
     const commits = calls.find(({ url }) => url.includes('/commits'))
@@ -284,13 +413,20 @@ describe('GitHub calls', () => {
 
 describe('pagination (rule G9)', () => {
   const since = '2026-08-01T00:00:00.000Z'
-  const pull = (number, updatedAt = '2026-10-31T10:00:00Z') => ({ ...pr, number, updatedAt })
+  const pull = (number, updatedAt = '2026-10-31T10:00:00Z') => ({
+    ...pr,
+    number,
+    updatedAt,
+  })
   const fullPage = (start, updatedAt) =>
     Array.from({ length: 100 }, (_, index) => pull(start + index, updatedAt))
 
   it('follows the GraphQL cursor through every page of open PRs', async () => {
     const { impl, calls } = fakeFetch({
-      '/graphql': graphqlPages({ open: [fullPage(1), [pull(101)]], done: [[pull(500)]] }),
+      '/graphql': graphqlPages({
+        open: [fullPage(1), [pull(101)]],
+        done: [[pull(500)]],
+      }),
     })
 
     const { pulls, partial } = await fetchPullRequests('t', repo, since, impl)
@@ -330,8 +466,14 @@ describe('pagination (rule G9)', () => {
 
   it('reads branches and commits page by page and flags a full last page at the ceiling', async () => {
     const branchPage = (count) =>
-      Array.from({ length: count }, (_, index) => ({ name: `b${index}`, commit: { sha: 's' } }))
-    const commitPage = Array.from({ length: 100 }, (_, index) => ({ ...commit, sha: `c${index}` }))
+      Array.from({ length: count }, (_, index) => ({
+        name: `b${index}`,
+        commit: { sha: 's' },
+      }))
+    const commitPage = Array.from({ length: 100 }, (_, index) => ({
+      ...commit,
+      sha: `c${index}`,
+    }))
     const { impl, calls } = fakeFetch({
       '/graphql': graphqlPages(),
       '/repos/dono/app/branches': restPagesOf([branchPage(100), branchPage(30)]),
@@ -349,7 +491,10 @@ describe('pagination (rule G9)', () => {
 
   it('lists up to 500 repositories the token can read, most recently pushed first', async () => {
     const page = (start, count) =>
-      Array.from({ length: count }, (_, index) => ({ ...repo, id: start + index }))
+      Array.from({ length: count }, (_, index) => ({
+        ...repo,
+        id: start + index,
+      }))
     const { impl, calls } = fakeFetch({
       '/user/repos': restPagesOf([page(0, 100), page(100, 100), page(200, 5)]),
     })

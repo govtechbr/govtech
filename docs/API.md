@@ -117,7 +117,7 @@ As tabelas do GitHub são **somente leitura** para o usuário: não têm policy 
 // frontend/src/features/projects/api/projectsApi.js
 supabase
   .from('projects')
-  .select('id, name, description, deadline, owner, priority, progress')
+  .select('id, name, description, deadline, owner, priority')
   .eq('organization_id', organizationId)
   .order('created_at')
 ```
@@ -125,7 +125,7 @@ supabase
 Equivale a:
 
 ```http
-GET /rest/v1/projects?select=id,name,description,deadline,owner,priority,progress&organization_id=eq.<id>&order=created_at
+GET /rest/v1/projects?select=id,name,description,deadline,owner,priority&organization_id=eq.<id>&order=created_at
 ```
 
 O filtro `organization_id` **não é segurança** (o RLS já garante isso). Ele serve para quem participa de várias empresas ver só a empresa escolhida na tela.
@@ -209,10 +209,13 @@ Paginação da regra G9 (E7). Os tetos ficam em `LIMITS`, em `functions/github/g
 | PRs mergeados e fechados | GraphQL `pullRequests(states: [MERGED, CLOSED], orderBy: UPDATED_AT desc)` | cursor, para ao sair dos 90 dias | 1.000 |
 | Branches (com proteção) | `GET /repos/{dono}/{repo}/branches?per_page=100&page=N` | páginas de 100 | 500 |
 | Commits da branch principal | `GET /repos/{dono}/{repo}/commits?since=<90 dias>&per_page=100&page=N` | páginas de 100 | 1.000 |
+| CI de cada PR (G10) | no mesmo GraphQL dos PRs: `commits(last: 1) { statusCheckRollup { state } }` | junto dos PRs | — |
+| CI da branch principal (G10) | GraphQL `defaultBranchRef { target { statusCheckRollup { state } } }` | 1 chamada por repositório | — |
 
 - Os abertos vêm todos, mesmo os parados há mais de 90 dias, porque ainda geram alerta.
 - Se alguma lista para no teto com a última página cheia, a sincronização grava `github_credentials.last_sync_partial = true`. O painel do projeto mostra "Dados parciais" e o evento de auditoria marca o mesmo.
 - Repositório vazio (o GitHub responde 409) conta como "sem commits", não como erro.
+- **CI (G10):** `SUCCESS` → `success`; `FAILURE` e `ERROR` → `failure`; `PENDING` e `EXPECTED` → `pending`; sem checks → `null` ("sem CI"). Vai para `pull_requests.ci_state` e `repositories.ci_state`. Se o GitHub devolver erro **só** no campo `statusCheckRollup` (chave sem permissão de *Commit statuses*/*Checks*), os dados valem e o CI fica `null`; qualquer outro erro continua falhando a sincronização.
 
 ### 6.6 Índice de Governança
 

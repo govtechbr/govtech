@@ -29,9 +29,10 @@ describe('projectsApi', () => {
   })
 
   it('creates a normalized project in the given organization', async () => {
-    const created = await createProject(orgId, { name: 'Portal', progress: 150 })
+    const created = await createProject(orgId, { name: 'Portal', priority: 'urgent' })
 
-    expect(created).toMatchObject({ name: 'Portal', progress: 100 })
+    expect(created).toMatchObject({ name: 'Portal', priority: 'medium' })
+    expect(created).not.toHaveProperty('progress')
     expect(db.projects.at(-1)).toMatchObject({
       name: 'Portal',
       organization_id: testOrganization.id,

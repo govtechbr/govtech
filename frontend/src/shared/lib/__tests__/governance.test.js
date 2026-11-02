@@ -127,23 +127,35 @@ describe('governanceAlerts', () => {
     { id: 'p4', name: 'Sem prazo', deadline: '' },
   ]
 
-  it('raises the alerts of §6, the most serious first', () => {
+  // §6: Risco antes de Atenção; dentro do nível, os riscos estruturais primeiro
+  it('raises the alerts of §6, the most critical first', () => {
     const alerts = governanceAlerts(data, projects, now)
 
     expect(alerts.map(({ level, title }) => `${level}: ${title}`)).toEqual([
-      'danger: PR aberto há 5 dias',
       'danger: Prazo vencido',
-      'warning: PR aberto há 2 dias',
-      'warning: PR mergeado sem aprovação',
+      'danger: PR aberto há 5 dias',
       'warning: Branch principal sem proteção',
+      'warning: PR mergeado sem aprovação',
       'warning: Prazo perto do fim',
+      'warning: PR aberto há 2 dias',
     ])
+  })
+
+  it('explains why each alert matters', () => {
+    const reasonOf = (start) =>
+      governanceAlerts(data, projects, now).find(({ title }) => title.startsWith(start)).reason
+
+    expect(reasonOf('Branch principal')).toMatch(/push direto/)
+    expect(reasonOf('PR mergeado sem aprovação')).toMatch(/sem nenhuma revisão aprovada/)
+    expect(reasonOf('Prazo vencido')).toMatch(/O prazo passou/)
+    expect(reasonOf('Prazo perto do fim')).toMatch(/Faltam poucos dias/)
+    expect(reasonOf('PR aberto')).toMatch(/PR parado/)
   })
 
   it('describes where each alert comes from', () => {
     const alerts = governanceAlerts(data, projects, now)
 
-    expect(alerts[0]).toMatchObject({
+    expect(alerts.find(({ title }) => title === 'PR aberto há 5 dias')).toMatchObject({
       detail: '#3 · app · PR 3',
       href: 'https://github.com/o/app/pull/3',
       projectIds: ['p1'],
@@ -155,6 +167,71 @@ describe('governanceAlerts', () => {
       'Site · vence em 5 dias',
     )
     expect(alerts.find(({ title }) => title.startsWith('Branch')).detail).toBe('app · main')
+  })
+})
+
+describe('CI status (rule G10)', () => {
+  const projects = [{ id: 'p1', name: 'Portal', deadline: '' }]
+  const ci = {
+    repositories: [
+      { id: 'r1', name: 'app', default_branch: 'main', ci_state: 'failure', projectIds: ['p1'] },
+    ],
+    branches: [{ repository_id: 'r1', name: 'main', protected: true }],
+    commits: [],
+    pullRequests: [
+      pr({ number: 1, ci_state: 'failure' }),
+      pr({ number: 2, ci_state: 'failure', draft: true }),
+      pr({
+        number: 3,
+        state: 'merged',
+        merged_at: daysAgo(2),
+        approval_count: 1,
+        ci_state: 'failure',
+      }),
+      pr({
+        number: 4,
+        state: 'merged',
+        merged_at: daysAgo(3),
+        approval_count: 1,
+        ci_state: 'success',
+      }),
+      pr({
+        number: 5,
+        state: 'merged',
+        merged_at: daysAgo(4),
+        approval_count: 1,
+        ci_state: 'success',
+      }),
+      pr({ number: 6, state: 'merged', merged_at: daysAgo(5), approval_count: 1, ci_state: null }),
+      pr({
+        number: 7,
+        state: 'merged',
+        merged_at: daysAgo(40),
+        approval_count: 1,
+        ci_state: 'failure',
+      }),
+      pr({ number: 8, ci_state: 'pending' }),
+    ],
+  }
+
+  it('raises the CI alerts, the broken main first', () => {
+    const alerts = governanceAlerts(ci, projects, now)
+
+    expect(alerts.map(({ level, title }) => `${level}: ${title}`)).toEqual([
+      'danger: CI falhando na branch principal',
+      'danger: PR mergeado com CI falhando',
+      'warning: PR com CI falhando',
+    ])
+    expect(alerts[0]).toMatchObject({ detail: 'app · main', projectIds: ['p1'] })
+    expect(alerts[1]).toMatchObject({ detail: '#3 · app · PR 3' })
+    expect(alerts[2]).toMatchObject({ detail: '#1 · app · PR 1' })
+    expect(alerts[0].reason).toMatch(/testes automáticos/)
+  })
+
+  it('computes the share of merged PRs with green CI, ignoring PRs without CI', () => {
+    expect(governanceMetrics(ci, 30, now).ciSuccessRate).toBe(67)
+    expect(governanceMetrics(ci, 90, now).ciSuccessRate).toBe(50)
+    expect(governanceMetrics(data, 30, now).ciSuccessRate).toBeNull()
   })
 })
 

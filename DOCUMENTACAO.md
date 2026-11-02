@@ -1,6 +1,6 @@
 # GovTech MS — Documentação do Projeto
 
-Plataforma web de **governança e monitoramento de projetos de TI**: painel com indicadores, lista de projetos com prazo e progresso, visão de repositórios/Pull Requests/branches, auditoria, controle de acesso (RBAC) e configurações.
+Plataforma web de **governança e monitoramento de projetos de TI**: painel com indicadores, lista de projetos com prazo, status e Índice de Governança, visão de repositórios/Pull Requests/branches, auditoria, controle de acesso (RBAC) e configurações.
 
 > **Resumo para quem não é da área de front-end:** o app roda no navegador e usa o **Supabase** como back-end (banco Postgres, login e regras de acesso). Desde 01/11/2026, **login, cadastro, organizações, membros, projetos e os dados do GitHub (repositórios, PRs e branches) são reais** e ficam no banco. Desde 04/11/2026 a **Visão geral** também usa dados reais (métricas, alertas e status calculado). Desde a E7 a **Auditoria** também é real (trilha gravada pelo banco). A busca global ainda mostra dados de exemplo (“mock”) até ganharem tabelas próprias. Detalhes na seção [Back-end](#14-tem-resquícios-de-back-end).
 
@@ -292,13 +292,13 @@ Desde 04/11/2026 (E4), tudo calculado em `src/shared/lib/governance.js` a partir
 - **4 cartões**: Quantidade de PRs (abertos agora + criados no período), Lead time médio (abertura → merge), Taxa de aprovação (mergeados com ao menos 1 aprovação) e PRs em risco (abertos há mais de 3 dias).
 - **Gráfico semanal** (`PullRequestFlowChart`): PRs abertos × mergeados, pelo menos 4 semanas. **Distribuição** (`PullRequestDistribution`): abertos, rascunhos, mergeados e fechados.
 - **Lista de projetos** com o status calculado (pior primeiro) e o primeiro alerta de cada um.
-- **Alertas automatizados** (`AutomatedAlerts`), Risco primeiro, com link para o PR, e **Eventos de desenvolvimento** (`RecentActivityPanel`): repositórios, commits da branch principal, branches e contribuidores no período.
+- **Alertas automatizados** (`AutomatedAlerts`), os mais críticos primeiro (Risco antes de Atenção; branch e revisão antes de prazo e PR parado), cada um com o motivo e link para o PR; 8 visíveis e o botão "Ver todos os N alertas", e **Eventos de desenvolvimento** (`RecentActivityPanel`): repositórios, commits da branch principal, branches e contribuidores no período.
 - **Tooltips explicativos** (desde 02/11/2026): as regras de cálculo do índice, do status e dos eventos ficam no botão ⓘ do canto de cada cartão (`shared/ui/Tooltip.jsx`), que abre com o mouse, o foco do teclado ou um toque e fecha com Esc. O texto continua ligado ao botão por `aria-describedby` para leitor de tela.
 
 ### 8.5 `ProjectsPage.jsx` — Projetos
 É o módulo mais completo para o usuário final:
-- **Cards** de projeto com nome, responsável, prazo, barra de progresso e o badge de status. Desde 02/11/2026 nem o card nem o detalhe do projeto listam alertas (geravam rolagem demais); a lista fica na Visão geral.
-- **Status calculado** (desde 04/11/2026): Saudável, Atenção ou Risco, a partir dos alertas do projeto (PR parado, PR sem aprovação, branch sem proteção, prazo). O formulário não tem mais o campo Status. O cartão e o detalhe do projeto mostram só o status; os alertas que o explicam aparecem na Visão geral.
+- **Cards** de projeto com nome, responsável, prazo e o badge de status. A barra de progresso manual saiu em 02/11/2026 (regra P2). Desde 02/11/2026 nem o card nem o detalhe do projeto listam alertas (geravam rolagem demais); a lista fica na Visão geral.
+- **Status calculado** (desde 04/11/2026): Saudável, Atenção ou Risco, a partir dos alertas do projeto (PR parado, PR sem aprovação, branch sem proteção, prazo, CI). O formulário não tem mais o campo Status. O cartão e o detalhe do projeto mostram só o status; os alertas que o explicam, com o motivo de cada um, aparecem na Visão geral.
 - **Índice de Governança** (desde 02/11/2026): o cartão mostra a nota mais recente e a faixa; o detalhe mostra a nota de cada critério.
 - **3 indicadores**: total, “em atenção” (`status === 'warning'`), “riscos críticos” (`status === 'danger'`).
 - **Novo projeto**: abre `ProjectFormModal` vazio.
@@ -387,14 +387,14 @@ As contas de data do calendário ficam em `shared/lib/date.js` (`todayIso`, `add
 | `ProjectStatusSummary` | Resumo “Status dos Projetos” (contagem por status calculado) e o cartão que explica a regra. |
 | `PullRequestFlowChart` | Gráfico de fluxo de PRs criadas × integradas. |
 | `PullRequestDistribution` | Distribuição das PRs por status (abertas, em revisão, aprovadas, integradas). |
-| `AutomatedAlerts` | Painel “Alertas Automatizados”, com a origem indicada como GitHub Actions. |
+| `AutomatedAlerts` | Painel “Alertas Automatizados”: alertas de `governanceAlerts` com título, origem, motivo e “Ver todos”. |
 | `RecentActivityPanel` | Painel “Atividade Recente” com eventos de PR e branch. |
 
 ### 9.4 Projetos
 
 | Componente | Função |
 |---|---|
-| `ProjectFormModal` | Formulário de criar/editar: nome, objetivo, deadline (`DatePicker`, obrigatório: o aviso “Informe o deadline.” aparece no submit), prioridade (`Select`), responsável, progresso (0–100) e repositórios vinculados (checkboxes vindos de `services`). |
+| `ProjectFormModal` | Formulário de criar/editar: nome, objetivo, deadline (`DatePicker`, obrigatório: o aviso “Informe o deadline.” aparece no submit), prioridade (`Select`), responsável e repositórios vinculados (checkboxes vindos de `services`). |
 | `ProjectDetailModal` | Detalhes com status calculado e botões Editar/Excluir. |
 | `DeleteProjectModal` | Confirmação de exclusão. |
 
@@ -466,7 +466,7 @@ Todas em `utils/projectUtils.js`.
 Garante que um projeto sempre tenha campos válidos, mesmo que os dados salvos estejam incompletos ou corrompidos:
 - `name` vazio → `"Projeto sem nome"`.
 - `priority` fora de `high | medium | low` → `"medium"`.
-- `progress` → número entre 0 e 100 (valores inválidos viram 0).
+- `progress` não existe mais (regra P2); a coluna antiga fica sem uso no banco.
 - `repositories` → só strings.
 
 ### 11.2 Status do projeto e alertas (`src/shared/lib/governance.js`)
@@ -489,6 +489,7 @@ Converte `2026-10-25` para `25/10/2026` (formato pt-BR). Usa meio-dia para evita
 - **Lead time médio:** média de horas da abertura ao merge dos PRs mergeados no período.
 - **Taxa de aprovação:** % dos mergeados no período com `approval_count` ≥ 1; "—" se nenhum foi mergeado.
 - **PRs em risco:** abertos (sem rascunhos) há mais de 3 dias.
+- **CI verde no merge** (desde 02/11/2026, regra G10): % dos mergeados no período **com CI** (`ci_state` não nulo) que estavam com `ci_state = 'success'`; "—" se nenhum tinha CI. Os alertas de CI (branch principal, PR mergeado e PR aberto com CI falhando) também saem de `governanceAlerts`.
 - **Contribuidores:** logins distintos de commits e de PRs criados no período.
 
 ---
