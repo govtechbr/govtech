@@ -66,6 +66,29 @@ Calculadas dos dados sincronizados, nunca valores fixos. **Período:** seletor 7
 
 **Números em destaque na primeira tela** (decisão de 04/11/2026): Quantidade de PRs, Lead time médio, Taxa de aprovação e **PRs em risco** (abertos há mais de 3 dias, sem rascunhos). O gráfico semanal mostra pelo menos 4 semanas, mesmo no período de 7 dias.
 
+### 5.1 Índice de Governança (E5, decisão de 02/11/2026)
+
+Uma nota de **0 a 100** por projeto e por empresa, com histórico diário. Os pesos dão mais importância à revisão de código, o controle central de governança (ISO/IEC 38500, COBIT). A faixa de lead time segue as métricas DORA.
+
+| # | Regra | Situação |
+|---|---|---|
+| I1 | **Critérios**, por projeto (repositórios ligados a ele), olhando os **últimos 30 dias**: ver a tabela abaixo | 🔜 E5 |
+| I2 | **Cálculo:** média ponderada só dos critérios **com dado** (os pesos são reescalados). Sem nenhum critério com dado, fica "sem dados" | 🔜 E5 |
+| I3 | **Faixas:** 80 ou mais = **Bom**; 60 a 79 = **Regular**; abaixo de 60 = **Crítico** | 🔜 E5 |
+| I4 | **Empresa:** média simples dos projetos que têm índice | 🔜 E5 |
+| I5 | **Apuração** de hora em hora, junto da sincronização; vale a última do dia. O dia é contado no fuso de MS (`America/Campo_Grande`). O seletor de período da tela **não** muda o índice | 🔜 E5 |
+| I6 | **Reconstrução:** na primeira apuração de um projeto, os 30 dias anteriores são recalculados pelas datas dos PRs, supondo proteção da branch, prazo e rascunho iguais aos de hoje. Esses dias ficam marcados como **recalculados** e a tela avisa | 🔜 E5 |
+
+| Critério | Peso | Nota (0–100) | Sem dado quando |
+|---|---|---|---|
+| Revisão de código | 30 | % dos PRs mergeados com ao menos 1 aprovação | nenhum PR mergeado |
+| Fluxo de PRs | 20 | Média dos PRs abertos (sem rascunhos): até 1 dia = 100; de 1 a 3 dias = 50; mais de 3 dias = 0. Nenhum aberto = 100 | projeto sem repositório |
+| Prazo | 20 | Mais de 7 dias = 100; até 7 dias = 50; vencido = 0 | projeto sem prazo |
+| Proteção da branch | 15 | % dos repositórios com a branch principal protegida | projeto sem repositório |
+| Lead time | 15 | Mediana da abertura ao merge: até 24 h = 100; 7 dias ou mais = 0; linear entre os dois | nenhum PR mergeado |
+
+Os limites são os mesmos dos alertas (§6).
+
 ## 6. Alertas automáticos
 
 | Alerta | Atenção | Risco |
@@ -95,4 +118,5 @@ Convite por e-mail, webhook ou GitHub App (atualização instantânea), status d
 | E2 | Troca de empresa (workspace) | A5, A6 | 05/11 |
 | E3 | Mais dados do GitHub + sincronização a cada hora | G6–G8 | 08/11 |
 | E4 | Visão geral com métricas reais, alertas e status automático com cartão | P3, P4, §5, §6 | 12/11 |
+| E5 | Índice de Governança (0–100) com histórico | I1–I6 | 06/11 |
 | — | Folga: testes, documentação do TCC, ensaio | — | 13–18/11 |
