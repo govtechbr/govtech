@@ -13,7 +13,6 @@ import {
 
 import { useToast } from '@/shared/hooks/useToast'
 import Select from '@/shared/ui/Select'
-import StatusBadge from '@/shared/ui/StatusBadge'
 
 const TIMEZONE_OPTIONS = [
   { value: 'America/Sao_Paulo', label: 'Brasília (UTC-3)' },
