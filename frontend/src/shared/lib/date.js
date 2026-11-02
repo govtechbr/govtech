@@ -41,3 +41,13 @@ export function isWithinDays(value, days, now = new Date()) {
 export function formatShortDate(date) {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
+
+// "03/11" a partir de "2026-11-03" (dia sem horário, sem passar por fuso)
+export function formatDay(day) {
+  return `${day.slice(8, 10)}/${day.slice(5, 7)}`
+}
+
+// "14:07", no horário de quem está vendo
+export function formatTime(value) {
+  return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}

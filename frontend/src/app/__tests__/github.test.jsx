@@ -330,4 +330,25 @@ describe('Overview with synced data', () => {
       within(screen.getByText('PRs em risco').closest('article')).getByText('1'),
     ).toBeInTheDocument()
   })
+
+  it('shows the governance index stored by the sync, only for the chosen company', async () => {
+    const row = (organizationId, score) => ({
+      project_id: db.projects[0].id,
+      organization_id: organizationId,
+      day: new Date().toISOString().slice(0, 10),
+      score,
+      components: { review: 0, flow: 100, deadline: 100, protection: 0, leadTime: null },
+      reconstructed: false,
+      computed_at: new Date().toISOString(),
+    })
+    db.governanceScores.push(row(db.projects[0].organization_id, 42), row('outra-empresa', 99))
+    await renderAs(testUser, '/dashboard')
+
+    const panel = (await screen.findByRole('heading', { name: 'Índice de Governança' })).closest(
+      'section',
+    )
+    expect(await within(panel).findByText('/100')).toBeInTheDocument()
+    expect(within(panel).getByText('/100').closest('p')).toHaveTextContent('42/100')
+    expect(within(panel).getByText('Crítico')).toBeInTheDocument()
+  })
 })

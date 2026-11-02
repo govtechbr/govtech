@@ -19,7 +19,13 @@ const DEADLINE_WARNING_DAYS = 7
 // do projeto não depender do período escolhido na tela
 const UNAPPROVED_WINDOW_DAYS = 30
 
-export const emptyGovernance = { pullRequests: [], repositories: [], branches: [], commits: [] }
+export const emptyGovernance = {
+  pullRequests: [],
+  repositories: [],
+  branches: [],
+  commits: [],
+  scores: [],
+}
 
 function ageInDays(value, now) {
   return (now.getTime() - new Date(value).getTime()) / DAY

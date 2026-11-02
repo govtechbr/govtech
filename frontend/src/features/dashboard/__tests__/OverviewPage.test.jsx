@@ -29,6 +29,18 @@ function pr(overrides) {
   }
 }
 
+function score(projectId, day, value, overrides = {}) {
+  return {
+    project_id: projectId,
+    day,
+    score: value,
+    components: { review: value, flow: 100, deadline: 50, protection: 0, leadTime: null },
+    reconstructed: false,
+    computed_at: `${day}T15:07:00Z`,
+    ...overrides,
+  }
+}
+
 const governance = {
   repositories: [{ id: 'r1', name: 'app', default_branch: 'main', projectIds: ['p1'] }],
   branches: [{ repository_id: 'r1', name: 'main', protected: true }],
@@ -39,6 +51,12 @@ const governance = {
     // 1 dia, sem aprovação, há 20 dias (fora do período de 7)
     pr({ number: 2, created_at_github: daysAgo(21), merged_at: daysAgo(20), approval_count: 0 }),
     pr({ number: 3, state: 'open', created_at_github: daysAgo(5), merged_at: null }),
+  ],
+  scores: [
+    score('p1', '2026-11-01', 60, { reconstructed: true }),
+    score('p1', '2026-11-03', 66, { reconstructed: true }),
+    score('p1', '2026-11-10', 72),
+    score('p2', '2026-11-10', 90),
   ],
 }
 
@@ -120,10 +138,61 @@ describe('OverviewPage', () => {
 
   it('tells the user to connect GitHub when nothing is synced', () => {
     renderOverview({
-      governance: { pullRequests: [], repositories: [], branches: [], commits: [] },
+      governance: { pullRequests: [], repositories: [], branches: [], commits: [], scores: [] },
     })
 
     expect(screen.getByText(/conecte o GitHub em um projeto/)).toBeInTheDocument()
+    expect(screen.getByText(/O índice ainda não foi apurado/)).toBeInTheDocument()
     expect(card('Taxa de aprovação')).toHaveTextContent('—')
+  })
+
+  describe('governance index', () => {
+    const indexPanel = () =>
+      screen.getByRole('heading', { name: 'Índice de Governança' }).closest('section')
+
+    it('shows the company score, its band and the change in 7 days', () => {
+      renderOverview()
+      const panel = within(indexPanel())
+
+      // 10/11: média de 72 e 90; 7 dias antes vale o dia 03/11 (66)
+      expect(panel.getByText('/100').closest('p')).toHaveTextContent('81/100')
+      expect(panel.getByText('Bom')).toBeInTheDocument()
+      expect(panel.getByText('▲ 15 pontos em 7 dias')).toBeInTheDocument()
+      expect(panel.getByText('Como o índice é calculado')).toBeInTheDocument()
+    })
+
+    it('breaks the score down by criterion, with the weights', () => {
+      renderOverview()
+      const items = within(indexPanel()).getAllByRole('listitem')
+
+      expect(items.map((item) => item.textContent)).toEqual([
+        'Revisão de código peso 3081',
+        'Fluxo de PRs peso 20100',
+        'Prazo peso 2050',
+        'Proteção da branch peso 150',
+        'Lead time peso 15sem dados',
+      ])
+    })
+
+    it('marks the recalculated days', () => {
+      renderOverview()
+
+      expect(
+        within(indexPanel()).getByText(/Os dias até 03\/11 foram recalculados/),
+      ).toBeInTheDocument()
+    })
+
+    it('lets the keyboard walk through the days of the line', async () => {
+      const { user } = renderOverview()
+      const chart = screen.getByRole('slider', { name: 'Evolução do índice por dia' })
+
+      expect(chart).toHaveAttribute('aria-valuetext', '81 em 10/11')
+
+      await user.tab()
+      chart.focus()
+      await user.keyboard('{ArrowLeft}')
+
+      expect(chart).toHaveAttribute('aria-valuetext', '66 em 03/11')
+    })
   })
 })

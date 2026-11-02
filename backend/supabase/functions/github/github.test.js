@@ -1,4 +1,4 @@
-// Rodar com: node --test backend/supabase/functions/github/
+// Rodar com: node --test "backend/supabase/functions/github/*.test.js"
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 

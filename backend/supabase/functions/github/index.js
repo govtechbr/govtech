@@ -21,6 +21,7 @@ import {
   toPullRequestRow,
   toRepositoryRow,
 } from './github.js'
+import { projectScore, reconstructionDays, scoreDay } from './score.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -244,7 +245,7 @@ async function select(context, _token, body) {
     ).error,
   )
 
-  return sync(context)
+  return syncAndScore(context)
 }
 
 async function sync({ project, asServer }) {
@@ -334,6 +335,114 @@ async function sync({ project, asServer }) {
   }
 }
 
+// O PostgREST devolve no máximo 1000 linhas por consulta: lê em páginas
+async function selectAll(buildQuery) {
+  const rows = []
+
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await buildQuery().range(from, from + 999)
+    check(error)
+    rows.push(...data)
+    if (data.length < 1000) return rows
+  }
+}
+
+// Índice de Governança (regras I5 e I6): grava a nota de hoje de cada projeto
+// e, na primeira apuração de um projeto, também os 30 dias anteriores.
+// Sem `projectIds`, apura todos (inclusive os sem GitHub, por causa do prazo).
+async function snapshotScores(asServer, projectIds) {
+  const now = new Date()
+  const projects = await selectAll(() => {
+    const query = asServer.from('projects').select('id, organization_id, deadline').order('id')
+    return projectIds ? query.in('id', projectIds) : query
+  })
+  // Projetos que já têm algum dia apurado (os outros ganham a reconstrução)
+  const scored = new Set(
+    (
+      await selectAll(() => {
+        const query = asServer
+          .from('governance_scores')
+          .select('project_id, day')
+          .order('project_id')
+          .order('day')
+        return projectIds ? query.in('project_id', projectIds) : query
+      })
+    ).map((row) => row.project_id),
+  )
+
+  for (const organizationId of new Set(projects.map((project) => project.organization_id))) {
+    const byOrganization = (table, columns) => () =>
+      asServer.from(table).select(columns).eq('organization_id', organizationId).order('id')
+    const [links, repositories, pullRequests, branches] = await Promise.all([
+      selectAll(() =>
+        asServer
+          .from('project_repositories')
+          .select('project_id, repository_id')
+          .eq('organization_id', organizationId)
+          .order('project_id')
+          .order('repository_id'),
+      ),
+      selectAll(byOrganization('repositories', 'id, default_branch')),
+      selectAll(
+        byOrganization(
+          'pull_requests',
+          'id, repository_id, draft, approval_count, created_at_github, merged_at, closed_at',
+        ),
+      ),
+      selectAll(byOrganization('branches', 'id, repository_id, name, protected')),
+    ])
+
+    const rows = []
+    for (const project of projects.filter((item) => item.organization_id === organizationId)) {
+      const repositoryIds = new Set(
+        links.filter((link) => link.project_id === project.id).map((link) => link.repository_id),
+      )
+      const data = {
+        pullRequests: pullRequests.filter((pr) => repositoryIds.has(pr.repository_id)),
+        repositories: repositories.filter((repository) => repositoryIds.has(repository.id)),
+        branches: branches.filter((branch) => repositoryIds.has(branch.repository_id)),
+        deadline: project.deadline,
+      }
+      const row = (at, reconstructed) => ({
+        project_id: project.id,
+        organization_id: organizationId,
+        day: scoreDay(at),
+        ...projectScore(data, at),
+        reconstructed,
+        computed_at: now.toISOString(),
+      })
+
+      if (!scored.has(project.id)) {
+        rows.push(...reconstructionDays(now, data.pullRequests).map((at) => row(at, true)))
+      }
+      rows.push(row(now, false))
+    }
+
+    if (rows.length > 0) {
+      check(
+        (await asServer.from('governance_scores').upsert(rows, { onConflict: 'project_id,day' }))
+          .error,
+      )
+    }
+  }
+}
+
+// Falha no índice não derruba a sincronização: fica no log da função
+async function refreshScores(asServer, projectIds) {
+  try {
+    await snapshotScores(asServer, projectIds)
+  } catch (error) {
+    console.error('Índice de Governança:', error)
+  }
+}
+
+async function syncAndScore(context) {
+  const result = await sync(context)
+  await refreshScores(context.asServer, [context.project.id])
+
+  return result
+}
+
 function errorMessage(error) {
   if (error instanceof RequestError || error instanceof GitHubError) return error.message
 
@@ -361,6 +470,8 @@ async function syncAll(asServer) {
         .eq('project_id', project.id)
     }
   }
+
+  await refreshScores(asServer)
 }
 
 // Comparação em tempo constante, para não vazar a senha pelo tempo de resposta
@@ -397,7 +508,7 @@ async function disconnect({ project, asServer }) {
   return { disconnected: true }
 }
 
-const actions = { connect, list, select, sync, disconnect }
+const actions = { connect, list, select, sync: syncAndScore, disconnect }
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
