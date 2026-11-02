@@ -145,7 +145,7 @@ govtech/
 ├── README.md             ← Como começar e comandos.
 ├── AGENTS.md / CLAUDE.md ← Regras do projeto para pessoas e agentes de IA.
 ├── DOCUMENTACAO.md       ← Este arquivo.
-├── docs/                 ← Plano técnico (PLANO_TECNICO.md) e mapa de testes (TESTES.mmd).
+├── docs/                 ← Plano técnico (PLANO_TECNICO.md), API (API.md) e mapa de testes (TESTES.mmd).
 ├── .github/workflows/    ← CI: lint, testes e build em todo PR.
 ├── backend/              ← (fase Supabase) migrations, seed, testes pgTAP e Edge Functions.
 │
