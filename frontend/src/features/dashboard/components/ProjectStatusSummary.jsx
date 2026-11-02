@@ -1,7 +1,8 @@
-import { AlertTriangle, Check, Info } from 'lucide-react'
+import { AlertTriangle, Check } from 'lucide-react'
 
 import styles from '@/features/dashboard/OverviewPage.module.css'
 import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
+import Tooltip from '@/shared/ui/Tooltip'
 
 const overallByStatus = {
   success: {
@@ -41,6 +42,23 @@ export default function ProjectStatusSummary({ health }) {
           <span className="section-kicker">VISÃO DE NEGÓCIO · PADRÃO SEMÁFORO</span>
           <h2>Status dos Projetos</h2>
         </div>
+
+        {/* Regra P4: a tela explica de onde vem o status */}
+        <Tooltip label="Como o status é calculado">
+          <p>
+            O status vem dos alertas automáticos de cada projeto: <b>Risco</b> se houver algum
+            alerta de risco; senão <b>Atenção</b> se houver algum alerta de atenção; senão{' '}
+            <b>Saudável</b>.
+          </p>
+          <ul>
+            <li>
+              PR aberto há mais de 1 dia: atenção; há mais de 3 dias: risco (rascunhos não contam)
+            </li>
+            <li>PR mergeado sem nenhuma aprovação nos últimos 30 dias: atenção</li>
+            <li>Branch principal sem proteção: atenção</li>
+            <li>Prazo do projeto em até 7 dias: atenção; vencido: risco</li>
+          </ul>
+        </Tooltip>
       </div>
 
       <div className={`${styles.overall} ${styles[overallStatus]}`}>
@@ -62,28 +80,6 @@ export default function ProjectStatusSummary({ health }) {
           </li>
         ))}
       </ul>
-
-      {/* Regra P4: a tela explica de onde vem o status */}
-      <div className={styles.ruleCard} role="note" aria-labelledby="status-rule-title">
-        <Info size={16} aria-hidden="true" />
-
-        <div>
-          <strong id="status-rule-title">Como o status é calculado</strong>
-          <p>
-            O status vem dos alertas automáticos de cada projeto: <b>Risco</b> se houver algum
-            alerta de risco; senão <b>Atenção</b> se houver algum alerta de atenção; senão{' '}
-            <b>Saudável</b>.
-          </p>
-          <ul>
-            <li>
-              PR aberto há mais de 1 dia: atenção; há mais de 3 dias: risco (rascunhos não contam)
-            </li>
-            <li>PR mergeado sem nenhuma aprovação nos últimos 30 dias: atenção</li>
-            <li>Branch principal sem proteção: atenção</li>
-            <li>Prazo do projeto em até 7 dias: atenção; vencido: risco</li>
-          </ul>
-        </div>
-      </div>
     </section>
   )
 }

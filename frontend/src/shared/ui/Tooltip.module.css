@@ -1,0 +1,76 @@
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.trigger {
+  display: grid;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  place-items: center;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: help;
+}
+
+.trigger:hover,
+.active {
+  background: var(--color-hover);
+  color: var(--color-primary-700);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Abre para baixo, alinhado à direita do botão: o botão fica no canto do cartão,
+   então o balão cresce para dentro da tela e não corta em 390 px */
+.tooltip {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 2 * var(--space-8)));
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-elevated);
+  box-shadow: var(--elevation-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.tooltip[hidden] {
+  display: none;
+}
+
+/* Ponte invisível sobre o espaço entre botão e balão: o mouse passa sem fechar */
+.tooltip::before {
+  position: absolute;
+  top: calc(-1 * var(--space-2));
+  right: 0;
+  left: 0;
+  height: var(--space-2);
+  content: '';
+}
+
+.tooltip p {
+  margin: 0;
+}
+
+.tooltip ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+.tooltip b,
+.tooltip strong {
+  color: var(--text);
+}

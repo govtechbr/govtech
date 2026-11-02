@@ -95,7 +95,8 @@ describe('Workspace (company) switch', () => {
     await user.click(await screen.findByRole('button', { name: /novo projeto/i }))
     await user.type(screen.getByLabelText('Nome do Projeto'), 'Novo na Org B')
     await user.type(screen.getByLabelText('Objetivo do Projeto'), 'Teste')
-    await user.type(screen.getByLabelText('Deadline'), '2026-12-20')
+    await user.click(screen.getByLabelText('Deadline'))
+    await user.keyboard('{PageDown}{Enter}') // um mês depois de hoje
     await user.type(screen.getByLabelText('Responsável'), 'Dev')
     await user.click(screen.getByRole('button', { name: /criar projeto/i }))
     await screen.findByText('Projeto criado com sucesso.')

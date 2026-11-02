@@ -31,8 +31,8 @@ describe('Access page (members)', () => {
     const row = await memberRow('Bruno Lima')
 
     expect(within(row).getByText(colleague.email)).toBeInTheDocument()
-    expect(within(row).getByRole('combobox', { name: 'Papel de Bruno Lima' })).toHaveValue(
-      'developer',
+    expect(within(row).getByRole('button', { name: 'Papel de Bruno Lima' })).toHaveTextContent(
+      'Developer',
     )
     expect(within(await memberRow('Alice Souza')).getByText('(você)')).toBeInTheDocument()
   })
@@ -40,10 +40,10 @@ describe('Access page (members)', () => {
   it('lets the admin change a member role', async () => {
     const { user } = await renderAs(testUser)
 
-    await user.selectOptions(
-      within(await memberRow('Bruno Lima')).getByRole('combobox'),
-      'stakeholder',
+    await user.click(
+      within(await memberRow('Bruno Lima')).getByRole('button', { name: 'Papel de Bruno Lima' }),
     )
+    await user.click(screen.getByRole('option', { name: 'Stakeholder' }))
 
     expect(await screen.findByText('Bruno Lima agora é Stakeholder.')).toBeInTheDocument()
     expect(roleOf(colleague.id)).toBe('stakeholder')
@@ -52,10 +52,10 @@ describe('Access page (members)', () => {
   it('keeps the last admin and explains why', async () => {
     const { user } = await renderAs(testUser)
 
-    await user.selectOptions(
-      within(await memberRow('Alice Souza')).getByRole('combobox'),
-      'stakeholder',
+    await user.click(
+      within(await memberRow('Alice Souza')).getByRole('button', { name: 'Papel de Alice Souza' }),
     )
+    await user.click(screen.getByRole('option', { name: 'Stakeholder' }))
 
     expect(
       await screen.findByText('A organização precisa de pelo menos um administrador.'),
@@ -90,7 +90,7 @@ describe('Access page (members)', () => {
 
     await memberRow('Alice Souza')
 
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Papel de/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Convidar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Remover/ })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sair da organização' })).toBeInTheDocument()

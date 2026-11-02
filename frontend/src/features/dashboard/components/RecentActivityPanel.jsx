@@ -1,6 +1,4 @@
-import { GitFork } from 'lucide-react'
-
-import styles from '@/features/dashboard/OverviewPage.module.css'
+import Tooltip from '@/shared/ui/Tooltip'
 
 // events: governanceMetrics().events. Contribuidores = logins distintos de commits
 // e PRs no período (regra G7); commits só da branch principal
@@ -20,7 +18,12 @@ export default function RecentActivityPanel({ events, days }) {
           <h2>Eventos de Desenvolvimento</h2>
         </div>
 
-        <GitFork size={21} />
+        <Tooltip label="O que é contado">
+          <p>
+            Commits da branch principal e contribuidores (quem fez commit ou abriu PR) nos últimos{' '}
+            {days} dias. Repositórios e branches: total atual.
+          </p>
+        </Tooltip>
       </div>
 
       <div className="repo-stats">
@@ -31,11 +34,6 @@ export default function RecentActivityPanel({ events, days }) {
           </div>
         ))}
       </div>
-
-      <p className={styles.muted}>
-        Commits da branch principal e contribuidores (quem fez commit ou abriu PR) nos últimos{' '}
-        {days} dias. Repositórios e branches: total atual.
-      </p>
     </section>
   )
 }

@@ -13,7 +13,10 @@ import {
 import styles from '@/features/rbac/RbacPage.module.css'
 import { ROLES } from '@/features/rbac/utils/roles'
 import { useToast } from '@/shared/hooks/useToast'
+import Select from '@/shared/ui/Select'
 import StatusBadge from '@/shared/ui/StatusBadge'
+
+const ROLE_OPTIONS = Object.entries(ROLES).map(([value, role]) => ({ value, label: role.label }))
 
 function initialsOf(name) {
   return name
@@ -176,18 +179,14 @@ export default function RbacPage({ organization, currentUserId }) {
 
                       <td>
                         {isAdmin ? (
-                          <select
+                          <Select
                             className={styles.roleSelect}
+                            size="sm"
                             aria-label={`Papel de ${member.name}`}
+                            options={ROLE_OPTIONS}
                             value={member.role}
-                            onChange={(event) => changeRole(member, event.target.value)}
-                          >
-                            {Object.entries(ROLES).map(([key, role]) => (
-                              <option key={key} value={key}>
-                                {role.label}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(role) => changeRole(member, role)}
+                          />
                         ) : (
                           <StatusBadge status="success">{ROLES[member.role].label}</StatusBadge>
                         )}

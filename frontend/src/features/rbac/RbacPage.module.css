@@ -65,12 +65,7 @@
 }
 
 .roleSelect {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text);
-  font-size: var(--font-size-sm);
+  min-width: 140px;
 }
 
 .actionsCell {

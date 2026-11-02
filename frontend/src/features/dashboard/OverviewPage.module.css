@@ -164,28 +164,6 @@
   font-size: var(--font-size-xs);
 }
 
-.ruleCard {
-  display: flex;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
-  padding: var(--space-4);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--muted);
-  font-size: var(--font-size-sm);
-}
-
-.ruleCard strong {
-  display: block;
-  margin-bottom: var(--space-1);
-  color: var(--text);
-}
-
-.ruleCard ul {
-  margin: var(--space-2) 0 0;
-  padding-left: var(--space-5);
-}
-
 /* Gráfico semanal */
 .legend {
   display: flex;

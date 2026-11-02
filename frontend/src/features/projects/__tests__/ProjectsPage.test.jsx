@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import ProjectsPage from '@/features/projects/ProjectsPage'
 import { CurrentOrganizationContext } from '@/shared/hooks/useCurrentOrganization'
@@ -55,6 +55,10 @@ const initialProjects = [
 
 beforeEach(() => {
   db.projects = structuredClone(initialProjects)
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 // Status calculado pelos alertas (regra P3); a página só exibe
@@ -176,12 +180,18 @@ describe('ProjectsPage', () => {
   })
 
   it('creates a project without a manual status (it is computed)', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 10, 2, 10, 0))
     const { user } = await renderPage()
 
     await user.click(screen.getByRole('button', { name: /novo projeto/i }))
     await user.type(screen.getByLabelText('Nome do Projeto'), 'Portal do Cidadão')
     await user.type(screen.getByLabelText('Objetivo do Projeto'), 'Atendimento online')
-    await user.type(screen.getByLabelText('Deadline'), '2026-12-20')
+    await user.click(screen.getByLabelText('Deadline'))
+    await user.click(screen.getByRole('button', { name: 'Próximo mês' }))
+    await user.click(screen.getByRole('button', { name: '20 de dezembro de 2026' }))
+    await user.click(screen.getByLabelText('Prioridade'))
+    await user.click(screen.getByRole('option', { name: 'Alta' }))
     await user.type(screen.getByLabelText('Responsável'), 'Carla')
     expect(screen.queryByLabelText('Status')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /criar projeto/i }))
@@ -190,6 +200,19 @@ describe('ProjectsPage', () => {
     expect(metric('Projetos ativos')).toHaveTextContent('3')
     expect(metric('Em atenção')).toHaveTextContent('1')
     expect(screen.getByRole('status')).toHaveTextContent('Projeto criado com sucesso.')
+  })
+
+  it('asks for the deadline before creating a project', async () => {
+    const { user } = await renderPage()
+
+    await user.click(screen.getByRole('button', { name: /novo projeto/i }))
+    await user.type(screen.getByLabelText('Nome do Projeto'), 'Portal do Cidadão')
+    await user.type(screen.getByLabelText('Objetivo do Projeto'), 'Atendimento online')
+    await user.type(screen.getByLabelText('Responsável'), 'Carla')
+    await user.click(screen.getByRole('button', { name: /criar projeto/i }))
+
+    expect(screen.getByLabelText('Deadline')).toHaveAccessibleDescription('Informe o deadline.')
+    expect(screen.getByRole('dialog', { name: 'Novo Projeto' })).toBeInTheDocument()
   })
 
   it('edits an existing project', async () => {
