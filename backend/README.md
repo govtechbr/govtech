@@ -31,7 +31,7 @@ Conecta a chave do GitHub de um projeto, lista o que ela enxerga, salva os repos
 - `functions/github/github.js`: conversa com a API do GitHub e converte as respostas. Sem dependência do Deno.
 - `functions/github/score.js`: cálculo do **Índice de Governança** (regras I1–I6), puro. Depois de cada sincronização (manual ou do agendador), a função grava a nota do dia em `governance_scores`; na primeira apuração de um projeto, recalcula os dias anteriores desde o primeiro PR.
 - Testes: `node --test "backend/supabase/functions/*/*.test.js"` (rodam no CI, junto com os da `assistant`).
-- Publicação: pelo MCP do Supabase (`deploy_edge_function`), com aprovação. Versão 3 (04/11/2026): PRs com aprovações pela API GraphQL, commits e ação `sync-all`. Versão 4 (02/11/2026): Índice de Governança. Versão 5 (02/11/2026): reconstrução só a partir do primeiro PR. Versão 6 (02/11/2026): paginação G9 e eventos de auditoria (`audit_record`). Versão 8 (02/11/2026): status do CI (G10), publicada depois da migration `ci_status`.
+- Publicação: pelo MCP do Supabase (`deploy_edge_function`), com aprovação. Versão 3 (04/11/2026): PRs com aprovações pela API GraphQL, commits e ação `sync-all`. Versão 4 (02/11/2026): Índice de Governança. Versão 5 (02/11/2026): reconstrução só a partir do primeiro PR. Versão 6 (02/11/2026): paginação G9 e eventos de auditoria (`audit_record`). Versão 8 (02/11/2026): status do CI (G10), publicada depois da migration `ci_status`. Versão 9 (02/11/2026): histórico de execuções do CI (G11), publicada depois da migration `ci_runs`.
 - **`verify_jwt` desligado desde a versão 3:** o agendador (pg_cron) chama sem login, com a senha `github_cron_secret` do Vault no cabeçalho `x-cron-secret`. As outras ações conferem o login dentro da função (`auth.getUser`), como antes.
 - **Agendamento:** job `github-sync-hourly` (`7 * * * *`) no pg_cron, criado pela migration `github_sync_hourly`. Ver os últimos disparos: `select * from cron.job_run_details order by start_time desc limit 5;` e as respostas em `net._http_response`.
 
@@ -69,7 +69,7 @@ python scripts/to_sql_editor.py tests/*.test.sql todos.editor.sql   # ou só um 
 | `assistant_usage.test.sql` | 8 | 8/8 ok (02/11/2026) |
 | `audit_events.test.sql` | 19 | 19/19 ok (02/11/2026) |
 | `ci_status.test.sql` | 7 | 7/7 ok (02/11/2026, pelo MCP) |
-| `ci_runs.test.sql` | 6 | a rodar (migration `ci_runs` ainda não aplicada) |
+| `ci_runs.test.sql` | 6 | 6/6 ok (02/11/2026, pelo MCP) |
 
 Depois de cada execução, o banco é conferido pelo MCP: nenhum usuário `@test.local` nem a extensão `pgtap` ficam para trás.
 
