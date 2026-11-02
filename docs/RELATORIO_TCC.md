@@ -468,6 +468,7 @@ A acessibilidade passou a ser **verificada por testes**: buscar elementos por pa
 | **Dados de duas empresas misturados na tela** | Revisão para a E2 | Toda consulta filtra pela empresa escolhida; a empresa entrou na chave do cache |
 | **Índice recalculado em dias sem nenhum PR** (nota 73 constante antes do primeiro PR) | Conferência dos dados em produção | O recálculo começa no dia do primeiro PR. Teste escrito antes; as 30 linhas erradas foram apagadas com aprovação do dono |
 | Teste pgTAP de cascata falhava em produção | Execução no SQL Editor | Rodando como administrador, o teste contava as linhas reais do índice; passou a olhar só o projeto do teste |
+| Teste pgTAP da auditoria parava com "permission denied for table projects" | Execução no SQL Editor | O teste criava o projeto informando o `id`, coluna que o usuário logado não pode escrever (proteção de propósito). O teste passou a deixar o banco gerar o id; a migration não mudou. Depois disso, 19/19 ok |
 | **Assistente: foco saía do diálogo** e o `Esc` deixava de funcionar | Teste automatizado | Depois de enviar a pergunta, o foco volta para o campo |
 | **Assistente: "valor de ontem"** | Pergunta real | A data ia em UTC; depois das 20 h em Campo Grande já era o dia seguinte. Passou a ir no fuso de MS |
 | **Assistente: leu "prazo 100" como "vence em até 7 dias"** e mostrava `**negrito**` com asteriscos | Pergunta real | O prompt passou a explicar o que cada nota significa, e a função tira o negrito. Testes escritos antes |
@@ -603,7 +604,7 @@ A acessibilidade passou a ser **verificada por testes**: buscar elementos por pa
 | 02/11 | E5 Índice de Governança (+ correção do teste) | PRs #22, #23 |
 | 02/11 | E6 Assistente com IA (+ registro e correções das respostas) | PRs #24, #27, #29 |
 | 02/11 | Ajustes de interface: tooltips, Select/DatePicker, limpeza de alertas e da aba Integrações | PRs #25, #26, #28 |
-| 02/11 | E7 Auditoria real + paginação do GitHub | PR #30 |
+| 02/11 | E7 Auditoria real + paginação do GitHub (+ correção do teste pgTAP, 19/19 ok) | PRs #30, #34 |
 
 Repositório: `github.com/oguilhermekenzo/govtech` (privado). Produção: `govtech-three.vercel.app`.
 
