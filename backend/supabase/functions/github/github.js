@@ -81,11 +81,25 @@ export function toRepositoryRow(repo, { organizationId }) {
   }
 }
 
-// Os 100 PRs atualizados por último, já com o número de aprovações (regra G7)
+// Tetos da paginação (regra G9). Bateu um teto: a sincronização marca "dados parciais"
+export const LIMITS = {
+  repositories: 500,
+  pullRequests: 1000,
+  branches: 500,
+  commits: 1000,
+}
+
+// PRs com as aprovações (regra G7), 100 por página, do mais recém-atualizado ao mais antigo
 const pullRequestsQuery = `
-  query ($owner: String!, $name: String!) {
+  query ($owner: String!, $name: String!, $states: [PullRequestState!], $after: String) {
     repository(owner: $owner, name: $name) {
-      pullRequests(first: 100, orderBy: { field: UPDATED_AT, direction: DESC }) {
+      pullRequests(
+        first: 100
+        after: $after
+        states: $states
+        orderBy: { field: UPDATED_AT, direction: DESC }
+      ) {
+        pageInfo { hasNextPage endCursor }
         nodes {
           number
           title
@@ -103,6 +117,42 @@ const pullRequestsQuery = `
     }
   }
 `
+
+// Páginas de PRs até acabar, chegar ao teto ou (com `since`) passar da janela.
+// partial = parou no teto com mais PRs por vir
+async function fetchPullRequestPages(token, repo, states, since, fetchImpl) {
+  const [owner, name] = repo.full_name.split('/')
+  const pulls = []
+  let after = null
+
+  while (pulls.length < LIMITS.pullRequests) {
+    const data = await githubGraphql(
+      token,
+      pullRequestsQuery,
+      { owner, name, states, after },
+      fetchImpl,
+    )
+    const { nodes, pageInfo } = data.repository.pullRequests
+    const inWindow = since ? nodes.filter((pr) => pr.updatedAt >= since) : nodes
+
+    pulls.push(...inWindow)
+    if (!pageInfo.hasNextPage || inWindow.length < nodes.length) {
+      return { pulls, partial: false }
+    }
+    after = pageInfo.endCursor
+  }
+
+  return { pulls: pulls.slice(0, LIMITS.pullRequests), partial: true }
+}
+
+// Todos os abertos (podem estar parados há meses e ainda gerar alerta) e os
+// mergeados ou fechados atualizados desde `since` (regra G9)
+export async function fetchPullRequests(token, repo, since, fetchImpl = fetch) {
+  const open = await fetchPullRequestPages(token, repo, ['OPEN'], null, fetchImpl)
+  const done = await fetchPullRequestPages(token, repo, ['MERGED', 'CLOSED'], since, fetchImpl)
+
+  return { pulls: [...open.pulls, ...done.pulls], partial: open.partial || done.partial }
+}
 
 // GraphQL: OPEN, CLOSED ou MERGED
 export function pullRequestState(pr) {
@@ -152,10 +202,29 @@ export function toBranchRow(branch, { repositoryId, organizationId }) {
   }
 }
 
-// Tudo o que a chave consegue ler (até 100). Atenção: inclui TODOS os repositórios
-// públicos, não só os escolhidos ao criar a chave; por isso o admin seleciona (G2)
-export function listRepositories(token, fetchImpl = fetch) {
-  return githubGet(token, `/user/repos?${PAGE}&sort=pushed`, fetchImpl)
+// Páginas de 100 de uma lista da API REST, até acabar ou chegar ao teto.
+// partial = a última página veio cheia no teto (pode haver mais)
+export async function restPages(token, path, max, fetchImpl = fetch) {
+  const items = []
+  const separator = path.includes('?') ? '&' : '?'
+
+  for (let page = 1; page <= max / 100; page += 1) {
+    const batch = await githubGet(token, `${path}${separator}${PAGE}&page=${page}`, fetchImpl)
+
+    items.push(...batch)
+    if (batch.length < 100) return { items, partial: false }
+  }
+
+  return { items, partial: true }
+}
+
+// Tudo o que a chave consegue ler (até 500, os com push mais recente). Atenção:
+// inclui TODOS os repositórios públicos, não só os escolhidos ao criar a chave;
+// por isso o admin seleciona (G2)
+export async function listRepositories(token, fetchImpl = fetch) {
+  const { items } = await restPages(token, '/user/repos?sort=pushed', LIMITS.repositories, fetchImpl)
+
+  return items
 }
 
 // O que a tela de seleção mostra de cada repositório
@@ -177,43 +246,36 @@ export async function checkToken(token, fetchImpl = fetch) {
   return { login: user.login, repositoryCount: repos.length }
 }
 
-const COMMIT_PAGES = 3
-
-// Commits da branch padrão desde `since` (até 300). Repositório vazio responde 409.
+// Commits da branch padrão desde `since` (até 1.000). Repositório vazio responde 409.
 async function fetchCommits(token, repo, since, fetchImpl) {
-  const commits = []
+  const path = `/repos/${repo.full_name}/commits?sha=${encodeURIComponent(repo.default_branch)}&since=${since}`
 
-  for (let page = 1; page <= COMMIT_PAGES; page += 1) {
-    const path = `/repos/${repo.full_name}/commits?sha=${encodeURIComponent(repo.default_branch)}&since=${since}&${PAGE}&page=${page}`
-    let batch
-
-    try {
-      batch = await githubGet(token, path, fetchImpl)
-    } catch (error) {
-      if (error instanceof GitHubError && error.status === 409) return []
-      throw error
-    }
-
-    commits.push(...batch)
-    if (batch.length < 100) break
+  try {
+    return await restPages(token, path, LIMITS.commits, fetchImpl)
+  } catch (error) {
+    if (error instanceof GitHubError && error.status === 409) return { items: [], partial: false }
+    throw error
   }
-
-  return commits
 }
 
-// PRs (os 100 mais recentes, com aprovações), branches (até 100) e commits da
-// branch padrão desde `since`, de cada repositório escolhido
+// De cada repositório escolhido: PRs (abertos + 90 dias), branches e commits da
+// branch padrão desde `since`, com partial = algum teto da regra G9 foi atingido
 export function fetchRepositoryData(token, repos, fetchImpl = fetch, since) {
   return Promise.all(
     repos.map(async (repo) => {
-      const [owner, name] = repo.full_name.split('/')
-      const [pullData, branches, commits] = await Promise.all([
-        githubGraphql(token, pullRequestsQuery, { owner, name }, fetchImpl),
-        githubGet(token, `/repos/${repo.full_name}/branches?${PAGE}`, fetchImpl),
+      const [pullData, branchData, commitData] = await Promise.all([
+        fetchPullRequests(token, repo, since, fetchImpl),
+        restPages(token, `/repos/${repo.full_name}/branches`, LIMITS.branches, fetchImpl),
         fetchCommits(token, repo, since, fetchImpl),
       ])
 
-      return { repo, pulls: pullData.repository.pullRequests.nodes, branches, commits }
+      return {
+        repo,
+        pulls: pullData.pulls,
+        branches: branchData.items,
+        commits: commitData.items,
+        partial: pullData.partial || branchData.partial || commitData.partial,
+      }
     }),
   )
 }

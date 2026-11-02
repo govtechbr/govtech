@@ -96,7 +96,7 @@ async function authorize(request, projectId, action) {
 
   const { data: project } = await asUser
     .from('projects')
-    .select('id, organization_id')
+    .select('id, organization_id, name')
     .eq('id', projectId)
     .maybeSingle()
   if (!project) throw new RequestError('Projeto não encontrado.', 404)
@@ -113,6 +113,22 @@ async function authorize(request, projectId, action) {
   }
 
   return { user, project, asServer: serverClient() }
+}
+
+// Trilha de auditoria (regra AU1): `actorId` null = agendador. Falha aqui não
+// derruba a ação, só vai para o log da função
+async function audit(asServer, project, actorId, action, details) {
+  const { error } = await asServer.rpc('audit_record', {
+    p_organization_id: project.organization_id,
+    p_actor_id: actorId,
+    p_action: action,
+    p_entity_type: 'project',
+    p_entity_id: project.id,
+    p_entity_name: project.name ?? null,
+    p_details: details,
+  })
+
+  if (error) console.error('Auditoria:', error)
 }
 
 async function connect({ user, project, asServer }, token) {
@@ -134,6 +150,13 @@ async function connect({ user, project, asServer }, token) {
     p_user_id: user.id,
   })
   check(error)
+
+  // nunca a chave: só os 4 últimos caracteres (AU1)
+  await audit(asServer, project, user.id, 'github.connected', {
+    githubLogin: login,
+    tokenLast4: cleanToken.slice(-4),
+    repositoryCount,
+  })
 
   return { login, repositoryCount }
 }
@@ -195,7 +218,7 @@ async function list({ project, asServer }) {
 
 // Salva a seleção do admin e já sincroniza. Só aceita repositórios que a chave enxerga.
 async function select(context, _token, body) {
-  const { project, asServer } = context
+  const { user, project, asServer } = context
   const githubIds = body.githubIds
 
   if (!Array.isArray(githubIds) || githubIds.length === 0) {
@@ -245,6 +268,10 @@ async function select(context, _token, body) {
     ).error,
   )
 
+  await audit(asServer, project, user.id, 'github.repositories_selected', {
+    repositories: chosen.map((repo) => repo.full_name),
+  })
+
   return syncAndScore(context)
 }
 
@@ -275,9 +302,10 @@ async function sync({ project, asServer }) {
   let pullRequestCount = 0
   let branchCount = 0
   let commitCount = 0
+  let partial = false
   const since = new Date(Date.now() - COMMIT_DAYS * 24 * 60 * 60 * 1000).toISOString()
 
-  for (const { repo, pulls, branches, commits } of await fetchRepositoryData(
+  for (const { repo, pulls, branches, commits, partial: repoPartial } of await fetchRepositoryData(
     token,
     visible,
     fetch,
@@ -312,6 +340,7 @@ async function sync({ project, asServer }) {
     pullRequestCount += pulls.length
     branchCount += branches.length
     commitCount += commits.length
+    partial ||= repoPartial
   }
 
   const syncedAt = new Date().toISOString()
@@ -319,7 +348,7 @@ async function sync({ project, asServer }) {
     (
       await asServer
         .from('github_credentials')
-        .update({ last_synced_at: syncedAt, last_sync_error: null })
+        .update({ last_synced_at: syncedAt, last_sync_error: null, last_sync_partial: partial })
         .eq('project_id', project.id)
     ).error,
   )
@@ -331,6 +360,8 @@ async function sync({ project, asServer }) {
     pullRequestCount,
     branchCount,
     commitCount,
+    // algum teto da paginação (G9) foi atingido
+    partial,
     syncedAt,
   }
 }
@@ -436,9 +467,25 @@ async function refreshScores(asServer, projectIds) {
   }
 }
 
-async function syncAndScore(context) {
-  const result = await sync(context)
-  await refreshScores(context.asServer, [context.project.id])
+// Sincroniza, registra o resultado na auditoria e apura o índice do projeto.
+// `user` ausente = agendador
+async function syncAndScore(context, trigger = 'manual') {
+  const { user, project, asServer } = context
+  let result
+
+  try {
+    result = await sync(context)
+  } catch (error) {
+    await audit(asServer, project, user?.id ?? null, 'github.sync_failed', {
+      trigger,
+      error: errorMessage(error),
+    })
+    throw error
+  }
+
+  const { syncedAt: _syncedAt, ...summary } = result
+  await audit(asServer, project, user?.id ?? null, 'github.synced', { trigger, ...summary })
+  if (trigger === 'manual') await refreshScores(asServer, [project.id])
 
   return result
 }
@@ -455,14 +502,18 @@ function errorMessage(error) {
 async function syncAll(asServer) {
   const { data, error } = await asServer
     .from('github_credentials')
-    .select('project_id, organization_id')
+    .select('project_id, organization_id, project:projects (name)')
   check(error)
 
   for (const row of data) {
-    const project = { id: row.project_id, organization_id: row.organization_id }
+    const project = {
+      id: row.project_id,
+      organization_id: row.organization_id,
+      name: row.project?.name,
+    }
 
     try {
-      await sync({ project, asServer })
+      await syncAndScore({ project, asServer }, 'schedule')
     } catch (syncError) {
       await asServer
         .from('github_credentials')
@@ -499,16 +550,18 @@ async function startSyncAll(request) {
   return json({ started: true }, 202)
 }
 
-async function disconnect({ project, asServer }) {
+async function disconnect({ user, project, asServer }) {
   const { error } = await asServer.rpc('github_disconnect', {
     p_project_id: project.id,
   })
   check(error)
 
+  await audit(asServer, project, user.id, 'github.disconnected', {})
+
   return { disconnected: true }
 }
 
-const actions = { connect, list, select, sync: syncAndScore, disconnect }
+const actions = { connect, list, select, sync: (context) => syncAndScore(context), disconnect }
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
