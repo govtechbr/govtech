@@ -292,6 +292,15 @@
   overflow-wrap: anywhere;
 }
 
+.alertReason {
+  margin: var(--space-1) 0 0;
+  color: var(--text);
+}
+
+.alertToggle {
+  margin-top: var(--space-3);
+}
+
 .statusDot {
   width: 12px;
   height: 12px;

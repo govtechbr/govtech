@@ -105,12 +105,14 @@ Substitui o assistente simulado da barra lateral. Provedor: **Groq** (plano grat
 
 ## 6. Alertas automáticos
 
-| Alerta | Atenção | Risco |
-|---|---|---|
-| PR aberto há muito tempo (rascunhos não contam) | mais de **1 dia** | mais de **3 dias** |
-| PR mergeado **sem nenhuma aprovação** | sempre | — |
-| Branch principal **sem proteção** | sempre | — |
-| Prazo do projeto | vence em até **7 dias** | **vencido** |
+| Alerta | Atenção | Risco | Por que importa (aparece junto do alerta) |
+|---|---|---|---|
+| Branch principal **sem proteção** | sempre | — | Qualquer pessoa com acesso pode fazer push direto ou reescrever o histórico, sem PR nem revisão |
+| PR mergeado **sem nenhuma aprovação** | sempre | — | O código entrou na branch principal sem passar pela revisão |
+| Prazo do projeto | vence em até **7 dias** | **vencido** | Replanejar ou confirmar que o que falta cabe no prazo |
+| PR aberto há muito tempo (rascunhos não contam) | mais de **1 dia** | mais de **3 dias** | PR parado acumula conflitos e atrasa a entrega |
+
+**Ordem (decisão de 02/11/2026):** Risco antes de Atenção; dentro do mesmo nível, na ordem da tabela, dos riscos estruturais (branch, revisão) aos operacionais (prazo, PR parado). O cartão da Visão geral mostra os 8 primeiros e um botão **"Ver todos os N alertas"**; o detalhe do projeto mostra todos os do projeto.
 
 **Status do projeto (P3):** Risco se houver algum alerta de Risco; senão Atenção se houver algum alerta de Atenção; senão Saudável.
 

@@ -1,13 +1,15 @@
 import { AlertTriangle, Bell } from 'lucide-react'
+import { useState } from 'react'
 
 import styles from '@/features/dashboard/OverviewPage.module.css'
 import { PROJECT_STATUS } from '@/shared/constants/projectStatus'
 
 const VISIBLE = 8
 
-// alerts: governanceAlerts (§6), Risco primeiro
+// alerts: governanceAlerts (§6), os mais críticos primeiro
 export default function AutomatedAlerts({ alerts }) {
-  const visible = alerts.slice(0, VISIBLE)
+  const [expanded, setExpanded] = useState(false)
+  const visible = expanded ? alerts : alerts.slice(0, VISIBLE)
 
   return (
     <section className="panel elevation-1">
@@ -45,6 +47,8 @@ export default function AutomatedAlerts({ alerts }) {
                 ) : (
                   <span className={styles.alertDetail}>{alert.detail}</span>
                 )}
+
+                <p className={styles.alertReason}>{alert.reason}</p>
               </div>
             </li>
           ))}
@@ -52,7 +56,13 @@ export default function AutomatedAlerts({ alerts }) {
       )}
 
       {alerts.length > VISIBLE && (
-        <p className={styles.muted}>E mais {alerts.length - VISIBLE} alerta(s).</p>
+        <button
+          className={`secondary-button ${styles.alertToggle}`}
+          type="button"
+          onClick={() => setExpanded((current) => !current)}
+        >
+          {expanded ? 'Mostrar menos' : `Ver todos os ${alerts.length} alertas`}
+        </button>
       )}
     </section>
   )

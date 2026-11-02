@@ -117,6 +117,20 @@ function daysUntil(deadline, now) {
   return Math.round((due.getTime() - today.getTime()) / DAY)
 }
 
+// Por que cada alerta importa (§6), mostrado junto do alerta
+const REASONS = {
+  branch:
+    'Sem proteção, qualquer pessoa com acesso pode fazer push direto na branch principal ou reescrever o histórico, sem PR nem revisão.',
+  unapproved:
+    'Entrou na branch principal sem nenhuma revisão aprovada: o código não passou pelo controle de revisão.',
+  deadlineOverdue: 'O prazo passou: replaneje a entrega ou registre a nova data.',
+  deadlineSoon: 'Faltam poucos dias: confira se o que falta cabe no prazo.',
+  open: 'PR parado acumula conflitos e atrasa a entrega: revise, peça mudanças ou feche.',
+}
+
+// Dentro do mesmo nível, os riscos estruturais primeiro (§6)
+const KIND_ORDER = ['branch', 'unapproved', 'deadline', 'open']
+
 function pullRequestDetail(pr) {
   return `#${pr.number} · ${pr.repositoryName} · ${pr.title}`
 }
@@ -130,9 +144,11 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
     if (age > OPEN_WARNING_DAYS) {
       alerts.push({
         id: `pr-open-${pr.id}`,
+        kind: 'open',
         level: age > OPEN_DANGER_DAYS ? 'danger' : 'warning',
         title: `PR aberto há ${plural(Math.floor(age), 'dia', 'dias')}`,
         detail: pullRequestDetail(pr),
+        reason: REASONS.open,
         href: pr.html_url,
         projectIds: pr.projectIds,
       })
@@ -147,9 +163,11 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
     ) {
       alerts.push({
         id: `pr-unapproved-${pr.id}`,
+        kind: 'unapproved',
         level: 'warning',
         title: 'PR mergeado sem aprovação',
         detail: pullRequestDetail(pr),
+        reason: REASONS.unapproved,
         href: pr.html_url,
         projectIds: pr.projectIds,
       })
@@ -165,9 +183,11 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
     if (main && !main.protected) {
       alerts.push({
         id: `branch-${repository.id}`,
+        kind: 'branch',
         level: 'warning',
         title: 'Branch principal sem proteção',
         detail: `${repository.name} · ${main.name}`,
+        reason: REASONS.branch,
         projectIds: repository.projectIds,
       })
     }
@@ -179,27 +199,29 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
     if (days !== null && days < 0) {
       alerts.push({
         id: `deadline-${project.id}`,
+        kind: 'deadline',
         level: 'danger',
         title: 'Prazo vencido',
         detail: `${project.name} · venceu há ${plural(-days, 'dia', 'dias')}`,
+        reason: REASONS.deadlineOverdue,
         projectIds: [project.id],
       })
     } else if (days !== null && days <= DEADLINE_WARNING_DAYS) {
       alerts.push({
         id: `deadline-${project.id}`,
+        kind: 'deadline',
         level: 'warning',
         title: 'Prazo perto do fim',
         detail: `${project.name} · ${days === 0 ? 'vence hoje' : `vence em ${plural(days, 'dia', 'dias')}`}`,
+        reason: REASONS.deadlineSoon,
         projectIds: [project.id],
       })
     }
   }
 
-  // Risco antes de Atenção; dentro de cada nível, a ordem acima
-  return [
-    ...alerts.filter(({ level }) => level === 'danger'),
-    ...alerts.filter(({ level }) => level === 'warning'),
-  ]
+  // Risco antes de Atenção; dentro de cada nível, KIND_ORDER (sort é estável)
+  const rank = ({ level, kind }) => (level === 'danger' ? 0 : 1) * 10 + KIND_ORDER.indexOf(kind)
+  return alerts.sort((a, b) => rank(a) - rank(b))
 }
 
 // Status do projeto (P3): Risco se tiver alerta de Risco; senão Atenção se tiver

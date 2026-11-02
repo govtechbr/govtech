@@ -127,23 +127,35 @@ describe('governanceAlerts', () => {
     { id: 'p4', name: 'Sem prazo', deadline: '' },
   ]
 
-  it('raises the alerts of §6, the most serious first', () => {
+  // §6: Risco antes de Atenção; dentro do nível, os riscos estruturais primeiro
+  it('raises the alerts of §6, the most critical first', () => {
     const alerts = governanceAlerts(data, projects, now)
 
     expect(alerts.map(({ level, title }) => `${level}: ${title}`)).toEqual([
-      'danger: PR aberto há 5 dias',
       'danger: Prazo vencido',
-      'warning: PR aberto há 2 dias',
-      'warning: PR mergeado sem aprovação',
+      'danger: PR aberto há 5 dias',
       'warning: Branch principal sem proteção',
+      'warning: PR mergeado sem aprovação',
       'warning: Prazo perto do fim',
+      'warning: PR aberto há 2 dias',
     ])
+  })
+
+  it('explains why each alert matters', () => {
+    const reasonOf = (start) =>
+      governanceAlerts(data, projects, now).find(({ title }) => title.startsWith(start)).reason
+
+    expect(reasonOf('Branch principal')).toMatch(/push direto/)
+    expect(reasonOf('PR mergeado sem aprovação')).toMatch(/sem nenhuma revisão aprovada/)
+    expect(reasonOf('Prazo vencido')).toMatch(/O prazo passou/)
+    expect(reasonOf('Prazo perto do fim')).toMatch(/Faltam poucos dias/)
+    expect(reasonOf('PR aberto')).toMatch(/PR parado/)
   })
 
   it('describes where each alert comes from', () => {
     const alerts = governanceAlerts(data, projects, now)
 
-    expect(alerts[0]).toMatchObject({
+    expect(alerts.find(({ title }) => title === 'PR aberto há 5 dias')).toMatchObject({
       detail: '#3 · app · PR 3',
       href: 'https://github.com/o/app/pull/3',
       projectIds: ['p1'],
