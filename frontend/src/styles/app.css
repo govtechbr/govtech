@@ -878,15 +878,9 @@ button.support-card {
   position: relative;
 }
 
-.notification-button i {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 6px;
-  height: 6px;
-  border: 1px solid var(--color-surface);
-  border-radius: 50%;
-  background: var(--color-danger);
+.notification-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .top-avatar {

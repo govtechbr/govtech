@@ -1,0 +1,31 @@
+.heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.badge {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.notice {
+  margin: 0 0 var(--space-5);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.disabled {
+  opacity: 0.55;
+}
+
+.disabled button {
+  cursor: not-allowed;
+}
