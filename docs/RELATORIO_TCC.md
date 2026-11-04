@@ -476,6 +476,7 @@ A acessibilidade passou a ser **verificada por testes**: buscar elementos por pa
 | **Índice recalculado em dias sem nenhum PR** (nota 73 constante antes do primeiro PR) | Conferência dos dados em produção | O recálculo começa no dia do primeiro PR. Teste escrito antes; as 30 linhas erradas foram apagadas com aprovação do dono |
 | Teste pgTAP de cascata falhava em produção | Execução no SQL Editor | Rodando como administrador, o teste contava as linhas reais do índice; passou a olhar só o projeto do teste |
 | Teste pgTAP da auditoria parava com "permission denied for table projects" | Execução no SQL Editor | O teste criava o projeto informando o `id`, coluna que o usuário logado não pode escrever (proteção de propósito). O teste passou a deixar o banco gerar o id; a migration não mudou. Depois disso, 19/19 ok |
+| **Projeto em Risco por falha de CI já corrigida** | Uso real: o PR #3 (01/11) mergeado com CI falhando mantinha o projeto em Risco por 30 dias, com a `main` verde | O alerta passou a valer só enquanto a branch principal do repositório do PR não está verde (G12). Teste escrito antes, com 3 casos: corrigida, pendente e outro repositório |
 | **Assistente: foco saía do diálogo** e o `Esc` deixava de funcionar | Teste automatizado | Depois de enviar a pergunta, o foco volta para o campo |
 | **Assistente: "valor de ontem"** | Pergunta real | A data ia em UTC; depois das 20 h em Campo Grande já era o dia seguinte. Passou a ir no fuso de MS |
 | **Assistente: leu "prazo 100" como "vence em até 7 dias"** e mostrava `**negrito**` com asteriscos | Pergunta real | O prompt passou a explicar o que cada nota significa, e a função tira o negrito. Testes escritos antes |
@@ -743,7 +744,7 @@ Ordem na tela: Risco antes de Atenção; no mesmo nível, dos riscos estruturais
 | PR aberto com CI falhando (sem rascunhos) | sempre | — | Precisa de correção antes de ser revisado |
 | PR aberto há muito tempo (sem rascunhos) | mais de 1 dia | mais de 3 dias | PR parado acumula conflitos e atrasa a entrega |
 
-Uma falha de CI já corrigida **não** gera alerta: ela aparece no histórico do CI, mas não é um risco atual.
+Uma falha de CI já corrigida **não** gera alerta: ela aparece no histórico do CI, mas não é um risco atual. Para o PR mergeado, isso vale assim (G12, 04/11/2026): o alerta existe por até 30 dias, mas só enquanto a branch principal do repositório do PR não estiver verde; quando ela volta a passar, o alerta some. Estado pendente ou desconhecido mantém o alerta, e uma branch principal vermelha em outro repositório não conta.
 
 ### A.5 Projetos
 
