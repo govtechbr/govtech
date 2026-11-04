@@ -115,7 +115,7 @@ Substitui o assistente simulado da barra lateral. Provedor: **Groq** (plano grat
 |---|---|---|---|
 | **CI falhando na branch principal** (G10) | — | sempre | A versão atual da branch principal não passa nos testes automáticos |
 | Branch principal **sem proteção** | sempre | — | Qualquer pessoa com acesso pode fazer push direto ou reescrever o histórico, sem PR nem revisão |
-| PR mergeado com **CI falhando** (últimos 30 dias) | — | sempre | Entrou na branch principal código que não passou nos testes automáticos |
+| PR mergeado com **CI falhando** (últimos 30 dias, **só enquanto a branch principal do repositório não estiver verde**; corrigida a falha, o alerta some e o fato fica no histórico de CI, decisão de 04/11/2026) | — | sempre | Entrou na branch principal código que não passou nos testes automáticos |
 | PR mergeado **sem nenhuma aprovação** | sempre | — | O código entrou na branch principal sem passar pela revisão |
 | Prazo do projeto | vence em até **7 dias** | **vencido** | Replanejar ou confirmar que o que falta cabe no prazo |
 | PR aberto com **CI falhando** (rascunhos não contam) | sempre | — | Precisa de correção antes de ser revisado e mergeado |

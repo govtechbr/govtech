@@ -737,7 +737,7 @@ Ordem na tela: Risco antes de Atenção; no mesmo nível, dos riscos estruturais
 |---|---|---|---|
 | CI falhando na branch principal | — | sempre | A versão atual da branch principal não passa nos testes automáticos |
 | Branch principal sem proteção | sempre | — | Qualquer pessoa com acesso pode fazer push direto ou reescrever o histórico, sem PR nem revisão |
-| PR mergeado com CI falhando (30 dias, fixo) | — | sempre | Entrou na branch principal código que não passou nos testes |
+| PR mergeado com CI falhando (30 dias, só enquanto a branch principal não estiver verde) | — | sempre | Entrou na branch principal código que não passou nos testes |
 | PR mergeado sem aprovação (30 dias, fixo) | sempre | — | O código entrou sem passar pela revisão |
 | Prazo do projeto | vence em até 7 dias | vencido | Replanejar ou confirmar que o que falta cabe no prazo |
 | PR aberto com CI falhando (sem rascunhos) | sempre | — | Precisa de correção antes de ser revisado |
