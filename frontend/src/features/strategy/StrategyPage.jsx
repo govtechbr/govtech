@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import DeleteObjectiveModal from './components/DeleteObjectiveModal'
 import ObjectiveFormModal from './components/ObjectiveFormModal'
+import ProjectAlerts from './components/ProjectAlerts'
 import {
   useCreateObjective,
   useDeleteObjective,
@@ -244,18 +245,7 @@ export default function StrategyPage({ projects = [], health = {}, canEdit = fal
                       <li className={`${styles.project} ${styles[projectStatus]}`} key={project.id}>
                         <span className={styles.projectName}>{project.name}</span>
 
-                        {alerts.length === 0 ? (
-                          <p className={styles.noAlerts}>Sem alertas.</p>
-                        ) : (
-                          <ul className={styles.alertList}>
-                            {alerts.map((alert) => (
-                              <li key={alert.id}>
-                                <span className={styles.alertTitle}>{alert.title}</span>
-                                <span className={styles.alertDetail}>{alert.detail}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                        <ProjectAlerts alerts={alerts} />
                       </li>
                     ))}
                   </ul>

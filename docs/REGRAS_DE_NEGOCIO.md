@@ -172,7 +172,7 @@ Liga o trabalho técnico às metas da empresa (RF03 e RF07 do TCC): um projeto e
 | S2 | A empresa tem uma lista de **objetivos estratégicos**: título (até 120 caracteres) e descrição (até 500). Só o admin cria, edita e exclui; todos veem | 🔜 E10 |
 | S3 | Um projeto se vincula a **no máximo um objetivo** (opcional), escolhido no formulário por admin ou developer. Um objetivo pode ter vários projetos. O vínculo só vale dentro da mesma empresa. Excluir um objetivo **desfaz os vínculos**; os projetos continuam | 🔜 E10 |
 | S4 | **Status do objetivo** = o pior status entre os projetos vinculados (Risco antes de Atenção antes de Saudável, mesma regra P3). Sem projeto vinculado: "Sem projetos vinculados" (falta de dado não vira Saudável) | 🔜 E10 |
-| S5 | **Impacto (RF07):** o objetivo em Risco ou Atenção lista os projetos responsáveis e os **alertas** de cada um (§6, com o "por que importa"). O sistema aponta a relação entre a falha técnica e a meta; **não estima** prazo nem custo do impacto | 🔜 E10 |
+| S5 | **Impacto (RF07):** o objetivo em Risco ou Atenção lista os projetos responsáveis e os **alertas** de cada um (§6, com o "por que importa"); cada projeto mostra os 3 primeiros alertas (mais críticos antes) e um botão "Ver todos os N alertas". O sistema aponta a relação entre a falha técnica e a meta; **não estima** prazo nem custo do impacto | 🔜 E10 |
 | S6 | Tela **Estratégia** na barra lateral: missão, visão e objetivos com status e projetos. O cartão e o detalhe do projeto mostram o objetivo a que ele serve | 🔜 E10 |
 | S7 | **Auditoria (§7):** objetivo criado, alterado ou excluído; missão e visão alteradas (antes e depois); vínculo do projeto com o objetivo (mudança do projeto) | 🔜 E10 |
 
