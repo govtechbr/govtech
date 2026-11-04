@@ -163,7 +163,7 @@ export function governanceMetrics(
   }
 }
 
-// PRs abertos × mergeados por semana, da mais antiga à atual (a última termina agora)
+// PRs criados × mergeados por semana, da mais antiga à atual (a última termina agora)
 export function weeklyFlow(pullRequests, weeks, now) {
   return Array.from({ length: weeks }, (_, index) => {
     const end = now.getTime() - (weeks - 1 - index) * 7 * DAY
@@ -174,7 +174,7 @@ export function weeklyFlow(pullRequests, weeks, now) {
     }
 
     return {
-      label: formatShortDate(new Date(start)),
+      label: `${formatShortDate(new Date(start))} a ${formatShortDate(new Date(end))}`,
       opened: pullRequests.filter((pr) => inWeek(pr.created_at_github)).length,
       merged: pullRequests.filter((pr) => pr.state === 'merged' && inWeek(pr.merged_at)).length,
     }

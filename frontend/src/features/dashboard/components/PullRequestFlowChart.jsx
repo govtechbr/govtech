@@ -5,7 +5,7 @@ export default function PullRequestFlowChart({ weeks }) {
   const max = Math.max(1, ...weeks.flatMap((week) => [week.opened, week.merged]))
   const current = weeks.at(-1)
   const summary = weeks
-    .map((week) => `Semana de ${week.label}: ${week.opened} abertos, ${week.merged} mergeados`)
+    .map((week) => `Semana de ${week.label}: ${week.opened} criados, ${week.merged} mergeados`)
     .join('; ')
 
   // Altura da barra = dado; vai por variável CSS, o resto do estilo fica no módulo
@@ -14,7 +14,7 @@ export default function PullRequestFlowChart({ weeks }) {
   return (
     <div>
       <div className={styles.legend}>
-        <span className={`${styles.legendItem} ${styles.opened}`}>PRs abertos</span>
+        <span className={`${styles.legendItem} ${styles.opened}`}>PRs criados</span>
         <span className={`${styles.legendItem} ${styles.merged}`}>PRs mergeados</span>
       </div>
 
@@ -25,7 +25,7 @@ export default function PullRequestFlowChart({ weeks }) {
               <span
                 className={`${styles.bar} ${styles.opened}`}
                 style={size(week.opened)}
-                title={`${week.opened} abertos`}
+                title={`${week.opened} criados`}
               />
               <span
                 className={`${styles.bar} ${styles.merged}`}
@@ -40,8 +40,8 @@ export default function PullRequestFlowChart({ weeks }) {
       </div>
 
       <p className={styles.muted}>
-        Semanas começando na data indicada. Nesta semana: <strong>{current.opened} abertos</strong>{' '}
-        e <strong>{current.merged} mergeados</strong>.
+        Períodos de 7 dias. Nesta semana: <strong>{current.opened} criados</strong> e{' '}
+        <strong>{current.merged} mergeados</strong>.
       </p>
     </div>
   )
