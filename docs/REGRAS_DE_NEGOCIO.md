@@ -2,7 +2,7 @@
 
 Fonte única das regras do produto. Definidas com o dono do projeto em 02/11/2026; mudanças passam por aqui antes do código. O "como" técnico fica em `PLANO_TECNICO.md`.
 
-**Legenda:** ✅ já funciona · 🔜 planejado (entrega indicada em §9)
+**Legenda:** ✅ já funciona · 🔜 planejado (entrega indicada em §9). Revisado contra o código depois do PR #52: todas as entregas E1 a E11 estão no ar.
 
 ---
 
@@ -45,12 +45,12 @@ Esconder um botão na tela é só conveniência: quem bloqueia de verdade é o b
 | G1 | **Uma chave por projeto**, cadastrada só pelo admin, guardada criptografada (Vault). A tela mostra só os 4 últimos caracteres | ✅ |
 | G2 | A chave do GitHub sempre lê **todos os repositórios públicos**, além dos escolhidos ao criá-la. Por isso, depois de conectar, o **admin marca na lista quais repositórios são do projeto** | ✅ E1 |
 | G3 | Um projeto pode ter **vários repositórios**, e um repositório pode estar em **vários projetos** (API compartilhada, monorepo) | ✅ E1 |
-| G4 | **Sem duplicidade:** na visão da empresa, cada repositório, PR, commit e contribuidor conta **uma vez só**. Na visão de um projeto aparecem todos os PRs dos repositórios dele. Num repositório compartilhado, o PR aparece nos dois projetos (o sistema não sabe de qual projeto ele é) | ✅ E1 (repositórios e PRs; commits e contribuidores chegam na E3) |
+| G4 | **Sem duplicidade:** na visão da empresa, cada repositório, PR, commit e contribuidor conta **uma vez só**. Na visão de um projeto aparecem todos os PRs dos repositórios dele. Num repositório compartilhado, o PR aparece nos dois projetos (o sistema não sabe de qual projeto ele é) | ✅ E1 e E3 (repositórios, PRs, commits e contribuidores) |
 | G5 | Desconectar a chave de um projeto desfaz as ligações; os dados de um repositório só somem quando nenhum projeto o usa mais | ✅ E1 |
 | G6 | **Sincronização automática a cada hora**, e o botão "Sincronizar" continua para quem não quer esperar | ✅ E3 (minuto 7 de cada hora) |
 | G7 | Dados buscados: repositórios, PRs (com **revisões/aprovações**), branches (com proteção), **commits da branch principal** e **contribuidores** | ✅ E3 (aprovações dos PRs, commits dos últimos 90 dias; contribuidores = logins distintos de commits e PRs) |
 | G8 | **LGPD:** de pessoas de fora (autores, contribuidores), guardar só o **login** e o **avatar público** do GitHub. Nada de e-mail | ✅ (commits sem nome, e-mail nem mensagem) |
-| G9 | **Paginação:** repositórios visíveis até 500; PRs **abertos** (até 1.000) mais os atualizados nos **últimos 90 dias** (até 1.000 por repositório); branches até 500; commits da branch principal de 90 dias, até 1.000. Se algum teto for atingido, a sincronização marca **dados parciais** e o painel do projeto e a auditoria avisam | 🔜 E7 |
+| G9 | **Paginação:** repositórios visíveis até 500; PRs **abertos** (até 1.000) mais os atualizados nos **últimos 90 dias** (até 1.000 por repositório); branches até 500; commits da branch principal de 90 dias, até 1.000. Se algum teto for atingido, a sincronização marca **dados parciais** e o painel do projeto e a auditoria avisam | ✅ E7 |
 | G10 | **Status do CI** (decisão de 02/11/2026): a cada sincronização, o resultado combinado dos checks (GitHub Actions ou outro CI) do **último commit** de cada PR e da **branch principal**: **verde**, **falhou** ou **rodando**. Repositório sem CI fica "sem CI" e não gera alerta nem entra na taxa. É uma **foto da hora da sincronização, não um histórico**: uma falha corrigida antes da sincronização seguinte não fica registrada. Se a chave não tiver permissão de leitura de *Commit statuses* e *Actions*, o CI vem como "sem CI" e a sincronização segue | ✅ E8 |
 | G11 | **Histórico de execuções do CI** (decisão de 02/11/2026): a cada sincronização, as execuções do **GitHub Actions** dos **últimos 90 dias** de cada repositório (até 1.000), com número, workflow, evento, branch, commit, resultado e horários. **Sem quem disparou** (LGPD). Mais antigas que 90 dias saem. Cobre só o GitHub Actions; outro CI continua só pelo estado atual (G10). Exige a permissão *Actions* (Read) na chave; sem ela, o histórico fica vazio e a sincronização segue. Não gera alerta: falha já corrigida não é risco atual | ✅ E9 |
 
@@ -121,7 +121,7 @@ Substitui o assistente simulado da barra lateral. Provedor: **Groq** (plano grat
 | PR aberto com **CI falhando** (rascunhos não contam) | sempre | — | Precisa de correção antes de ser revisado e mergeado |
 | PR aberto há muito tempo (rascunhos não contam) | mais de **1 dia** | mais de **3 dias** | PR parado acumula conflitos e atrasa a entrega |
 
-**Ordem (decisão de 02/11/2026):** Risco antes de Atenção; dentro do mesmo nível, na ordem da tabela, dos riscos estruturais (CI da branch principal, proteção, revisão) aos operacionais (prazo, PR parado). O cartão da Visão geral mostra os 8 primeiros e um botão **"Ver todos os N alertas"**. Os alertas ficam só na Visão geral: o cartão e o detalhe do projeto mostram só o status (PR #25).
+**Ordem (decisão de 02/11/2026):** Risco antes de Atenção; dentro do mesmo nível, na ordem da tabela, dos riscos estruturais (CI da branch principal, proteção, revisão) aos operacionais (prazo, PR parado). O cartão da Visão geral mostra os 8 primeiros e um botão **"Ver todos os N alertas"**. Os alertas aparecem na Visão geral e, por objetivo, na Estratégia (S5): o cartão e o detalhe do projeto mostram só o status (PR #25).
 
 **Status do projeto (P3):** Risco se houver algum alerta de Risco; senão Atenção se houver algum alerta de Atenção; senão Saudável.
 
@@ -133,13 +133,13 @@ Trilha simples, para revisão (sem cadeia de hash, decisão Q7 do plano técnico
 
 | # | Regra | Situação |
 |---|---|---|
-| AU1 | **O que se registra.** Projetos: criado, alterado (quais campos, antes e depois) e excluído. Membros: entrou, papel alterado, removido ou saiu. Empresa: nome alterado e código de convite gerado de novo (**sem o código**). GitHub: chave conectada ou removida (**nunca a chave**, só os 4 últimos caracteres), repositórios escolhidos e cada sincronização (manual ou automática) com o resultado | 🔜 E7 |
-| AU2 | **Quem fez:** a pessoa logada; nas ações do agendador, "Sistema". O nome e o papel de quem agiu ficam gravados no evento, para continuar legível se a pessoa sair da empresa | 🔜 E7 |
-| AU3 | **Imutável:** ninguém altera nem apaga um evento, nem pelo app nem com a chave de serviço. Os eventos só somem junto com a empresa | 🔜 E7 |
-| AU4 | **Quem vê:** admin e stakeholder da empresa. O developer não vê (o menu some e o banco bloqueia) | 🔜 E7 |
-| AU5 | **Tela:** do mais novo ao mais antigo, 50 por vez com "Carregar mais"; filtros de período (7, 30 ou 90 dias) e de tipo (Projetos, Membros, Empresa, GitHub). Os cartões mostram números reais do período: eventos, mudanças de acesso e sincronizações com falha | 🔜 E7 |
-| AU6 | **CSV** dos eventos filtrados, gerado no navegador e protegido contra fórmulas (célula que começa com `=`, `+`, `-` ou `@`) | 🔜 E7 |
-| AU7 | **LGPD:** o evento guarda nome e papel de quem agiu; nada de e-mail ou chave. Do GitHub, só contagens | 🔜 E7 |
+| AU1 | **O que se registra.** Projetos: criado, alterado (quais campos, antes e depois) e excluído. Membros: entrou, papel alterado, removido ou saiu. Empresa: nome alterado, missão e visão alteradas (antes e depois) e código de convite gerado de novo (**sem o código**). Estratégia: objetivo criado, alterado ou excluído, e vínculo do projeto com o objetivo (S7). GitHub: chave conectada ou removida (**nunca a chave**, só os 4 últimos caracteres), repositórios escolhidos e cada sincronização (manual ou automática) com o resultado | ✅ E7 |
+| AU2 | **Quem fez:** a pessoa logada; nas ações do agendador, "Sistema". O nome e o papel de quem agiu ficam gravados no evento, para continuar legível se a pessoa sair da empresa | ✅ E7 |
+| AU3 | **Imutável:** ninguém altera nem apaga um evento, nem pelo app nem com a chave de serviço. Os eventos só somem junto com a empresa | ✅ E7 |
+| AU4 | **Quem vê:** admin e stakeholder da empresa. O developer não vê (o menu some e o banco bloqueia) | ✅ E7 |
+| AU5 | **Tela:** do mais novo ao mais antigo, 50 por vez com "Carregar mais"; filtros de período (7, 30 ou 90 dias) e de tipo (Projetos, Membros, Empresa, GitHub). Os cartões mostram números reais do período: eventos, mudanças de acesso e sincronizações com falha | ✅ E7 |
+| AU6 | **CSV** dos eventos filtrados, gerado no navegador e protegido contra fórmulas (célula que começa com `=`, `+`, `-` ou `@`) | ✅ E7 |
+| AU7 | **LGPD:** o evento guarda nome e papel de quem agiu; nada de e-mail ou chave. Do GitHub, só contagens | ✅ E7 |
 
 ## 8. Fora do escopo até 18/11/2026
 
@@ -147,20 +147,20 @@ Convite por e-mail, webhook ou GitHub App (atualização instantânea), CI no Í
 
 ## 9. Entregas
 
-| # | Entrega | Regras | Previsão |
-|---|---|---|---|
-| E1 | Seleção de repositórios (N:N, sem duplicidade) + viewer vira stakeholder | A2, G2–G5, papéis | 04/11 |
-| E2 | Troca de empresa (workspace) | A5, A6 | 05/11 |
-| E3 | Mais dados do GitHub + sincronização a cada hora | G6–G8 | 08/11 |
-| E4 | Visão geral com métricas reais, alertas e status automático com cartão | P3, P4, §5, §6 | 12/11 |
-| E5 | Índice de Governança (0–100) com histórico | I1–I6 | 06/11 |
-| E6 | Assistente de Governança com IA (Groq) | IA1–IA6 | 08/11 |
-| E7 | Auditoria real + paginação do GitHub | AU1–AU7, G9 | 10/11 |
-| E8 | Status do CI: coleta, alertas e taxa de CI verde | G10, §5, §6 | 03/11 |
-| E9 | Histórico de execuções do CI e tempo de correção | G11, §5 | 04/11 |
-| E10 | Direcionadores estratégicos: missão, visão, objetivos e vínculo com projetos | S1–S7 | 04/11 |
-| E11 | Página Processos: evidências por área do CMMI/ISO 12207 | C1–C6 | 05/11 |
-| — | Folga: testes, documentação do TCC, ensaio | — | 13–18/11 |
+| # | Entrega | Regras | Previsão | Situação |
+|---|---|---|---|---|
+| E1 | Seleção de repositórios (N:N, sem duplicidade) + viewer vira stakeholder | A2, G2–G5, papéis | 04/11 | ✅ |
+| E2 | Troca de empresa (workspace) | A5, A6 | 05/11 | ✅ |
+| E3 | Mais dados do GitHub + sincronização a cada hora | G6–G8 | 08/11 | ✅ |
+| E4 | Visão geral com métricas reais, alertas e status automático com cartão | P3, P4, §5, §6 | 12/11 | ✅ |
+| E5 | Índice de Governança (0–100) com histórico | I1–I6 | 06/11 | ✅ |
+| E6 | Assistente de Governança com IA (Groq) | IA1–IA6 | 08/11 | ✅ |
+| E7 | Auditoria real + paginação do GitHub | AU1–AU7, G9 | 10/11 | ✅ |
+| E8 | Status do CI: coleta, alertas e taxa de CI verde | G10, §5, §6 | 03/11 | ✅ |
+| E9 | Histórico de execuções do CI e tempo de correção | G11, §5 | 04/11 | ✅ |
+| E10 | Direcionadores estratégicos: missão, visão, objetivos e vínculo com projetos | S1–S7 | 04/11 | ✅ |
+| E11 | Página Processos: evidências por área do CMMI/ISO 12207 | C1–C6 | 05/11 | ✅ |
+| — | Folga: testes, documentação do TCC, ensaio | — | 13–18/11 | em andamento |
 
 ## 10. Direcionadores estratégicos (E10, decisão de 02/11/2026)
 
@@ -168,13 +168,13 @@ Liga o trabalho técnico às metas da empresa (RF03 e RF07 do TCC): um projeto e
 
 | # | Regra | Situação |
 |---|---|---|
-| S1 | A empresa tem **missão** e **visão**: texto livre, até 1.000 caracteres cada. Só o admin edita; todos os papéis veem | 🔜 E10 |
-| S2 | A empresa tem uma lista de **objetivos estratégicos**: título (até 120 caracteres) e descrição (até 500). Só o admin cria, edita e exclui; todos veem | 🔜 E10 |
-| S3 | Um projeto se vincula a **no máximo um objetivo** (opcional), escolhido no formulário por admin ou developer. Um objetivo pode ter vários projetos. O vínculo só vale dentro da mesma empresa. Excluir um objetivo **desfaz os vínculos**; os projetos continuam | 🔜 E10 |
-| S4 | **Status do objetivo** = o pior status entre os projetos vinculados (Risco antes de Atenção antes de Saudável, mesma regra P3). Sem projeto vinculado: "Sem projetos vinculados" (falta de dado não vira Saudável) | 🔜 E10 |
-| S5 | **Impacto (RF07):** o objetivo em Risco ou Atenção lista os projetos responsáveis e os **alertas** de cada um (§6, com o "por que importa"); cada projeto mostra os 3 primeiros alertas (mais críticos antes) e um botão "Ver todos os N alertas". O sistema aponta a relação entre a falha técnica e a meta; **não estima** prazo nem custo do impacto | 🔜 E10 |
-| S6 | Tela **Estratégia** na barra lateral: missão, visão e objetivos com status e projetos. O cartão e o detalhe do projeto mostram o objetivo a que ele serve | 🔜 E10 |
-| S7 | **Auditoria (§7):** objetivo criado, alterado ou excluído; missão e visão alteradas (antes e depois); vínculo do projeto com o objetivo (mudança do projeto) | 🔜 E10 |
+| S1 | A empresa tem **missão** e **visão**: texto livre, até 1.000 caracteres cada. Só o admin edita; todos os papéis veem | ✅ E10 |
+| S2 | A empresa tem uma lista de **objetivos estratégicos**: título (até 120 caracteres) e descrição (até 500). Só o admin cria, edita e exclui; todos veem | ✅ E10 |
+| S3 | Um projeto se vincula a **no máximo um objetivo** (opcional), escolhido no formulário por admin ou developer. Um objetivo pode ter vários projetos. O vínculo só vale dentro da mesma empresa. Excluir um objetivo **desfaz os vínculos**; os projetos continuam | ✅ E10 |
+| S4 | **Status do objetivo** = o pior status entre os projetos vinculados (Risco antes de Atenção antes de Saudável, mesma regra P3). Sem projeto vinculado: "Sem projetos vinculados" (falta de dado não vira Saudável) | ✅ E10 |
+| S5 | **Impacto (RF07):** o objetivo em Risco ou Atenção lista os projetos responsáveis e os **alertas** de cada um (§6, com o "por que importa"); cada projeto mostra os 3 primeiros alertas (mais críticos antes) e um botão "Ver todos os N alertas". O sistema aponta a relação entre a falha técnica e a meta; **não estima** prazo nem custo do impacto | ✅ E10 |
+| S6 | Tela **Estratégia** na barra lateral: missão, visão e objetivos com status e projetos. O cartão e o detalhe do projeto mostram o objetivo a que ele serve | ✅ E10 |
+| S7 | **Auditoria (§7):** objetivo criado, alterado ou excluído; missão e visão alteradas (antes e depois); vínculo do projeto com o objetivo (mudança do projeto) | ✅ E10 |
 
 ## 11. Processos: evidências por área do CMMI (E11, decisão de 02/11/2026)
 
@@ -182,12 +182,12 @@ Objetivo específico 5 do TCC: relacionar os registros dos PRs às práticas de 
 
 | # | Regra | Situação |
 |---|---|---|
-| C1 | A tela **Processos** (todos os papéis veem) mostra cada área de processo, os critérios do Índice de Governança que servem de evidência, a nota atual da empresa e a faixa (I3) | 🔜 E11 |
-| C2 | **Mapeamento fixo** (tabela abaixo). Cada critério do índice (I1) alimenta uma única área, então nenhuma evidência é contada duas vezes | 🔜 E11 |
-| C3 | A **nota da área** é a média ponderada dos critérios dela, com os pesos e a regra de "só critérios com dado" do índice (I2); a empresa usa a média dos projetos (I4). Sem dado em nenhum critério da área: "sem dados" | 🔜 E11 |
-| C4 | Cada área mostra **de onde vem a evidência** (qual dado do GitHub) e a **prática do modelo** correspondente, em texto simples para quem não é técnico | 🔜 E11 |
-| C5 | Um aviso fixo na tela diz que a nota é **evidência de apoio**, não avaliação formal de maturidade | 🔜 E11 |
-| C6 | Mapeamento só de apoio à leitura: mudar a tabela não muda o índice nem os alertas | 🔜 E11 |
+| C1 | A tela **Processos** (todos os papéis veem) mostra cada área de processo, os critérios do Índice de Governança que servem de evidência, a nota atual da empresa e a faixa (I3) | ✅ E11 |
+| C2 | **Mapeamento fixo** (tabela abaixo). Cada critério do índice (I1) alimenta uma única área, então nenhuma evidência é contada duas vezes | ✅ E11 |
+| C3 | A **nota da área** é a média ponderada dos critérios dela, com os pesos e a regra de "só critérios com dado" do índice (I2); a empresa usa a média dos projetos (I4). Sem dado em nenhum critério da área: "sem dados" | ✅ E11 |
+| C4 | Cada área mostra **de onde vem a evidência** (qual dado do GitHub) e a **prática do modelo** correspondente, em texto simples para quem não é técnico | ✅ E11 |
+| C5 | Um aviso fixo na tela diz que a nota é **evidência de apoio**, não avaliação formal de maturidade | ✅ E11 |
+| C6 | Mapeamento só de apoio à leitura: mudar a tabela não muda o índice nem os alertas | ✅ E11 |
 
 | Área (CMMI-DEV 1.3) | Processo ISO/IEC/IEEE 12207 | Critérios do índice | Prática que a evidência apoia |
 |---|---|---|---|
