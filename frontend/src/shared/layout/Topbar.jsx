@@ -37,9 +37,14 @@ export default function Topbar({
           <Search size={18} />
         </button>
 
-        <button type="button" className="icon-button notification-button" aria-label="Notificações">
+        <button
+          type="button"
+          className="icon-button notification-button"
+          aria-label="Notificações (em desenvolvimento)"
+          title="Notificações — em desenvolvimento"
+          disabled
+        >
           <Bell size={18} />
-          <i />
         </button>
 
         <button
