@@ -114,7 +114,12 @@ describe('weeklyFlow', () => {
     const weeks = weeklyFlow(data.pullRequests, 4, now)
 
     expect(weeks).toHaveLength(4)
-    expect(weeks.at(-1)).toMatchObject({ label: '03/11', opened: 5, merged: 1 })
+    expect(weeks.at(-1)).toMatchObject({
+      label: '03/11 a 10/11',
+      opened: 5,
+      merged: 1,
+    })
+    expect(weeks.at(-2).label).toBe('27/10 a 03/11')
     expect(weeks.at(-2)).toMatchObject({ opened: 1, merged: 0 })
     expect(weeks.at(-4)).toMatchObject({ opened: 1, merged: 1 })
   })

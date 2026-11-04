@@ -717,7 +717,7 @@ O CI ainda não entra no índice: mudar os pesos agora quebraria a comparação 
 
 | Campo | O que é | Como é calculado | Período |
 |---|---|---|---|
-| Evolução das Pull Requests | Ritmo semanal | Por semana: PRs abertos × PRs mergeados. Mostra pelo menos 4 semanas | Seletor (mín. 4 semanas) |
+| Evolução das Pull Requests | Ritmo semanal | Por semana: PRs criados × PRs mergeados. Mostra pelo menos 4 semanas | Seletor (mín. 4 semanas) |
 | Distribuição | Situação dos PRs | **Abertos** e **rascunhos** agora; **mergeados** e **fechados sem merge** no período | Misto |
 | Repositórios | Escopo monitorado | Repositórios escolhidos pelo admin nos projetos | Agora |
 | Commits | Atividade de código | Commits da branch principal | Seletor |

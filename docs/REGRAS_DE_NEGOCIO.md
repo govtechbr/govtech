@@ -64,7 +64,7 @@ Calculadas dos dados sincronizados, nunca valores fixos. **Período:** seletor 7
 | Lead time médio | Média do tempo da **abertura do PR até o merge**, nos PRs mergeados no período |
 | Taxa de aprovação | % dos PRs **mergeados** no período que tiveram **ao menos 1 aprovação** de revisor |
 | CI verde no merge | % dos PRs **mergeados** no período, **com CI**, cujo último commit estava **verde** (G10). Sem PR mergeado com CI = "sem dados" |
-| Evolução dos PRs | Gráfico **por semana**: PRs abertos × PRs mergeados |
+| Evolução dos PRs | Gráfico **por semana** (períodos de 7 dias, ex.: "28/10 a 04/11"): PRs criados × PRs mergeados |
 | Eventos de desenvolvimento | Repositórios, commits (branch principal), branches e contribuidores no período |
 | Execuções com sucesso | % das execuções do CI **concluídas** no período (G11) que passaram; canceladas e puladas não contam. Sem execução = "sem dados" |
 | Tempo médio de correção | Média, nas falhas **corrigidas** que começaram no período, do fim da **primeira execução que falhou** ao fim da **próxima que passou**, no mesmo workflow e na mesma branch (falhas seguidas contam como uma só). É o "tempo de recuperação" das métricas DORA |
