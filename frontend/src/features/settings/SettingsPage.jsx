@@ -14,6 +14,8 @@ import {
 import { useToast } from '@/shared/hooks/useToast'
 import Select from '@/shared/ui/Select'
 
+import styles from './SettingsPage.module.css'
+
 const TIMEZONE_OPTIONS = [
   { value: 'America/Sao_Paulo', label: 'Brasília (UTC-3)' },
   { value: 'America/New_York', label: 'New York (UTC-5)' },
@@ -47,16 +49,6 @@ export default function SettingsPage({ settings, onSaveSettings }) {
   function save() {
     onSaveSettings(draft)
     onToast('Configurações salvas com sucesso.')
-  }
-
-  function toggleNotification(key) {
-    setDraft((current) => ({
-      ...current,
-      notifications: {
-        ...current.notifications,
-        [key]: !current.notifications[key],
-      },
-    }))
   }
 
   const tabs = [
@@ -241,10 +233,17 @@ export default function SettingsPage({ settings, onSaveSettings }) {
       {tab === 'notificacoes' && (
         <section className="panel elevation-1">
           <div className="panel-heading">
-            <h2>Notificações</h2>
+            <div className={styles.heading}>
+              <h2>Notificações</h2>
+              <span className={styles.badge}>Em desenvolvimento</span>
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gap: '10px' }}>
+          <p className={styles.notice}>
+            As notificações ainda não estão disponíveis. As opções abaixo são apenas uma prévia.
+          </p>
+
+          <div className={styles.disabled} style={{ display: 'grid', gap: '10px' }}>
             {notifications.map((notification) => {
               const enabled = Boolean(draft.notifications?.[notification.key])
 
@@ -274,7 +273,7 @@ export default function SettingsPage({ settings, onSaveSettings }) {
 
                   <button
                     type="button"
-                    onClick={() => toggleNotification(notification.key)}
+                    disabled
                     aria-label={
                       enabled ? `Desativar ${notification.label}` : `Ativar ${notification.label}`
                     }
@@ -307,26 +306,24 @@ export default function SettingsPage({ settings, onSaveSettings }) {
               )
             })}
           </div>
-
-          <button
-            type="button"
-            className="primary-button"
-            style={{ marginTop: '20px' }}
-            onClick={save}
-          >
-            <Check size={16} />
-            Salvar preferências
-          </button>
         </section>
       )}
 
       {tab === 'seguranca' && (
         <section className="panel elevation-1">
           <div className="panel-heading">
-            <h2>Segurança e Autenticação</h2>
+            <div className={styles.heading}>
+              <h2>Segurança e Autenticação</h2>
+              <span className={styles.badge}>Em desenvolvimento</span>
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gap: '14px' }}>
+          <p className={styles.notice}>
+            Os recursos de segurança da conta ainda não estão disponíveis. Os itens abaixo são
+            apenas uma prévia.
+          </p>
+
+          <div className={styles.disabled} style={{ display: 'grid', gap: '14px' }}>
             {securityItems.map((item) => {
               const SecurityIcon = item.icon
 
@@ -358,11 +355,7 @@ export default function SettingsPage({ settings, onSaveSettings }) {
                     </small>
                   </div>
 
-                  <button
-                    type="button"
-                    className="secondary-button small"
-                    onClick={() => onToast(`${item.action}: ação demonstrativa.`)}
-                  >
+                  <button type="button" className="secondary-button small" disabled>
                     {item.action}
                   </button>
                 </article>
