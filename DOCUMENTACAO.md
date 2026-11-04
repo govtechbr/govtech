@@ -1,4 +1,4 @@
-# GovTech MS — Documentação do Projeto
+# GovTech — Documentação do Projeto
 
 Plataforma web de **governança e monitoramento de projetos de TI**: painel com indicadores, lista de projetos com prazo, status e Índice de Governança, visão de repositórios/Pull Requests/branches, auditoria, controle de acesso (RBAC) e configurações.
 
@@ -356,7 +356,7 @@ Aberto pelo botão "Assistente com IA" do menu lateral (`app/AssistantDialog.jsx
 
 | Componente | O que faz |
 |---|---|
-| `Brand` | Logo “GovTech MS”. |
+| `Brand` | Logo “GovTech”. |
 | `Icon` | Recebe um **nome** de ícone em texto (`name="Shield"`) e busca no mapa `iconMap`. Se o nome não existir, mostra o ícone de interrogação (`CircleHelp`) como fallback. |
 | `StatCard` | Cartão com título, valor grande, subtexto, ícone e variação (`trend`) com seta. |
 | `StatusBadge` | Etiqueta colorida. `status` = `success`, `warning`, `danger`… |

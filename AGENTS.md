@@ -1,4 +1,4 @@
-# AGENTS.md — GovTech MS
+# AGENTS.md — GovTech
 
 <!-- Aprovado em 31/10/2026. Manter abaixo de ~120 linhas: este arquivo é lido em TODA interação e cada linha custa tokens. Detalhes ficam em docs/ e são lidos só quando necessário. -->
 

@@ -1,4 +1,4 @@
-# GovTech MS
+# GovTech
 
 Plataforma web de governança de projetos de TI (TCC). Front-end em React + Vite; back-end em Supabase (Postgres, Auth e RLS).
 

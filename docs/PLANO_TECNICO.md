@@ -1,4 +1,4 @@
-# GovTech MS — Plano Técnico (Back-end Supabase, Refatoração, Testes, Responsividade)
+# GovTech — Plano Técnico (Back-end Supabase, Refatoração, Testes, Responsividade)
 
 > **Status (01/11/2026):** ✅ Limpeza (branch `chore/limpeza`) · ✅ Qualidade: ESLint, Prettier e Husky (branch `chore/qualidade`) · ✅ Skills instaladas · ✅ Testes P0 (branch `test/setup`, §14) · Supabase `govtech-br` em São Paulo, vazio · ✅ **Nova estrutura concluída** (§15) · próxima fase: **Supabase**.
 >

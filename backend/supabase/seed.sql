@@ -1,5 +1,5 @@
 -- =====================================================================
--- Seed de demonstração: organização "GovTech MS (demo)" com os 4 projetos
+-- Seed de demonstração: organização "GovTech (demo)" com os 4 projetos
 -- que hoje estão em frontend/src/mocks/mockData.js.
 --
 -- Rodar DEPOIS que a conta do admin existir (cadastro feito no app).
@@ -22,14 +22,14 @@ begin
   select o.id into org_id
   from public.organizations o
   join public.organization_members m on m.organization_id = o.id
-  where o.name = 'GovTech MS (demo)' and m.user_id = admin_id and m.role = 'admin';
+  where o.name = 'GovTech (demo)' and m.user_id = admin_id and m.role = 'admin';
 
   if org_id is not null then
     raise notice 'Organização demo já existe (%); nada a fazer.', org_id;
     return;
   end if;
 
-  insert into public.organizations (name) values ('GovTech MS (demo)') returning id into org_id;
+  insert into public.organizations (name) values ('GovTech (demo)') returning id into org_id;
 
   insert into public.organization_members (organization_id, user_id, role)
   values (org_id, admin_id, 'admin');

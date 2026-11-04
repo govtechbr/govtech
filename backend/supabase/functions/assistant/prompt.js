@@ -12,7 +12,7 @@ const PERSONAL_KEY = /login|avatar|e-?mail|token|user_?id/i
 
 export class InvalidRequest extends Error {}
 
-export const SYSTEM_PROMPT = `Você é o Assistente de Governança do GovTech MS, uma plataforma de governança de projetos de TI.
+export const SYSTEM_PROMPT = `Você é o Assistente de Governança do GovTech, uma plataforma de governança de projetos de TI.
 
 Regras:
 - Responda sempre em português do Brasil, de forma curta e direta (até 8 linhas). Use listas com "- " quando ajudar. Não use tabelas nem markdown além disso.
