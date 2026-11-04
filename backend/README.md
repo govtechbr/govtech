@@ -1,6 +1,6 @@
 # backend — Supabase
 
-Banco Postgres, autenticação e regras de acesso (RLS) do GovTech MS. Projeto Supabase: **`govtech-br`** (região São Paulo).
+Banco Postgres, autenticação e regras de acesso (RLS) do GovTech. Projeto Supabase: **`govtech-br`** (região São Paulo).
 
 ```
 supabase/
@@ -83,4 +83,4 @@ Depois de cada execução, o banco é conferido pelo MCP: nenhum usuário `@test
 
 ## Seed de demonstração
 
-`seed.sql` cria a organização "GovTech MS (demo)" com os 4 projetos do mock e põe uma conta existente como admin. Rodar **depois** do cadastro dessa conta no app, trocando `ADMIN_EMAIL_AQUI` pelo e-mail dela na hora de executar (o e-mail não fica no repositório).
+`seed.sql` cria a organização "GovTech (demo)" com os 4 projetos do mock e põe uma conta existente como admin. Rodar **depois** do cadastro dessa conta no app, trocando `ADMIN_EMAIL_AQUI` pelo e-mail dela na hora de executar (o e-mail não fica no repositório).

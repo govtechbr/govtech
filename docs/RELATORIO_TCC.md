@@ -1,4 +1,4 @@
-# GovTech MS — Relatório técnico de desenvolvimento (base para o TCC)
+# GovTech — Relatório técnico de desenvolvimento (base para o TCC)
 
 > **Para que serve este arquivo:** reunir, em um só lugar, o que foi feito na engenharia do projeto entre **31/10/2026 e 02/11/2026**: o diagnóstico, as decisões e seus motivos, o método de trabalho e os resultados medidos (antes e depois). Ele serve de matéria-prima para os capítulos de **Metodologia**, **Desenvolvimento** e **Resultados** do TCC.
 >
@@ -40,7 +40,7 @@
 
 ## 1. Contexto e ponto de partida
 
-O **GovTech MS** é uma plataforma web de governança de projetos de TI. Ela acompanha:
+O **GovTech** é uma plataforma web de governança de projetos de TI. Ela acompanha:
 - projetos (prazo, responsável e status);
 - repositórios, pull requests e branches do GitHub;
 - um Índice de Governança;

@@ -1,4 +1,4 @@
-# Regras de negócio — GovTech MS
+# Regras de negócio — GovTech
 
 Fonte única das regras do produto. Definidas com o dono do projeto em 02/11/2026; mudanças passam por aqui antes do código. O "como" técnico fica em `PLANO_TECNICO.md`.
 

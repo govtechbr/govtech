@@ -1,5 +1,5 @@
 export const defaultSettings = {
-  organizationName: 'govtech-ms',
+  organizationName: 'govtech',
   theme: 'Claro',
   notifications: true,
   emailDigest: 'weekly',

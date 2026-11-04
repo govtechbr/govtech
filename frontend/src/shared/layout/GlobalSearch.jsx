@@ -172,7 +172,7 @@ function SearchPanel({
               color: 'var(--muted)',
             }}
           >
-            Digite para pesquisar em todo o ambiente GovTech MS.
+            Digite para pesquisar em todo o ambiente GovTech.
           </p>
         )}
 

@@ -1,4 +1,4 @@
-# API do GovTech MS
+# API do GovTech
 
 Como o front-end conversa com o back-end: quais endereços existem, quem pode chamar cada um, o que entra e o que sai. Estado de E5 (Índice de Governança).
 

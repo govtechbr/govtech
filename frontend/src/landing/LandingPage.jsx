@@ -754,7 +754,7 @@ export default function LandingPage() {
         <div className="footer-bottom">
           <div className="container">
             <p>
-              © 2026 GovTech MS. Projeto acadêmico de Governança e Monitoramento de Projetos de TI.
+              © 2026 GovTech. Projeto acadêmico de Governança e Monitoramento de Projetos de TI.
             </p>
           </div>
         </div>

@@ -37,7 +37,7 @@ export default function LoginPage() {
     <AuthLayout
       kicker="ACESSO CORPORATIVO"
       title="Bem-vindo de volta"
-      subtitle="Acesse a plataforma GovTech MS."
+      subtitle="Acesse a plataforma GovTech."
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <AuthField
