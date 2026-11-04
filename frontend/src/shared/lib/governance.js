@@ -235,10 +235,18 @@ export function governanceAlerts({ pullRequests, repositories, branches }, proje
     }
   }
 
-  // CI (G10): o estado do último commit na hora da sincronização
+  // CI (G10): o estado do último commit na hora da sincronização. Um PR mergeado com
+  // CI falhando só alerta enquanto a branch principal dele não estiver verde: depois
+  // disso a falha foi corrigida e fica só no histórico (§6)
+  const mainIsGreen = new Set(
+    repositories.filter((repository) => repository.ci_state === 'success').map(({ id }) => id),
+  )
+
   for (const pr of pullRequests) {
     const recentMerge =
-      pr.state === 'merged' && isWithinDays(pr.merged_at, UNAPPROVED_WINDOW_DAYS, now)
+      pr.state === 'merged' &&
+      isWithinDays(pr.merged_at, UNAPPROVED_WINDOW_DAYS, now) &&
+      !mainIsGreen.has(pr.repository_id)
 
     if (pr.ci_state === 'failure' && (isOpen(pr) || recentMerge)) {
       alerts.push({

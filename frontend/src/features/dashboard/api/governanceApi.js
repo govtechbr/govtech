@@ -22,7 +22,7 @@ export async function loadGovernanceData(organizationId, now = new Date()) {
     supabase
       .from('pull_requests')
       .select(
-        `id, number, title, state, draft, author_login, approval_count, ci_state, html_url, created_at_github, merged_at, closed_at, repository:repositories!inner (name, ${links})`,
+        `id, repository_id, number, title, state, draft, author_login, approval_count, ci_state, html_url, created_at_github, merged_at, closed_at, repository:repositories!inner (name, ${links})`,
       )
       .eq('organization_id', organizationId),
     supabase

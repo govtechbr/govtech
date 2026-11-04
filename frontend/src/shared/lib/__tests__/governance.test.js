@@ -23,6 +23,7 @@ function pr(overrides) {
     created_at_github: daysAgo(0.5),
     merged_at: null,
     closed_at: null,
+    repository_id: 'r1',
     repositoryName: 'app',
     projectIds: ['p1'],
     ...overrides,
@@ -232,6 +233,44 @@ describe('CI status (rule G10)', () => {
     expect(alerts[1]).toMatchObject({ detail: '#3 · app · PR 3' })
     expect(alerts[2]).toMatchObject({ detail: '#1 · app · PR 1' })
     expect(alerts[0].reason).toMatch(/testes automáticos/)
+  })
+
+  // §6: uma falha já corrigida deixou de ser risco atual; fica só no histórico
+  it('drops the merged-with-failing-CI alert once the main branch is green again', () => {
+    const fixed = {
+      ...ci,
+      repositories: [{ ...ci.repositories[0], ci_state: 'success' }],
+    }
+
+    expect(governanceAlerts(fixed, projects, now).map(({ title }) => title)).toEqual([
+      'PR com CI falhando',
+    ])
+  })
+
+  it('keeps the merged-with-failing-CI alert while the main CI is not confirmed green', () => {
+    const pending = {
+      ...ci,
+      repositories: [{ ...ci.repositories[0], ci_state: 'pending' }],
+    }
+
+    expect(governanceAlerts(pending, projects, now).map(({ title }) => title)).toContain(
+      'PR mergeado com CI falhando',
+    )
+  })
+
+  it('only counts the merged alert against the repository of the PR', () => {
+    const other = {
+      ...ci,
+      repositories: [
+        { ...ci.repositories[0], ci_state: 'success' },
+        { id: 'r2', name: 'site', default_branch: 'main', ci_state: 'failure', projectIds: ['p2'] },
+      ],
+      branches: [...ci.branches, { repository_id: 'r2', name: 'main', protected: true }],
+    }
+
+    const titles = governanceAlerts(other, projects, now).map(({ title }) => title)
+
+    expect(titles).not.toContain('PR mergeado com CI falhando')
   })
 
   it('computes the share of merged PRs with green CI, ignoring PRs without CI', () => {
