@@ -150,6 +150,11 @@
   color: var(--muted);
 }
 
+.alertToggle {
+  justify-self: start;
+  margin-top: var(--space-2);
+}
+
 .noAlerts {
   margin: var(--space-1) 0 0;
   color: var(--muted);
