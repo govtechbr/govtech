@@ -1,6 +1,6 @@
 # API do GovTech
 
-Como o front-end conversa com o back-end: quais endereços existem, quem pode chamar cada um, o que entra e o que sai. Estado de E5 (Índice de Governança).
+Como o front-end conversa com o back-end: quais endereços existem, quem pode chamar cada um, o que entra e o que sai. Revisado contra o código e as migrations depois do PR #52 (entregas E1 a E11).
 
 > **Resumo:** não existe um servidor próprio. A API é o **Supabase**: o banco Postgres fica exposto como API REST, e as regras de acesso ficam **no banco** (RLS). Só o que não pode rodar no navegador (falar com o GitHub usando a chave do cliente) fica numa **Edge Function**.
 
@@ -28,7 +28,7 @@ flowchart LR
   AI -->|GROQ_API_KEY| GROQ[API do Groq]
 ```
 
-São quatro tipos de porta de entrada, todas no mesmo projeto Supabase (`https://<projeto>.supabase.co`):
+São cinco portas de entrada, todas no mesmo projeto Supabase (`https://<projeto>.supabase.co`):
 
 | Porta | Endereço | Para quê |
 |---|---|---|
@@ -96,20 +96,20 @@ Endereço: `/rest/v1/<tabela>`. Todas pertencem a uma organização (`organizati
 | Tabela | Ler | Inserir | Alterar | Excluir | Observações |
 |---|---|---|---|---|---|
 | `profiles` | o próprio e o dos colegas de organização | — (criado por trigger no cadastro) | o próprio, só `full_name` | — | `email` copiado do Auth por trigger |
-| `organizations` | membros | — (só pela RPC `create_organization`) | admin, só `name` | — | `join_code` = código de convite |
+| `organizations` | membros | — (só pela RPC `create_organization`) | admin, só `name`, `mission` e `vision` | — | `join_code` = código de convite; `mission` e `vision` até 1.000 caracteres cada (regra S1) |
 | `organization_members` | membros | — (só pelas RPCs) | admin, só `role` | admin, ou o próprio membro (sair) | Trigger impede ficar sem admin |
-| `projects` | membros | admin, developer | admin, developer | admin | A coluna `status` está sem uso (status é calculado, regra P3) |
-| `github_credentials` | membros (sem `secret_id`) | — | — | — | Só a Edge Function escreve |
-| `repositories` | membros | — | — | — | Um por empresa; cache do GitHub |
+| `projects` | membros | admin, developer | admin, developer | admin | Colunas gravadas: nome, descrição, prazo, responsável, prioridade e `objective_id` (objetivo estratégico, opcional, regra S3). `status` e `progress` estão sem uso (status é calculado, regra P3) |
+| `github_credentials` | membros (sem `secret_id`) | — | — | — | Só a Edge Function escreve. Mostra `token_last4`, `github_login`, `last_synced_at`, `last_sync_error` e `last_sync_partial` |
+| `repositories` | membros | — | — | — | Um por empresa; cache do GitHub. `ci_state` = CI da branch principal (G10) |
 | `project_repositories` | membros | — | — | — | Liga projetos a repositórios (N:N) |
-| `pull_requests` | membros | — | — | — | Os 100 mais recentes de cada repositório |
-| `branches` | membros | — | — | — | Até 100 por repositório |
+| `pull_requests` | membros | — | — | — | PRs abertos mais os dos últimos 90 dias (teto G9), com `approval_count` e `ci_state` (G10) |
+| `branches` | membros | — | — | — | Até 500 por repositório (G9), com a proteção da branch |
 | `commits` | membros | — | — | — | Branch principal, últimos 90 dias |
 | `ci_runs` | membros | — | — | — | Execuções do GitHub Actions, últimos 90 dias (G11), sem quem disparou |
 | `governance_scores` | membros | — | — | — | Índice de Governança: uma linha por projeto e por dia (§6.6) |
 | `assistant_usage` | — | — | — | — | Perguntas ao assistente por pessoa e por dia (§6.7). Sem acesso pelo front |
 | `audit_events` | admin e stakeholder | — | — | — | Trilha de auditoria (§6.8). Gravada só pelo banco: triggers em `projects`, `organization_members` e `organizations`, e `audit_record` pela Edge Function. Imutável, nem a chave de serviço altera |
-| `strategic_objectives` | membros | admin | admin | admin | Objetivos estratégicos da empresa (regras S2–S3). Colunas: `title`, `description`. Auditoria: `objective.created`, `objective.updated`, `objective.deleted` |
+| `strategic_objectives` | membros | admin | admin | admin | Objetivos estratégicos da empresa (regras S2–S3). Colunas: `title` (até 120) e `description` (até 500). Excluir um objetivo desfaz o vínculo dos projetos (`objective_id` fica nulo). Auditoria: `objective.created`, `objective.updated`, `objective.deleted` |
 
 As tabelas do GitHub são **somente leitura** para o usuário: não têm policy de escrita. Só a Edge Function grava nelas, com a chave de serviço, **depois** de conferir o papel de quem chamou.
 
@@ -221,14 +221,6 @@ Paginação da regra G9 (E7). Os tetos ficam em `LIMITS`, em `functions/github/g
 - **CI (G10):** `SUCCESS` → `success`; `FAILURE` e `ERROR` → `failure`; `PENDING` e `EXPECTED` → `pending`; sem checks → `null` ("sem CI"). Vai para `pull_requests.ci_state` e `repositories.ci_state`. Se o GitHub devolver erro **só** no campo `statusCheckRollup` (chave sem permissão de *Commit statuses*/*Actions*), os dados valem e o CI fica `null`; qualquer outro erro continua falhando a sincronização.
 - **Execuções do CI (G11):** sem a permissão *Actions* (403/404), o histórico fica vazio e a sincronização segue. `actor` e `triggering_actor` não são guardados. `completed_at` = `updated_at` do GitHub quando `status = completed`. O resumo da sincronização e o evento de auditoria ganham `ciRunCount`.
 
-### 6.6 Índice de Governança
-
-- Calculado em `functions/github/score.js` (regras I1–I6 de `REGRAS_DE_NEGOCIO.md` §5.1) e gravado em `governance_scores`: uma linha por projeto e por dia, no fuso de MS, com a nota (`score`, 0–100 ou null) e a nota de cada critério (`components`).
-- Apurado depois de cada `sync`/`select` (só o projeto da ação) e no fim de cada `sync-all` (todos os projetos, inclusive os sem GitHub, por causa do prazo). Vale a última apuração do dia.
-- Na primeira apuração de um projeto, os dias anteriores (até 30) são recalculados pelas datas dos PRs, a partir do primeiro PR, e marcados `reconstructed`.
-- Uma falha no índice não derruba a sincronização: vai só para o log da função.
-- O front lê com `loadGovernanceData` (últimos 31 dias) e só organiza para a tela (`shared/lib/governanceScore.js`).
-
 ### 6.5 Erros
 
 A resposta de erro é sempre `{ "error": "<mensagem em pt-BR, pronta para a tela>" }`:
@@ -244,6 +236,14 @@ A resposta de erro é sempre `{ "error": "<mensagem em pt-BR, pronta para a tela
 | 502 | O GitHub está fora do ar ou respondeu com erro 5xx |
 
 Problema com a chave do GitHub volta como **400**, e não 401, de propósito: o client do Supabase trataria um 401 como sessão expirada do usuário.
+
+### 6.6 Índice de Governança
+
+- Calculado em `functions/github/score.js` (regras I1–I6 de `REGRAS_DE_NEGOCIO.md` §5.1) e gravado em `governance_scores`: uma linha por projeto e por dia, no fuso de MS, com a nota (`score`, 0–100 ou null) e a nota de cada critério (`components`).
+- Apurado depois de cada `sync`/`select` (só o projeto da ação) e no fim de cada `sync-all` (todos os projetos, inclusive os sem GitHub, por causa do prazo). Vale a última apuração do dia.
+- Na primeira apuração de um projeto, os dias anteriores (até 30) são recalculados pelas datas dos PRs, a partir do primeiro PR, e marcados `reconstructed`.
+- Uma falha no índice não derruba a sincronização: vai só para o log da função.
+- O front lê com `loadGovernanceData` (últimos 31 dias) e só organiza para a tela (`shared/lib/governanceScore.js`).
 
 ### 6.7 Edge Function `assistant` (Assistente de Governança com IA)
 
@@ -291,9 +291,10 @@ Regras AU1–AU7 de `REGRAS_DE_NEGOCIO.md` §7.
 
 | Ação (`action`) | Quem grava | Detalhes (`details`) |
 |---|---|---|
-| `project.created` / `project.updated` / `project.deleted` | trigger em `projects` | campos com `from`/`to` (só os que mudaram; `updated_at` e `status` não contam) |
+| `project.created` / `project.updated` / `project.deleted` | trigger em `projects` | campos com `from`/`to` (só os que mudaram, inclusive o vínculo com o objetivo, `objective`; `updated_at` e `status` não contam) |
 | `member.joined` / `member.role_changed` / `member.removed` / `member.left` | trigger em `organization_members` | papel (ou `from`/`to`) |
-| `organization.renamed` / `organization.join_code_regenerated` | trigger em `organizations` | nome `from`/`to`; o código **nunca** |
+| `organization.renamed` / `organization.join_code_regenerated` / `organization.strategy_updated` | trigger em `organizations` | nome `from`/`to`; missão e visão `from`/`to`; o código **nunca** |
+| `objective.created` / `objective.updated` / `objective.deleted` | trigger em `strategic_objectives` | título e campos alterados (`from`/`to`) |
 | `github.connected` / `github.disconnected` | Edge Function | login do GitHub e 4 últimos caracteres da chave |
 | `github.repositories_selected` | Edge Function | nomes dos repositórios |
 | `github.synced` / `github.sync_failed` | Edge Function | `trigger` (`manual` ou `schedule`), contagens, `partial`, ou a mensagem de erro |
@@ -316,8 +317,13 @@ Regras AU1–AU7 de `REGRAS_DE_NEGOCIO.md` §7.
 4. Depois disso: `sync` manual (admin ou developer) ou automático a cada hora.
 
 **Visão geral**
-1. `loadGovernanceData(organizationId)` lê `repositories`, `pull_requests`, `branches` e `commits` (últimos 90 dias) da empresa.
-2. As métricas, os alertas e o status de cada projeto são calculados **no navegador**, em `shared/lib/governance.js` (regras em `REGRAS_DE_NEGOCIO.md` §5 e §6). Não há endpoint de métricas.
+1. `loadGovernanceData(organizationId)` lê `repositories`, `pull_requests`, `branches`, `commits` e `ci_runs` (últimos 90 dias) e `governance_scores` (últimos 31 dias) da empresa.
+2. As métricas, os alertas e o status de cada projeto são calculados **no navegador**, em `shared/lib/governance.js` (regras em `REGRAS_DE_NEGOCIO.md` §5 e §6). Não há endpoint de métricas. A página **Processos** reaproveita as notas por critério de `governance_scores` (regra C3).
+
+**Estratégia**
+1. `listObjectives` e `getMissionAndVision` leem `strategic_objectives` e `organizations`; só o admin grava (RLS).
+2. O vínculo do projeto com um objetivo é `projects.objective_id`, gravado por `createProject` e `updateProject`.
+3. O status do objetivo é calculado no navegador (`shared/lib/strategy.js`) a partir do status dos projetos ligados (regra S4).
 
 ---
 
@@ -332,12 +338,12 @@ Cada feature tem sua pasta `api/`. Os hooks (TanStack Query) chamam essas funç�
 | `features/projects/api/githubApi.js` | `connectGitHub`, `listAvailableRepositories`, `selectRepositories`, `syncGitHub`, `disconnectGitHub`, `getGitHubConnection` | Edge Function, `github_credentials`, `project_repositories` |
 | `features/rbac/api/membersApi.js` | `listMembers`, `updateMemberRole`, `removeMember`, `regenerateJoinCode` | `organization_members`, `profiles`, RPC |
 | `features/repositories/api/repositoriesApi.js` | `listRepositoryData` | `repositories`, `pull_requests`, `branches` |
-| `features/dashboard/api/governanceApi.js` | `loadGovernanceData` | `repositories`, `pull_requests`, `branches`, `commits`, `governance_scores` |
+| `features/dashboard/api/governanceApi.js` | `loadGovernanceData` | `repositories`, `pull_requests`, `branches`, `commits`, `ci_runs`, `governance_scores` |
 | `features/assistant/api/assistantApi.js` | `askAssistant` | Edge Function `assistant` |
 | `features/strategy/api/strategyApi.js` | `getMissionAndVision`, `saveMissionAndVision`, `listObjectives`, `createObjective`, `updateObjective`, `deleteObjective` | `organizations` (colunas `mission` e `vision`, só o admin altera) e `strategic_objectives` |
 | `features/audit/api/auditApi.js` | `listAuditEvents`, `listAllAuditEvents`, `countAuditEvents` | `audit_events` |
 
-Chaves de cache do TanStack Query: `['projects', orgId]`, `['members', orgId]`, `['repository-data', orgId, projectId | 'all']`, `['governance', orgId]`. Todas incluem a empresa, para os dados de duas empresas nunca se misturarem.
+Chaves de cache do TanStack Query: `['organizations', userId]`, `['projects', orgId]`, `['github', projectId]`, `['github-available', projectId]`, `['members', orgId]`, `['repository-data', orgId, projectId | 'all']`, `['governance', orgId]`, `['objectives', orgId]`, `['mission-vision', orgId]`, `['audit', orgId, dias, tipo]` e `['audit-counts', orgId, dias]`. Todas incluem a empresa, para os dados de duas empresas nunca se misturarem.
 
 ---
 
@@ -360,7 +366,7 @@ As funções de `api/` transformam o erro técnico numa mensagem em pt-BR antes 
 
 | O quê | Onde | Ferramenta |
 |---|---|---|
-| Policies de RLS (positivo e negativo para cada papel), RPCs, triggers | `backend/supabase/tests/*.test.sql` | pgTAP (`npx supabase test db`) |
+| Policies de RLS (positivo e negativo para cada papel), RPCs, triggers | `backend/supabase/tests/*.test.sql` (11 arquivos) | pgTAP, rodado no SQL Editor com `scripts/to_sql_editor.py` (ver `backend/README.md`) |
 | Conversão dos dados do GitHub, mensagens de erro, cálculo do índice e validação do assistente | `backend/supabase/functions/*/*.test.js` | `node --test` (roda no CI) |
 | Camada `api/` do front e telas | `frontend/src/**/__tests__` | Vitest + MSW, que simula o Supabase e a Edge Function (`src/test/msw`) |
 

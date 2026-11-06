@@ -1,8 +1,10 @@
 # GovTech — Relatório técnico de desenvolvimento (base para o TCC)
 
-> **Para que serve este arquivo:** reunir, em um só lugar, o que foi feito na engenharia do projeto entre **31/10/2026 e 02/11/2026**: o diagnóstico, as decisões e seus motivos, o método de trabalho e os resultados medidos (antes e depois). Ele serve de matéria-prima para os capítulos de **Metodologia**, **Desenvolvimento** e **Resultados** do TCC.
+> **Para que serve este arquivo:** reunir, em um só lugar, o que foi feito na engenharia do projeto entre **31/10/2026 e 04/11/2026**: o diagnóstico, as decisões e seus motivos, o método de trabalho e os resultados medidos (antes e depois). Ele serve de matéria-prima para os capítulos de **Metodologia**, **Desenvolvimento** e **Resultados** do TCC.
 >
 > Todos os números vêm de comandos executados no projeto (testes, lint, build, consultas ao banco e medições no navegador). Nenhum valor foi estimado. As datas são as do merge de cada PR no GitHub (horário UTC).
+>
+> Estado descrito: `main` até o PR #52 (entregas E1 a E11). Os números de testes foram conferidos de novo nessa data: 222 no front, 131 no banco e 51 nas Edge Functions.
 >
 > Documentos de apoio:
 > - `docs/REGRAS_DE_NEGOCIO.md`: regras do produto, fonte única.
@@ -44,6 +46,7 @@ O **GovTech** é uma plataforma web de governança de projetos de TI. Ela acompa
 - projetos (prazo, responsável e status);
 - repositórios, pull requests e branches do GitHub;
 - um Índice de Governança;
+- os objetivos estratégicos da empresa e as evidências por área de processo (CMMI);
 - a auditoria;
 - o controle de acesso por papéis (RBAC).
 
@@ -57,7 +60,7 @@ O **GovTech** é uma plataforma web de governança de projetos de TI. Ela acompa
 **Objetivo do trabalho de engenharia:** levar o produto de um protótipo com dados falsos a um sistema real.
 - **Primeiro:** organizar, testar e corrigir o front-end.
 - **Depois:** conectar um back-end real, o **Supabase** (Postgres, autenticação, Row Level Security e Edge Functions), e integrar com o GitHub.
-- **Por fim:** construir diferenciais de governança (índice, assistente com IA e auditoria).
+- **Por fim:** construir diferenciais de governança (índice, assistente com IA, auditoria, estratégia e processos).
 
 **Restrições:**
 
@@ -73,7 +76,7 @@ O **GovTech** é uma plataforma web de governança de projetos de TI. Ela acompa
 ## 2. Método de trabalho
 
 ### 2.1 Ordem das fases
-Definida pelo time: **Limpeza → Qualidade → Testes → Nova estrutura → Supabase**. Depois vieram as entregas de produto **E1 a E7**, guiadas pelas regras de negócio.
+Definida pelo time: **Limpeza → Qualidade → Testes → Nova estrutura → Supabase**. Depois vieram as entregas de produto **E1 a E11**, guiadas pelas regras de negócio.
 
 O raciocínio é de dependência:
 - não se refatora com segurança sem testes;
@@ -147,7 +150,10 @@ Antes de qualquer mudança, o código foi lido por inteiro e os problemas foram 
 | Sincronização | **A cada hora** (agendador no banco) e botão "Sincronizar" para quem não quer esperar (E3) |
 | Índice de Governança | Nota de 0 a 100 com pesos: revisão de código 30, fluxo de PRs 20, prazo 20, proteção da branch 15, lead time 15 (E5) |
 | Assistente com IA | **Groq** (gratuito), 20 perguntas por pessoa e 200 no total por dia; só números e títulos de PR vão para a IA; todos os papéis usam (E6) |
-| Auditoria | Para revisão, sem cadeia de *hash*. Visível para **admin e stakeholder**; registra também as ações da integração com o GitHub (E7) |
+| Auditoria | Para revisão, sem cadeia de *hash*. Visível para **admin e stakeholder**; registra também as ações da integração com o GitHub e as mudanças na estratégia (E7, E10) |
+| Estratégia | Missão, visão e objetivos por empresa (só o admin edita); um projeto serve a no máximo um objetivo; o status do objetivo é o pior entre seus projetos (E10) |
+| Processos | Evidência de apoio por área do CMMI-DEV 1.3, sem avaliar nível de maturidade (E11) |
+| Funcionalidades ainda sem função | Abas Notificações e Segurança de Configurações e o sino do topo ficam marcados como **em desenvolvimento**, desabilitados, em vez de fingir que funcionam |
 | Paginação do GitHub | Janela de **90 dias**, com tetos e aviso de "dados parciais" (E7) |
 | Dados pessoais | Nome, e-mail e chave de API do GitHub. De pessoas de fora (autores no GitHub), só login e avatar públicos |
 | Landing page | Mantida, em pasta separada do sistema |
@@ -209,7 +215,7 @@ Antes de qualquer mudança, o código foi lido por inteiro e os problemas foram 
 | **Membros (RBAC real)** | Lista real de membros, troca de papel, remoção e código de convite. Um trigger impede a empresa de ficar sem admin. Botões aparecem conforme o papel |
 | **GitHub** | Chave por projeto no **Vault**, Edge Function `github` (conectar, sincronizar, desconectar) e tabelas de repositórios, PRs e branches, só leitura para o front |
 
-### Entregas de produto (E1 a E9)
+### Entregas de produto (E1 a E11)
 
 | # | Entrega | Destaques |
 |---|---|---|
@@ -222,11 +228,10 @@ Antes de qualquer mudança, o código foi lido por inteiro e os problemas foram 
 | **E7** | **Auditoria real + paginação do GitHub** | Trilha imutável de quem fez o quê (projetos, membros, empresa e GitHub), com filtros e CSV seguro. A busca no GitHub passou a ser paginada, com aviso de "dados parciais" |
 | **E8** | **Status do CI** | Resultado do CI (GitHub Actions ou outro) do último commit de cada PR e da branch principal; 3 alertas (main com CI quebrado, PR mergeado e PR aberto com CI falhando) e o indicador "CI verde no merge". Saiu também o campo de progresso manual, que não tinha regra de cálculo |
 | **E9** | **Histórico do CI** | Execuções do GitHub Actions de 90 dias, com taxa de sucesso e **tempo médio de correção** (DORA). Nasceu de um caso real: a execução #60 falhou e foi corrigida 4 minutos depois, entre duas sincronizações, e a foto do E8 não a registrava |
-
 | **E10** | Direcionadores estratégicos (RF03/RF07 do TCC) | Missão e visão por empresa, objetivos estratégicos e vínculo opcional do projeto a um objetivo (chave composta: nunca de outra empresa). O objetivo mostra o pior status entre os projetos e os alertas que o causam. Auditoria dos objetivos, da missão/visão e do vínculo. Regras S1–S7 |
 | **E11** | Página Processos (objetivo 5 do TCC) | Os 5 critérios do Índice de Governança agrupados por área do CMMI-DEV 1.3 (VER, CM, PMC, MA) e pelos processos da ISO/IEC/IEEE 12207 (base do SPICE). Evidência de apoio, **não** avaliação de maturidade. Regras C1–C6 |
 
-Cada entrega teve suas regras em `docs/REGRAS_DE_NEGOCIO.md`, um plano aprovado, um PR com CI verde e um registro em `docs/PLANO_TECNICO.md` (§16 a §18.8).
+Cada entrega teve suas regras em `docs/REGRAS_DE_NEGOCIO.md`, um plano aprovado, um PR com CI verde e um registro das decisões de execução em `docs/PLANO_TECNICO.md` (§10).
 
 ### 5.1 Detalhe: Índice de Governança (E5)
 
@@ -278,6 +283,34 @@ Cada entrega teve suas regras em `docs/REGRAS_DE_NEGOCIO.md`, um plano aprovado,
 - **Tela:** filtros de período e tipo, 50 eventos por vez, cartões com números reais e exportação **CSV protegida contra fórmulas maliciosas** (CSV *injection*).
 - **Motivação real:** antes da E7, um membro sumiu de uma empresa e não havia como saber quem o removeu. A hipótese mais provável era uma remoção manual pelo painel do banco (seção 12.2). Com a auditoria, isso ficaria registrado.
 
+### 5.4 Detalhe: Estratégia (E10)
+- **Por quê:** ligar o trabalho técnico às metas da empresa (RF03 e RF07 do TCC): um projeto em risco passa a mostrar **qual objetivo de negócio ele ameaça**.
+- **Dados:** missão e visão (até 1.000 caracteres cada) na própria empresa; tabela `strategic_objectives` (título até 120, descrição até 500); coluna opcional `projects.objective_id`, com chave composta que impede ligar um projeto a um objetivo de outra empresa.
+- **Permissões:** todos os papéis veem; só o admin cria, edita e exclui (RLS, com 17 testes pgTAP). Excluir um objetivo desfaz os vínculos e os projetos continuam.
+- **Status do objetivo:** o pior status entre os projetos ligados (Risco antes de Atenção antes de Saudável); sem projeto, "Sem projetos vinculados". Falta de dado nunca vira Saudável.
+- **Impacto:** o objetivo em Risco ou Atenção lista os projetos responsáveis e os alertas de cada um (3 primeiros, com "Ver todos os N alertas"). O sistema aponta a relação entre a falha técnica e a meta; **não estima** prazo nem custo.
+- **Auditoria:** objetivo criado, alterado ou excluído; missão e visão alteradas (antes e depois); vínculo do projeto com o objetivo.
+
+### 5.5 Detalhe: Processos (E11)
+- **Por quê:** objetivo específico 5 do TCC, relacionar os registros dos PRs às práticas de avaliação de processos (CMMI-DEV 1.3 e SPICE, ISO/IEC 33000, sobre os processos da ISO/IEC/IEEE 12207).
+- **Mapeamento fixo**, sem tabela nova (cada critério do índice alimenta uma única área, então nenhuma evidência é contada duas vezes):
+
+| Área (CMMI-DEV 1.3) | Processo ISO/IEC/IEEE 12207 | Critérios do índice |
+|---|---|---|
+| Verificação (VER) | Verificação | Revisão de código |
+| Gestão de Configuração (CM) | Gestão de configuração | Proteção da branch |
+| Monitoramento e Controle do Projeto (PMC) | Avaliação e controle do projeto | Fluxo de PRs e Prazo |
+| Medição e Análise (MA) | Medição | Lead time |
+
+- **Cuidado metodológico:** a tela mostra a nota de cada área e **de onde vem a evidência**, com um aviso fixo de que é evidência de apoio. O sistema **não atribui nível de capacidade nem de maturidade**, o que exige um avaliador qualificado.
+
+### 5.6 Acabamento das últimas entregas (PRs #48 a #52)
+- Estratégia: cada projeto mostra os 3 primeiros alertas, com botão para ver todos (#48).
+- Gráfico de PRs: rotulado como "criados" e com a faixa de datas de cada semana (#49).
+- Notificações, Segurança e sino do topo marcados como "em desenvolvimento" (#50).
+- Produto renomeado de "GovTech MS" para "GovTech" (#51).
+- Alerta "PR mergeado com CI falhando" some quando o CI da branch principal volta a ficar verde; a falha continua no histórico do CI (#52).
+
 ---
 
 ## 6. Arquitetura resultante
@@ -308,17 +341,17 @@ govtech/
 │       ├── app/              rotas, layout autenticado, providers, adaptadores entre features
 │       ├── landing/          página institucional (carregada sob demanda)
 │       ├── features/         uma pasta por área: auth, dashboard, projects, repositories,
-│       │                     audit, assistant, rbac, settings (cada uma com api, hooks,
+│       │                     strategy, processes, audit, assistant, rbac, settings (cada uma com api, hooks,
 │       │                     components, utils e __tests__)
 │       ├── shared/           ui (Modal, Select, DatePicker, Tooltip…), layout, hooks, lib
-│       │                     (governance, governanceScore, assistantContext, date)
+│       │                     (governance, governanceScore, strategy, processes, assistantContext, date)
 │       ├── mocks/            dados de exemplo restantes
 │       ├── styles/           tokens e estilos globais
 │       └── test/             configuração dos testes e MSW (Supabase simulado)
 ├── backend/supabase/
-│   ├── migrations/           9 migrations versionadas
+│   ├── migrations/           12 migrations versionadas
 │   ├── functions/            Edge Functions github (sync, índice, auditoria) e assistant (IA)
-│   ├── tests/                8 arquivos pgTAP (101 testes)
+│   ├── tests/                11 arquivos pgTAP (131 testes)
 │   └── scripts/              conversor dos testes para o SQL Editor
 ├── docs/                     regras de negócio, plano técnico, API, mapa de testes, este relatório
 └── .github/workflows/        CI
@@ -388,38 +421,45 @@ Três camadas, da menos para a mais confiável:
 | E4 | 103 | 68 | 14 |
 | E5 (índice) | 115 | 74 | 28 |
 | E6 (IA) | 125 | 82 | 37 |
-| **E7 (auditoria)** | **176** | **101** | **41** |
+| E7 (auditoria) | 176 | 101 | 41 |
+| E8 (status do CI) | 181 | 108 | 46 |
+| E9 (histórico do CI) | 189 | 114 | 51 |
+| **E10, E11 e acabamentos (#52)** | **222** | **131** | **51** |
 
 O salto entre a E6 e a E7 inclui, além da auditoria, os componentes `Select`, `DatePicker` e `Tooltip`, entregues em paralelo (PRs #26 e #28).
 
 ### 8.3 Distribuição atual
 
-**Front-end: 176 testes em 21 arquivos**
+**Front-end: 222 testes em 27 arquivos** (conferido com `npm run test:run`)
 
 | Área | Testes | O que cobre |
 |---|---|---|
-| Fluxos completos do app (`app/__tests__`) | 65 | Navegação, login e cadastro, membros, troca de empresa, GitHub (conectar, escolher, sincronizar, dados parciais), assistente, auditoria |
-| Regras puras (`shared/lib`) | 38 | Métricas, alertas e status (10), índice (6), contexto da IA (8), datas (7), projetos (7) |
+| Fluxos completos do app (`app/__tests__`) | 81 | Navegação, login e cadastro, membros, troca de empresa, GitHub (conectar, escolher, sincronizar, dados parciais), assistente, auditoria, estratégia, processos |
+| Regras puras (`shared/lib`) | 53 | Métricas, alertas e status (19), contexto da IA (8), datas (7), projetos (7), índice (6), processos (6) |
 | Componentes de UI (`shared/ui`) | 33 | Modal, Select, DatePicker, Tooltip |
-| Telas e API de projetos | 19 | Listar, criar, editar, excluir, permissões; contrato da API |
-| Visão geral | 9 | Métricas, alertas, Índice de Governança |
-| Auditoria (utilitários) | 8 | Texto dos eventos e CSV seguro |
+| Telas e API de projetos | 21 | Listar, criar, editar, excluir, permissões, vínculo com objetivo; contrato da API |
+| Visão geral | 13 | Métricas, alertas, Índice de Governança, histórico do CI |
+| Auditoria (utilitários) | 11 | Texto dos eventos e CSV seguro |
 | Repositórios | 4 | Métricas da página |
+| Estratégia, Configurações e Topbar | 6 | Alertas por projeto; abas e sino em desenvolvimento |
 
-**Banco: 101 testes pgTAP em 8 arquivos**
+**Banco: 131 testes pgTAP em 11 arquivos**
 
 | Arquivo | Testes | O que prova |
 |---|---|---|
 | `core_rls` | 25 | Isolamento por empresa e permissões por papel em projetos, membros e organizações |
 | `audit_events` | 19 | Cada ação gera evento com quem agiu; developer e outra empresa não veem; ninguém altera, nem a chave de serviço |
+| `strategic_objectives` | 17 | Só o admin escreve; todos da empresa leem; outra empresa não vê; vínculo de outra empresa é recusado; auditoria da estratégia |
 | `github` | 15 | Dados do GitHub só leitura; a chave no Vault nunca volta ao usuário |
 | `repository_selection` | 11 | Relação N:N, papel stakeholder, limpeza de repositório sem projeto |
 | `github_sync` | 9 | Agendador, commits, senha do agendador inacessível |
 | `members` | 8 | E-mail visível só para colegas; empresa nunca fica sem admin |
 | `assistant_usage` | 8 | Limite por pessoa e total; ninguém logado mexe na própria cota |
+| `ci_status` | 7 | Estado do CI gravado só pelo servidor |
 | `governance_scores` | 6 | Índice lido por membros, gravado só pelo servidor |
+| `ci_runs` | 6 | Execuções do CI lidas por membros, gravadas só pelo servidor |
 
-**Edge Functions: 41 testes** (`github.test.js` 18, `score.test.js` 14, `prompt.test.js` 9).
+**Edge Functions: 51 testes** (`github.test.js` 28, `score.test.js` 14, `prompt.test.js` 9), conferidos com `node --test`.
 
 ---
 
@@ -480,6 +520,11 @@ A acessibilidade passou a ser **verificada por testes**: buscar elementos por pa
 | **Assistente: foco saía do diálogo** e o `Esc` deixava de funcionar | Teste automatizado | Depois de enviar a pergunta, o foco volta para o campo |
 | **Assistente: "valor de ontem"** | Pergunta real | A data ia em UTC; depois das 20 h em Campo Grande já era o dia seguinte. Passou a ir no fuso de MS |
 | **Assistente: leu "prazo 100" como "vence em até 7 dias"** e mostrava `**negrito**` com asteriscos | Pergunta real | O prompt passou a explicar o que cada nota significa, e a função tira o negrito. Testes escritos antes |
+| **Chave sem permissão de CI** (a ajuda da tela pedia "Checks", que não existe em chave *fine-grained*) | Primeiro teste real do CI (E8) | A ajuda passou a pedir *Commit statuses* e *Actions*; sem elas o CI aparece como "sem CI" e a sincronização segue |
+| **Busca global ainda mostrava dados de exemplo** | Revisão das telas com dado real | Passou a buscar repositórios, PRs e branches reais (PR #45) |
+| **Alerta de CI continuava depois da correção** | Uso real: o CI já estava verde e o alerta seguia | O alerta de PR mergeado some quando o CI da branch principal fica verde; a falha fica no histórico (PR #52) |
+| **Gráfico de PRs sem rótulo claro** | Revisão do dono | Passou a dizer "criados" e a mostrar a faixa de datas de cada semana (PR #49) |
+| **Sino e abas sem função pareciam funcionar** (bolinha vermelha fixa, interruptores que não faziam nada) | Revisão do dono | Marcados como "em desenvolvimento" e desabilitados, sem a bolinha (PR #50) |
 
 **Destaques para o TCC:**
 - **Testes como ferramenta de descoberta.** O bug de prazo afetava a regra central do produto. Estava no código desde o início e só apareceu quando os testes foram escritos.
@@ -526,7 +571,7 @@ A acessibilidade passou a ser **verificada por testes**: buscar elementos por pa
 | Tema | Medida |
 |---|---|
 | Localização dos dados | Banco em **São Paulo** |
-| Acesso aos dados | **RLS** em toda tabela, com teste positivo e negativo de cada regra (101 testes pgTAP) |
+| Acesso aos dados | **RLS** em toda tabela, com teste positivo e negativo de cada regra (131 testes pgTAP) |
 | Chaves | No front, só a chave pública. A chave secreta, a chave do GitHub (Vault, criptografada) e a do Groq ficam no servidor e nunca chegaram ao chat ou ao Git |
 | Funções privilegiadas | `security definer` só no schema `private`, com `search_path` vazio; o front chama apenas "embrulhos" públicos |
 | Agendador | Chama a Edge Function com uma senha gerada **dentro** do Vault (ninguém a vê), comparada em tempo constante |
@@ -541,17 +586,17 @@ A acessibilidade passou a ser **verificada por testes**: buscar elementos por pa
 
 ## 13. Indicadores: antes e depois
 
-| Indicador | 31/10 (início) | 01/11 (Nova estrutura) | 02/11 (E7) |
+| Indicador | 31/10 (início) | 01/11 (Nova estrutura) | 04/11 (E1 a E11) |
 |---|---|---|---|
-| Testes automatizados (front) | 0 | 55 | **176** (21 arquivos) |
-| Testes de banco (pgTAP) | — | — | **101** (8 arquivos) |
-| Testes das Edge Functions | — | — | **41** |
+| Testes automatizados (front) | 0 | 55 | **222** (27 arquivos) |
+| Testes de banco (pgTAP) | — | — | **131** (11 arquivos) |
+| Testes das Edge Functions | — | — | **51** |
 | Avisos de acessibilidade (lint) | 17 | 0 | **0** |
 | Integração contínua | Não havia | Lint + testes + build | + testes das Edge Functions |
-| Dados reais | 0 telas | 0 telas | Login, empresas, membros, projetos, repositórios, Visão geral, índice, assistente e auditoria |
-| Números fixos apresentados como métrica | vários ("34", "92%", "4.2 dias") | vários | **0** nas telas com dado real |
-| Tabelas com RLS | — | — | **todas** as tabelas de `public` |
-| Migrations versionadas | — | — | **9** |
+| Dados reais | 0 telas | 0 telas | Login, empresas, membros, projetos, repositórios, Visão geral, índice, estratégia, processos, assistente, auditoria e busca global |
+| Números fixos apresentados como métrica | vários ("34", "92%", "4.2 dias") | vários | **0** (o que não funciona está marcado "em desenvolvimento") |
+| Tabelas com RLS | — | — | **todas** as 15 tabelas de `public` |
+| Migrations versionadas | — | — | **12** |
 | Largura da Visão geral em 390 px | 429 px | 390 px | 390 px |
 | Bugs de regra de negócio conhecidos | 1 oculto (prazo) | 0 | 0 |
 
@@ -567,6 +612,8 @@ A acessibilidade passou a ser **verificada por testes**: buscar elementos por pa
 - O índice reconstruído supõe que a proteção da branch e o prazo eram, nos dias passados, iguais aos de hoje. A tela avisa.
 - Colunas antigas (`projects.status` e `projects.progress`) ficaram no banco sem uso, para evitar migration destrutiva antes da banca.
 - Ainda usam estilo inline: Configurações, RBAC, Repositórios e partes da barra lateral.
+- **Em desenvolvimento, de propósito:** notificações, segurança da conta (2FA, sessões, troca de senha) e o sino do topo. As configurações gerais (nome, fuso, tema) ficam só no navegador.
+- **Processos** dá evidência de apoio, não avalia maturidade (exige avaliador qualificado).
 
 **Trabalhos futuros:**
 - **GitHub App com *webhooks***, no lugar da chave pessoal (análise na §14.1).
@@ -642,7 +689,14 @@ A acessibilidade passou a ser **verificada por testes**: buscar elementos por pa
 | 02/11 | Ajustes de interface: tooltips, Select/DatePicker, limpeza de alertas e da aba Integrações | PRs #25, #26, #28 |
 | 02/11 | E7 Auditoria real + paginação do GitHub (+ correção do teste pgTAP, 19/19 ok) | PRs #30, #34 |
 
-Repositório: `github.com/oguilhermekenzo/govtech` (privado). Produção: `govtech-three.vercel.app`.
+| 02/11 | E8 Status do CI (entregue na `main` pelo PR #36) + registros de aplicação no banco | PRs #36, #37, #38 |
+| 02/11 | Cartões de Projetos e layout da Auditoria redesenhados | PRs #39, #42 |
+| 02/11 | E9 Histórico do CI + análise do GitHub App + dicionário de métricas | PRs #40, #41, #43, #44 |
+| 02/11 | Busca global com dados reais · E10 Estratégia · E11 Processos | PRs #45, #46, #47 |
+| 04/11 | Alertas por projeto na Estratégia · rótulos do gráfico de PRs · abas e sino em desenvolvimento | PRs #48, #49, #50 |
+| 04/11 | Produto renomeado para "GovTech" · alerta de CI corrigido some | PRs #51, #52 |
+
+Repositório: `github.com/govtechbr/govtech` (privado). Produção: `govtech-three.vercel.app`.
 
 ---
 
@@ -751,6 +805,7 @@ Uma falha de CI já corrigida **não** gera alerta: ela aparece no histórico do
 | Campo | O que é | Observação |
 |---|---|---|
 | Nome, objetivo, prazo, responsável, prioridade | Cadastro do projeto (P2) | Preenchidos por admin ou developer |
+| Objetivo estratégico | A meta da empresa a que o projeto serve (S3) | Opcional; escolhido por admin ou developer; no máximo um por projeto |
 | Status | Saudável / Atenção / Risco | Calculado pelos alertas (A.2); não é editável |
 | Índice de Governança (cartão e detalhe) | Nota do projeto e de cada critério | Mesmo cálculo de A.1, só com os repositórios do projeto |
 | Progresso | **Removido** em 02/11/2026 | Era um número digitado à mão, sem regra de cálculo, exibido ao lado de números calculados. A coluna ficou sem uso no banco |
@@ -781,3 +836,21 @@ Uma falha de CI já corrigida **não** gera alerta: ela aparece no histórico do
 | Última sincronização | Hora da última sincronização que deu certo, e o erro da última automática, se houver |
 | Dados parciais | Algum limite de paginação foi atingido (G9): até 500 repositórios, 1.000 PRs, 500 branches, 1.000 commits e 1.000 execuções do CI por repositório |
 | Permissões da chave | *Contents*, *Pull requests*, *Commit statuses* e *Actions*, só leitura. Sem as duas últimas, o CI aparece como "sem CI" e a sincronização segue |
+
+### A.9 Estratégia
+
+| Campo | O que é | Como é calculado |
+|---|---|---|
+| Missão e visão | Textos da empresa (S1) | Digitados pelo admin, até 1.000 caracteres cada |
+| Objetivo estratégico | Meta de negócio (S2) | Título (até 120) e descrição (até 500), criados pelo admin |
+| Status do objetivo | Situação da meta (S4) | O **pior** status entre os projetos ligados (Risco, depois Atenção, depois Saudável). Sem projeto ligado: "Sem projetos vinculados" |
+| Projetos e alertas do objetivo | O que ameaça a meta (S5) | Para objetivo em Risco ou Atenção: os projetos ligados e os 3 primeiros alertas de cada um, com "Ver todos os N alertas". Não estima prazo nem custo |
+
+### A.10 Processos
+
+| Campo | O que é | Como é calculado |
+|---|---|---|
+| Área de processo | VER, CM, PMC ou MA (CMMI-DEV 1.3) | Mapeamento fixo dos critérios do índice (C2); mudar o mapa não muda o índice nem os alertas (C6) |
+| Nota da área | Evidência atual da empresa | Média ponderada dos critérios da área, com os pesos e a regra de "só critérios com dado" do índice; a empresa usa a média dos projetos (C3). Sem dado: "sem dados" |
+| Prática e fonte | O que a evidência apoia e de onde vem | Texto fixo por área (C4) |
+| Aviso | Limite da leitura | Evidência de apoio, **não** avaliação formal de maturidade (C5) |
