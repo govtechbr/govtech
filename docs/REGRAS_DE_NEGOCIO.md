@@ -53,6 +53,7 @@ Esconder um botão na tela é só conveniência: quem bloqueia de verdade é o b
 | G9 | **Paginação:** repositórios visíveis até 500; PRs **abertos** (até 1.000) mais os atualizados nos **últimos 90 dias** (até 1.000 por repositório); branches até 500; commits da branch principal de 90 dias, até 1.000. Se algum teto for atingido, a sincronização marca **dados parciais** e o painel do projeto e a auditoria avisam | ✅ E7 |
 | G10 | **Status do CI** (decisão de 02/11/2026): a cada sincronização, o resultado combinado dos checks (GitHub Actions ou outro CI) do **último commit** de cada PR e da **branch principal**: **verde**, **falhou** ou **rodando**. Repositório sem CI fica "sem CI" e não gera alerta nem entra na taxa. É uma **foto da hora da sincronização, não um histórico**: uma falha corrigida antes da sincronização seguinte não fica registrada. Se a chave não tiver permissão de leitura de *Commit statuses* e *Actions*, o CI vem como "sem CI" e a sincronização segue | ✅ E8 |
 | G11 | **Histórico de execuções do CI** (decisão de 02/11/2026): a cada sincronização, as execuções do **GitHub Actions** dos **últimos 90 dias** de cada repositório (até 1.000), com número, workflow, evento, branch, commit, resultado e horários. **Sem quem disparou** (LGPD). Mais antigas que 90 dias saem. Cobre só o GitHub Actions; outro CI continua só pelo estado atual (G10). Exige a permissão *Actions* (Read) na chave; sem ela, o histórico fica vazio e a sincronização segue. Não gera alerta: falha já corrigida não é risco atual | ✅ E9 |
+| G12 | **Alerta de PR mergeado com CI falhando só enquanto a branch principal não estiver verde** (decisão de 04/11/2026): corrigida a falha, o alerta some e o fato fica no histórico (G11). Detalhes no §6 | ✅ PR #52 |
 
 ## 5. Métricas de governança (Visão geral)
 
@@ -115,7 +116,7 @@ Substitui o assistente simulado da barra lateral. Provedor: **Groq** (plano grat
 |---|---|---|---|
 | **CI falhando na branch principal** (G10) | — | sempre | A versão atual da branch principal não passa nos testes automáticos |
 | Branch principal **sem proteção** | sempre | — | Qualquer pessoa com acesso pode fazer push direto ou reescrever o histórico, sem PR nem revisão |
-| PR mergeado com **CI falhando** (últimos 30 dias, **só enquanto a branch principal do repositório não estiver verde**; corrigida a falha, o alerta some e o fato fica no histórico de CI, decisão de 04/11/2026) | — | sempre | Entrou na branch principal código que não passou nos testes automáticos |
+| PR mergeado com **CI falhando** (últimos 30 dias, enquanto a branch principal não estiver verde; ver G12) | — | sempre | Entrou na branch principal código que não passou nos testes automáticos |
 | PR mergeado **sem nenhuma aprovação** | sempre | — | O código entrou na branch principal sem passar pela revisão |
 | Prazo do projeto | vence em até **7 dias** | **vencido** | Replanejar ou confirmar que o que falta cabe no prazo |
 | PR aberto com **CI falhando** (rascunhos não contam) | sempre | — | Precisa de correção antes de ser revisado e mergeado |
@@ -124,6 +125,8 @@ Substitui o assistente simulado da barra lateral. Provedor: **Groq** (plano grat
 **Ordem (decisão de 02/11/2026):** Risco antes de Atenção; dentro do mesmo nível, na ordem da tabela, dos riscos estruturais (CI da branch principal, proteção, revisão) aos operacionais (prazo, PR parado). O cartão da Visão geral mostra os 8 primeiros e um botão **"Ver todos os N alertas"**. Os alertas aparecem na Visão geral e, por objetivo, na Estratégia (S5): o cartão e o detalhe do projeto mostram só o status (PR #25).
 
 **Status do projeto (P3):** Risco se houver algum alerta de Risco; senão Atenção se houver algum alerta de Atenção; senão Saudável.
+
+**G12, alerta de PR mergeado com CI falhando (decisão de 04/11/2026):** o alerta olha os PRs mergeados nos últimos 30 dias cujo último commit estava com o CI falhando, **mas só enquanto a branch principal do repositório do PR não estiver verde**. Quando o CI da branch principal volta a passar (`ci_state = success` do repositório, atualizado a cada sincronização), a falha foi corrigida: o alerta some e o fato continua no histórico de CI (G11) e na taxa de CI verde no merge. Se o estado da branch principal for `pending` ou desconhecido (sem CI, sincronização que falhou), o alerta continua, porque a correção ainda não foi confirmada. A regra olha o repositório do próprio PR: uma branch principal vermelha em outro repositório não mantém nem apaga o alerta. Motivo: sem ela, um PR antigo com CI falhando mantinha o projeto em **Risco** por 30 dias mesmo depois de a falha ser corrigida, sem que o time tivesse como resolver. Os alertas de PR sem aprovação, de prazo e de PR aberto não mudam. Situação: ✅ PR #52.
 
 **Detalhes decididos na implementação (E4):** o alerta "mergeado sem aprovação" olha os PRs mergeados nos **últimos 30 dias**, fixo, para o status do projeto não mudar quando se troca o período da tela. Os alertas de PR e de branch valem para todos os projetos ligados ao repositório. Projeto sem prazo não gera alerta de prazo.
 

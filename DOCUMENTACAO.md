@@ -425,6 +425,14 @@ Cinco critérios com pesos (`SCORE_CRITERIA`): revisão de código, proteção d
 - `projectUtils.js`: `formatProjectDate` (`2026-10-25` → `25/10/2026`, meio-dia para evitar erro de fuso) e `normalizeProject`.
 - `assistantContext.js`: monta o contexto enviado à IA, sem dados pessoais.
 - `date.js`, `supabase.js` (único client) e `zodResolver.js`.
+### 11.4 Métricas da Visão geral (`governanceMetrics`)
+- **Quantidade de PRs:** abertos agora + criados no período (sem contar duas vezes).
+- **Lead time médio:** média de horas da abertura ao merge dos PRs mergeados no período.
+- **Taxa de aprovação:** % dos mergeados no período com `approval_count` ≥ 1; "—" se nenhum foi mergeado.
+- **PRs em risco:** abertos (sem rascunhos) há mais de 3 dias.
+- **CI verde no merge** (desde 02/11/2026, regra G10): % dos mergeados no período **com CI** (`ci_state` não nulo) que estavam com `ci_state = 'success'`; "—" se nenhum tinha CI. Os alertas de CI (branch principal, PR mergeado e PR aberto com CI falhando) também saem de `governanceAlerts`. O alerta de PR mergeado com CI falhando (G12, desde 04/11/2026) considera os mergeados nos últimos 30 dias, mas some quando o `ci_state` do repositório do PR é `success` (a branch principal voltou a passar); com estado `pending` ou nulo ele continua. Por isso `loadGovernanceData` traz o `repository_id` de cada PR.
+- **Histórico do CI** (desde 02/11/2026, regra G11, `ciIncidents` e painel `CiHistoryPanel` na Visão geral): % das execuções concluídas no período que passaram (canceladas não contam), tempo médio de correção (do fim da primeira falha ao fim da próxima execução que passou, no mesmo workflow e branch; falhas seguidas contam como uma) e as últimas falhas, com link. Durações abaixo de 1 hora aparecem em minutos.
+- **Contribuidores:** logins distintos de commits e de PRs criados no período.
 
 ---
 
