@@ -86,7 +86,7 @@ Uma nota de **0 a 100** por projeto e por empresa, com histórico diário. Os pe
 | I4 | **Empresa:** média simples dos projetos que têm índice (só entra quem tem nota; ver I7) | ✅ E5 |
 | I5 | **Apuração** de hora em hora, junto da sincronização; vale a última do dia. O dia é contado no fuso de MS (`America/Campo_Grande`). O seletor de período da tela **não** muda o índice | ✅ E5 |
 | I6 | **Reconstrução:** na primeira apuração de um projeto, os 30 dias anteriores são recalculados pelas datas dos PRs, **a partir do dia do primeiro PR** (antes dele não há atividade para medir), supondo proteção da branch, prazo e rascunho iguais aos de hoje. Esses dias ficam marcados como **recalculados** e a tela avisa | ✅ E5 |
-| I7 | **Projeto sem repositório ligado não tem nota** (decisão de 07/11/2026): o prazo sozinho não mede a entrega, e um projeto sem GitHub tirava 100 só por ele, inflando a nota da empresa (caso real: 85 com 3 projetos, 2 deles sem repositório; sem eles a nota era 55). O projeto aparece como "sem dados" e fica fora da média da empresa (I4); o prazo continua gerando alerta (§6). Os dias já gravados não mudam | 🔜 decidida, a implementar |
+| I7 | **Projeto sem repositório ligado não tem nota** (decisão de 07/11/2026): o prazo sozinho não mede a entrega, e um projeto sem GitHub tirava 100 só por ele, inflando a nota da empresa (caso real: 85 com 3 projetos, 2 deles sem repositório; sem eles a nota era 55). O projeto aparece como "sem dados" e fica fora da média da empresa (I4); o prazo continua gerando alerta (§6). Os dias já gravados não mudam | ✅ código pronto (`score.js`); vale na tela depois do redeploy da função `github` |
 
 | Critério | Peso | Nota (0–100) | Sem dado quando |
 |---|---|---|---|

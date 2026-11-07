@@ -93,6 +93,19 @@ describe('projectScore', () => {
     assert.equal(result.score, null)
   })
 
+  it('gives no score to a project without repositories, even with a deadline (I7)', () => {
+    const result = score({ repositories: [], branches: [], deadline: '2026-12-31' })
+
+    assert.equal(result.score, null)
+    assert.deepEqual(result.components, {
+      review: null,
+      flow: null,
+      deadline: null,
+      protection: null,
+      leadTime: null,
+    })
+  })
+
   it('scores open PRs by age and ignores drafts', () => {
     const result = score({
       pullRequests: [
