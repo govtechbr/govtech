@@ -126,7 +126,8 @@ export function projectScore({ pullRequests, repositories, branches, deadline },
         )
       : { review: null, leadTime: null }),
     flow: hasRepositories ? flow(pullRequests, at) : null,
-    deadline: deadlineScore(deadline, now),
+    // I7: sem repositório o prazo sozinho não mede a entrega (dava 100 e inflava a empresa)
+    deadline: hasRepositories ? deadlineScore(deadline, now) : null,
     protection: hasRepositories ? protection(repositories, branches) : null,
   }
 

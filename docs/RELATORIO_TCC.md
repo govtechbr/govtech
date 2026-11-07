@@ -244,7 +244,7 @@ Cada entrega teve suas regras em `docs/REGRAS_DE_NEGOCIO.md`, um plano aprovado,
 | Lead time | 15 | Mediana da abertura ao merge: até 24 h = 100; 7 dias ou mais = 0 |
 
 - **Critério sem dado:** sai da conta, e os pesos dos outros são reescalados.
-- **Projeto sem repositório ligado:** não tem nota ("sem dados") e fica fora da média da empresa (I7, decisão de 07/11/2026), porque o prazo sozinho dava 100 e inflava a nota. Só vale depois de implementada.
+- **Projeto sem repositório ligado:** não tem nota ("sem dados") e fica fora da média da empresa (I7, decisão de 07/11/2026), porque o prazo sozinho dava 100 e inflava a nota. Implementada em `score.js` (teste novo); passa a valer na tela depois do redeploy da função `github`.
 - **Faixas:** 80 ou mais = Bom; 60 a 79 = Regular; abaixo de 60 = Crítico.
 - **Histórico:** na primeira apuração, os dias anteriores são **recalculados** pelas datas dos PRs e marcados como tal na tela (linha tracejada).
 - **Caso real:** o repositório deste TCC teve nota **57 (Crítico)**, puxada por revisão de código 5% e branch principal sem proteção. O índice mostrou um problema real do próprio desenvolvimento, que pode ser corrigido e acompanhado na linha do tempo durante a apresentação.
