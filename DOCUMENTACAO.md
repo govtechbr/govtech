@@ -417,8 +417,8 @@ As regras estão em `docs/REGRAS_DE_NEGOCIO.md`; aqui, onde cada uma vive no có
 - **`weeklyFlow`**: PRs criados × mergeados por semana.
 - **`emptyGovernance`**: formato vazio usado enquanto os dados carregam.
 
-### 11.2 `shared/lib/governanceScore.js` — Índice de Governança (I1–I6)
-Cinco critérios com pesos (`SCORE_CRITERIA`): revisão de código, proteção da branch, fluxo de PRs, prazo e lead time. Só entram os critérios **com dado**. A empresa usa a média dos projetos. Faixas (`SCORE_BANDS`): Bom, Regular, Crítico. Funções: `latestScores`, `scoreHistory`, `scoreChange`, `scoreBand`. **O cálculo e a gravação** ficam na Edge Function (`functions/github/score.js`, testado com `node --test`); o front só lê.
+### 11.2 `shared/lib/governanceScore.js` — Índice de Governança (I1–I7)
+Cinco critérios com pesos (`SCORE_CRITERIA`): revisão de código, proteção da branch, fluxo de PRs, prazo e lead time. Só entram os critérios **com dado**. A empresa usa a média dos projetos que têm nota; projeto sem repositório ligado não terá nota (I7, decidida em 07/11/2026; a mudança é no `score.js` da função de servidor e ainda não foi implementada). Faixas (`SCORE_BANDS`): Bom, Regular, Crítico. Funções: `latestScores`, `scoreHistory`, `scoreChange`, `scoreBand`. **O cálculo e a gravação** ficam na Edge Function (`functions/github/score.js`, testado com `node --test`); o front só lê.
 
 ### 11.3 Demais módulos de `shared/lib/`
 - `strategy.js` (`objectiveStatus`, regras S4 e S5) e `processes.js` (áreas e critérios, regras C2–C6).

@@ -244,6 +244,7 @@ Cada entrega teve suas regras em `docs/REGRAS_DE_NEGOCIO.md`, um plano aprovado,
 | Lead time | 15 | Mediana da abertura ao merge: até 24 h = 100; 7 dias ou mais = 0 |
 
 - **Critério sem dado:** sai da conta, e os pesos dos outros são reescalados.
+- **Projeto sem repositório ligado:** não tem nota ("sem dados") e fica fora da média da empresa (I7, decisão de 07/11/2026), porque o prazo sozinho dava 100 e inflava a nota. Só vale depois de implementada.
 - **Faixas:** 80 ou mais = Bom; 60 a 79 = Regular; abaixo de 60 = Crítico.
 - **Histórico:** na primeira apuração, os dias anteriores são **recalculados** pelas datas dos PRs e marcados como tal na tela (linha tracejada).
 - **Caso real:** o repositório deste TCC teve nota **57 (Crítico)**, puxada por revisão de código 5% e branch principal sem proteção. O índice mostrou um problema real do próprio desenvolvimento, que pode ser corrigido e acompanhado na linha do tempo durante a apresentação.
@@ -517,6 +518,7 @@ A acessibilidade passou a ser **verificada por testes**: buscar elementos por pa
 | Teste pgTAP de cascata falhava em produção | Execução no SQL Editor | Rodando como administrador, o teste contava as linhas reais do índice; passou a olhar só o projeto do teste |
 | Teste pgTAP da auditoria parava com "permission denied for table projects" | Execução no SQL Editor | O teste criava o projeto informando o `id`, coluna que o usuário logado não pode escrever (proteção de propósito). O teste passou a deixar o banco gerar o id; a migration não mudou. Depois disso, 19/19 ok |
 | **Projeto em Risco por falha de CI já corrigida** | Uso real: o PR #3 (01/11) mergeado com CI falhando mantinha o projeto em Risco por 30 dias, com a `main` verde | O alerta passou a valer só enquanto a branch principal do repositório do PR não está verde (G12). Teste escrito antes, com 3 casos: corrigida, pendente e outro repositório |
+| **Nota da empresa inflada por projetos sem repositório** (85 em vez de 55) | Conferência da conta pelo dono, com a tela | Projeto sem repositório só tinha o critério Prazo e tirava 100. Decisão (07/11/2026, opção A): ele fica "sem dados" (I7). Opções avaliadas: A, exigir 2 critérios (B) e só mostrar na tela quantos projetos entraram (C) |
 | **Assistente: foco saía do diálogo** e o `Esc` deixava de funcionar | Teste automatizado | Depois de enviar a pergunta, o foco volta para o campo |
 | **Assistente: "valor de ontem"** | Pergunta real | A data ia em UTC; depois das 20 h em Campo Grande já era o dia seguinte. Passou a ir no fuso de MS |
 | **Assistente: leu "prazo 100" como "vence em até 7 dias"** e mostrava `**negrito**` com asteriscos | Pergunta real | O prompt passou a explicar o que cada nota significa, e a função tira o negrito. Testes escritos antes |
@@ -740,7 +742,7 @@ Cada número da tela vem de um cálculo sobre os dados sincronizados do GitHub o
 
 | Campo | O que é | Como é calculado | Período |
 |---|---|---|---|
-| Índice de Governança (empresa) | Nota de 0 a 100 da governança da empresa | Média simples dos índices dos projetos que têm nota (I4) | Fixo: últimos 30 dias, apurado de hora em hora (I5) |
+| Índice de Governança (empresa) | Nota de 0 a 100 da governança da empresa | Média simples dos índices dos projetos que têm nota (I4); projeto sem repositório não tem nota (I7, decidida em 07/11/2026) | Fixo: últimos 30 dias, apurado de hora em hora (I5) |
 | Faixa | Leitura da nota | **Bom** ≥ 80; **Regular** 60 a 79; **Crítico** < 60 (I3) | — |
 | Variação em 7 dias | Quanto a nota subiu ou caiu | Nota do último dia menos a de 7 dias antes (ou do dia anterior mais próximo). Com menos de 7 dias de histórico, a tela avisa em vez de calcular | — |
 | Linha de 30 dias | Evolução diária | Uma nota por dia, no fuso de MS; dias **recalculados** (I6) vêm marcados | 30 dias |

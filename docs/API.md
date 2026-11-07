@@ -239,7 +239,7 @@ Problema com a chave do GitHub volta como **400**, e não 401, de propósito: o 
 
 ### 6.6 Índice de Governança
 
-- Calculado em `functions/github/score.js` (regras I1–I6 de `REGRAS_DE_NEGOCIO.md` §5.1) e gravado em `governance_scores`: uma linha por projeto e por dia, no fuso de MS, com a nota (`score`, 0–100 ou null) e a nota de cada critério (`components`).
+- Calculado em `functions/github/score.js` (regras I1–I7 de `REGRAS_DE_NEGOCIO.md` §5.1) e gravado em `governance_scores`: uma linha por projeto e por dia, no fuso de MS, com a nota (`score`, 0–100 ou null) e a nota de cada critério (`components`).
 - Apurado depois de cada `sync`/`select` (só o projeto da ação) e no fim de cada `sync-all` (todos os projetos, inclusive os sem GitHub, por causa do prazo). Vale a última apuração do dia.
 - Na primeira apuração de um projeto, os dias anteriores (até 30) são recalculados pelas datas dos PRs, a partir do primeiro PR, e marcados `reconstructed`.
 - Uma falha no índice não derruba a sincronização: vai só para o log da função.
