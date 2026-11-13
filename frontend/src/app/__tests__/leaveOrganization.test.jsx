@@ -1,15 +1,54 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
+import { focusManager } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 
 import App from '@/app/App'
 import { colleague, db, otherOrganization, signInAs, testOrganization } from '@/test/msw/db'
 import { renderWithRouter } from '@/test/renderWithRouter'
 
+function joinOtherOrganization() {
+  db.members.push({
+    organization_id: otherOrganization.id,
+    user_id: colleague.id,
+    role: 'stakeholder',
+  })
+}
+
 async function leave(user) {
   await user.click(await screen.findByRole('button', { name: 'Sair da organização' }))
   await user.click(
     within(screen.getByRole('dialog')).getByRole('button', { name: /sair|remover/i }),
   )
+  await screen.findByText('Você saiu da organização.')
+}
+
+// Um admin, em outro navegador, remove o colega da Org A
+function removedByAdmin() {
+  db.members = db.members.filter(
+    (member) =>
+      !(member.user_id === colleague.id && member.organization_id === testOrganization.id),
+  )
+}
+
+// A pessoa volta para a aba do app
+function returnToTab() {
+  act(() => {
+    focusManager.setFocused(false)
+    focusManager.setFocused(true)
+  })
+}
+
+// Espera a tela terminar de carregar antes de mudar o banco
+async function openAccessPage() {
+  renderWithRouter(<App />, { route: '/access' })
+  await screen.findByRole('table')
+}
+
+// Busca na tela inteira: trocar de empresa remonta a barra lateral
+async function currentOrganizationIs(name) {
+  expect(
+    await screen.findByRole('button', { name: `Trocar empresa (atual: ${name})` }),
+  ).toBeInTheDocument()
 }
 
 describe('Leaving or losing an organization', () => {
@@ -24,40 +63,36 @@ describe('Leaving or losing an organization', () => {
   })
 
   it('opens the other organization of a member who leaves one of two', async () => {
-    db.members.push({
-      organization_id: otherOrganization.id,
-      user_id: colleague.id,
-      role: 'stakeholder',
-    })
+    joinOtherOrganization()
     signInAs(colleague)
     const { user } = renderWithRouter(<App />, { route: '/access' })
 
     await leave(user)
-    await screen.findByText('Você saiu da organização.')
 
-    const sidebar = await screen.findByRole('complementary')
-    expect(
-      await within(sidebar).findByRole('button', {
-        name: `Trocar empresa (atual: ${otherOrganization.name})`,
-      }),
-    ).toBeInTheDocument()
+    await currentOrganizationIs(otherOrganization.name)
     expect(db.organizations).toHaveLength(2)
   })
 
-  // Bug conhecido: a lista de empresas não é buscada de novo, então quem é removido
-  // por um admin continua na empresa até recarregar. Vira `it` quando a correção entrar.
-  it.fails('notices a removal made by an admin elsewhere', async () => {
+  it('sends a member removed by an admin to the organization page', async () => {
     signInAs(colleague)
-    const { user } = renderWithRouter(<App />, { route: '/access' })
-    await screen.findByRole('button', { name: 'Sair da organização' })
+    await openAccessPage()
+    await currentOrganizationIs(testOrganization.name)
 
-    db.members = db.members.filter(
-      (m) => !(m.user_id === colleague.id && m.organization_id === testOrganization.id),
-    )
-    await user.click(
-      within(screen.getByRole('complementary')).getByRole('button', { name: /^projetos$/i }),
-    )
+    removedByAdmin()
+    returnToTab()
 
     expect(await screen.findByRole('heading', { name: 'Onde você trabalha?' })).toBeInTheDocument()
+  })
+
+  it('opens the other organization of a member removed from one of two', async () => {
+    joinOtherOrganization()
+    signInAs(colleague)
+    await openAccessPage()
+    await currentOrganizationIs(testOrganization.name)
+
+    removedByAdmin()
+    returnToTab()
+
+    await currentOrganizationIs(otherOrganization.name)
   })
 })
