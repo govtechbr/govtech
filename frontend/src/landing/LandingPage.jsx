@@ -24,7 +24,7 @@ const CAPABILITIES = [
   {
     icon: GitBranch,
     title: 'Integração com o GitHub',
-    text: 'O admin conecta uma chave do GitHub somente leitura por projeto e escolhe quais repositórios pertencem a ele. A chave fica guardada no cofre do servidor e nunca volta ao navegador.',
+    text: 'O admin conecta uma chave do GitHub somente leitura por projeto e escolhe quais repositórios pertencem a ele. A chave fica guardada no cofre do servidor e nunca volta ao navegador. Cada sincronização lê até 500 repositórios e, por repositório, até 1.000 PRs, numa janela de 90 dias.',
     items: [
       'Repositórios, Pull Requests e aprovações',
       'Branches e proteção da branch principal',
