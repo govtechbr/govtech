@@ -252,7 +252,7 @@ Definidas em `src/app/App.jsx`:
 - **Troca de empresa**: na `Sidebar`, lista as empresas da pessoa e "Adicionar empresa". A última empresa escolhida é lembrada no `localStorage` (`govtech:last-organization`).
 
 ### 8.2 `LandingPage` — Apresentação
-Página institucional estática, com seções com âncora (capacidades, como funciona, padrões, demonstração). Cita CMMI/SPICE, COBIT, ITIL e ISO/IEC 38500. É texto de marketing; não lê dados.
+Página institucional estática, com seções com âncora (capacidades, como funciona, referenciais, demonstração). Descreve só o que já funciona: integração com o GitHub, métricas, alertas e status, Índice de Governança, estratégia, processos, auditoria, papéis e assistente com IA. Os números mostrados são regras do produto (faixas e pesos do índice, quantidade de tipos de alerta, sincronização a cada hora), nunca dados de exemplo. Referenciais citados, conforme o uso real: CMMI-DEV 1.3 e ISO/IEC 33000 (SPICE) sobre a ISO/IEC/IEEE 12207 (página Processos), ISO/IEC 38500 e COBIT (peso da revisão de código no índice) e métricas DORA (lead time e tempo de correção). Não lê dados. Teste em `src/landing/__tests__/LandingPage.test.jsx`.
 
 ### 8.3 `OverviewPage` — Visão geral
 Tudo calculado em `shared/lib/governance.js` a partir dos dados sincronizados do GitHub (`dashboard/api/governanceApi.js`, chave `['governance', empresa]`) e do prazo dos projetos. Recebe os projetos e os dados por prop (adaptador em `app/routes.jsx`). Mostra:

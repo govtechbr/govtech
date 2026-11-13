@@ -2,16 +2,160 @@ import {
   ArrowUpRight,
   BarChart3,
   Bell,
+  Calculator,
   Check,
   ChevronRight,
   Gauge,
   GitBranch,
+  Info,
+  KeyRound,
+  LayoutDashboard,
   RefreshCw,
   Shield,
-  Workflow,
+  Target,
 } from 'lucide-react'
 
 import Brand from '@/shared/ui/Brand'
+
+// Todo texto desta página descreve o que já funciona (docs/REGRAS_DE_NEGOCIO.md).
+// Números exibidos são regras do produto (faixas, pesos, limites), nunca dados inventados.
+
+const CAPABILITIES = [
+  {
+    icon: GitBranch,
+    title: 'Integração com o GitHub',
+    text: 'O admin conecta uma chave do GitHub somente leitura por projeto e escolhe quais repositórios pertencem a ele. A chave fica guardada no cofre do servidor e nunca volta ao navegador.',
+    items: [
+      'Repositórios, Pull Requests e aprovações',
+      'Branches e proteção da branch principal',
+      'Commits da branch principal (90 dias)',
+      'Status e histórico do CI (GitHub Actions)',
+    ],
+  },
+  {
+    icon: BarChart3,
+    title: 'Métricas da Visão geral',
+    text: 'Indicadores calculados a partir dos dados sincronizados, com período de 7, 30 ou 90 dias e a regra de cada cálculo explicada na tela.',
+    items: [
+      'Quantidade de PRs e PRs em risco',
+      'Lead time médio e taxa de aprovação',
+      'CI verde no merge',
+      'Execuções com sucesso e tempo médio de correção',
+    ],
+  },
+  {
+    icon: Bell,
+    title: 'Alertas e status automático',
+    text: 'Os alertas são classificados em Atenção ou Risco e definem o status de cada projeto: Saudável, Atenção ou Risco. Não existe status manual.',
+    items: [
+      'CI falhando na branch principal ou em PRs',
+      'Branch principal sem proteção',
+      'PR mergeado sem aprovação',
+      'PR aberto parado e prazo do projeto',
+    ],
+  },
+  {
+    icon: Gauge,
+    title: 'Índice de Governança',
+    text: 'Nota de 0 a 100 por projeto e pela empresa, apurada de hora em hora com histórico diário. Os critérios olham os últimos 30 dias.',
+    items: [
+      'Revisão de código (peso 30)',
+      'Fluxo de PRs e prazo (peso 20 cada)',
+      'Proteção da branch e lead time (peso 15 cada)',
+      'Faixas: Bom, Regular e Crítico',
+    ],
+  },
+  {
+    icon: Target,
+    title: 'Direcionadores estratégicos',
+    text: 'Missão, visão e objetivos estratégicos da empresa ligados aos projetos, mostrando qual meta de negócio uma falha técnica ameaça.',
+    items: [
+      'Missão, visão e objetivos da empresa',
+      'Projeto vinculado a um objetivo',
+      'Status do objetivo pelo pior projeto',
+      'Alertas que afetam cada objetivo',
+    ],
+  },
+  {
+    icon: Shield,
+    title: 'Auditoria e controle de acesso',
+    text: 'Trilha imutável de quem fez o quê, gravada pelo banco, e acesso por papel garantido por regras de segurança no próprio banco (RLS).',
+    items: [
+      'Eventos de projetos, membros, empresa e GitHub',
+      'Filtros por período e tipo, exportação em CSV',
+      'Papéis Admin, Developer e Stakeholder',
+      'Várias empresas por pessoa, com código de convite',
+    ],
+  },
+]
+
+const STEPS = [
+  {
+    icon: KeyRound,
+    title: 'Conectar',
+    text: 'A pessoa cria a conta e a empresa (ou entra com um código de convite). O admin cadastra os projetos, conecta a chave do GitHub e escolhe os repositórios.',
+  },
+  {
+    icon: RefreshCw,
+    title: 'Sincronizar',
+    text: 'Os dados do GitHub são buscados automaticamente a cada hora, ou na hora pelo botão Sincronizar.',
+  },
+  {
+    icon: Calculator,
+    title: 'Calcular',
+    text: 'O sistema calcula métricas, alertas, o status de cada projeto e o Índice de Governança, e grava a nota do dia.',
+  },
+  {
+    icon: LayoutDashboard,
+    title: 'Acompanhar',
+    text: 'Visão geral, Estratégia, Processos e Auditoria mostram os resultados. Um assistente com IA responde perguntas sobre esses dados.',
+  },
+]
+
+const PROCESS_AREAS = [
+  { area: 'Verificação (VER)', evidence: 'Revisão de código' },
+  { area: 'Gestão de Configuração (CM)', evidence: 'Proteção da branch' },
+  { area: 'Monitoramento e Controle (PMC)', evidence: 'Fluxo de PRs e prazo' },
+  { area: 'Medição e Análise (MA)', evidence: 'Lead time' },
+]
+
+const STANDARDS = [
+  {
+    logo: 'CMMI',
+    title: 'CMMI-DEV 1.3',
+    text: 'Modelo de maturidade de processos de desenvolvimento. A página Processos agrupa as evidências em quatro de suas áreas.',
+    items: [
+      'Verificação (VER)',
+      'Gestão de Configuração (CM)',
+      'Monitoramento e Controle (PMC)',
+      'Medição e Análise (MA)',
+    ],
+  },
+  {
+    logo: 'SPICE',
+    title: 'ISO/IEC 33000 e 12207',
+    text: 'SPICE (ISO/IEC 33000) avalia processos definidos na ISO/IEC/IEEE 12207. Cada área de evidência é ligada ao processo correspondente.',
+    items: ['Verificação', 'Gestão de configuração', 'Avaliação e controle do projeto', 'Medição'],
+  },
+  {
+    logo: 'COBIT',
+    title: 'ISO/IEC 38500 e COBIT',
+    text: 'Referências de governança de TI que fundamentam o maior peso dado à revisão de código no Índice de Governança.',
+    items: ['Revisão de código como controle central', 'Peso 30 de 100 no índice'],
+  },
+  {
+    logo: 'DORA',
+    title: 'Métricas DORA',
+    text: 'Métricas de entrega de software usadas como base para medir o tempo das entregas e da recuperação de falhas.',
+    items: ['Lead time da abertura ao merge', 'Tempo médio de correção do CI'],
+  },
+]
+
+const ROLES = [
+  { role: 'Admin', can: 'Tudo: projetos, membros, convite e GitHub' },
+  { role: 'Developer', can: 'Cria e edita projetos e sincroniza' },
+  { role: 'Stakeholder', can: 'Vê tudo, sem alterar' },
+]
 
 export default function LandingPage() {
   return (
@@ -47,7 +191,7 @@ export default function LandingPage() {
         <div className="hero-content">
           <div className="eyebrow">
             <span className="eyebrow-pulse" />
-            TCC — GOVERNANÇA E MONITORAMENTO DE TI
+            TCC — GOVERNANÇA DE PROJETOS DE TI
           </div>
 
           <h1>
@@ -56,8 +200,9 @@ export default function LandingPage() {
           </h1>
 
           <p className="hero-description">
-            Transforme os dados das Pull Requests em informações claras para acompanhar entregas,
-            identificar riscos e apoiar decisões de Governança de Tecnologia da Informação.
+            O GovTech lê os dados do GitHub de cada projeto (Pull Requests, branches, commits e CI)
+            e os transforma em métricas, alertas, status e um Índice de Governança para apoiar a
+            gestão de TI.
           </p>
 
           <div className="hero-cta">
@@ -66,31 +211,31 @@ export default function LandingPage() {
               <ChevronRight size={18} />
             </a>
 
-            <a href="/landing#how-it-works" className="secondary-button large">
-              Conhecer a solução
+            <a href="/cadastro" className="secondary-button large">
+              Criar conta
             </a>
           </div>
 
           <div className="hero-stats">
             <div className="stat-item">
-              <strong>GitHub</strong>
-              <span>Integração com repositórios</span>
+              <strong>0–100</strong>
+              <span>Índice de Governança</span>
             </div>
 
             <div className="stat-item">
-              <strong>PRs</strong>
-              <span>Monitoramento das entregas</span>
+              <strong>7</strong>
+              <span>Tipos de alerta automático</span>
             </div>
 
             <div className="stat-item">
-              <strong>KPIs</strong>
-              <span>Indicadores para gestão</span>
+              <strong>1 h</strong>
+              <span>Sincronização automática</span>
             </div>
           </div>
         </div>
 
         <div className="hero-visual">
-          <div className="dashboard-preview elevation-3">
+          <div className="dashboard-preview elevation-3" aria-hidden="true">
             <div className="preview-header">
               <div className="preview-dots">
                 <span className="dot" />
@@ -98,27 +243,27 @@ export default function LandingPage() {
                 <span className="dot" />
               </div>
 
-              <span className="preview-title">Governança de Projetos de TI</span>
+              <span className="preview-title">Faixas do Índice de Governança</span>
             </div>
 
             <div className="preview-content">
               <div className="preview-summary">
                 <div className="summary-card">
-                  <span>Projetos monitorados</span>
-                  <strong>12</strong>
-                  <small>Em acompanhamento</small>
+                  <span>Bom</span>
+                  <strong>≥ 80</strong>
+                  <small>Nota de 80 a 100</small>
                 </div>
 
                 <div className="summary-card">
-                  <span>Pull Requests</span>
-                  <strong>48</strong>
-                  <small>Ativas no período</small>
+                  <span>Regular</span>
+                  <strong>60–79</strong>
+                  <small>Merece atenção</small>
                 </div>
 
                 <div className="summary-card warning">
-                  <span>Pontos de atenção</span>
-                  <strong>05</strong>
-                  <small>Exigem acompanhamento</small>
+                  <span>Crítico</span>
+                  <strong>&lt; 60</strong>
+                  <small>Exige ação</small>
                 </div>
               </div>
 
@@ -168,16 +313,14 @@ export default function LandingPage() {
             <h2>Informações técnicas nem sempre são acessíveis para a gestão</h2>
 
             <p>
-              As equipes de desenvolvimento produzem informações importantes durante o ciclo de vida
-              dos projetos. Pull Requests, revisões, aprovações, branches e pipelines registram o
-              andamento das entregas, mas esses dados normalmente ficam dispersos em ferramentas
-              técnicas.
+              Pull Requests, revisões, aprovações, branches e execuções do CI registram o andamento
+              das entregas, mas esses dados ficam no GitHub, em uma linguagem técnica.
             </p>
 
             <p>
-              A solução centraliza essas informações e apresenta indicadores mais simples para
-              profissionais de gestão e Governança de TI, mesmo quando não possuem conhecimento
-              aprofundado em desenvolvimento de software.
+              O GovTech reúne esses registros e apresenta indicadores e alertas explicados em texto
+              simples, para que gestores e profissionais de Governança de TI acompanhem os projetos
+              sem precisar conhecer o dia a dia do desenvolvimento.
             </p>
           </div>
         </div>
@@ -192,203 +335,32 @@ export default function LandingPage() {
             <h2>Uma visão consolidada do progresso dos projetos</h2>
 
             <p className="section-subtitle">
-              A plataforma organiza dados técnicos e transforma registros do desenvolvimento em
-              informações úteis para acompanhamento, controle e tomada de decisão.
+              Tudo o que aparece na plataforma é calculado a partir dos dados sincronizados do
+              GitHub e do cadastro dos projetos.
             </p>
           </div>
 
           <div className="capabilities-grid">
-            <div className="capability-card elevation-1">
-              <div className="capability-icon">
-                <GitBranch size={24} />
+            {CAPABILITIES.map(({ icon: Icon, title, text, items }) => (
+              <div key={title} className="capability-card elevation-1">
+                <div className="capability-icon">
+                  <Icon size={24} />
+                </div>
+
+                <h3>{title}</h3>
+
+                <p>{text}</p>
+
+                <ul className="capability-list">
+                  {items.map((item) => (
+                    <li key={item}>
+                      <Check size={14} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
-
-              <h3>Monitoramento de Pull Requests</h3>
-
-              <p>
-                Acompanhe solicitações de integração, revisões, aprovações e estados das entregas
-                realizadas pelas equipes.
-              </p>
-
-              <ul className="capability-list">
-                <li>
-                  <Check size={14} />
-                  Pull Requests abertas e encerradas
-                </li>
-                <li>
-                  <Check size={14} />
-                  Status de revisão e aprovação
-                </li>
-                <li>
-                  <Check size={14} />
-                  Identificação de atividades pendentes
-                </li>
-                <li>
-                  <Check size={14} />
-                  Histórico das alterações
-                </li>
-              </ul>
-            </div>
-
-            <div className="capability-card elevation-1">
-              <div className="capability-icon">
-                <Workflow size={24} />
-              </div>
-
-              <h3>Integração com GitHub</h3>
-
-              <p>
-                Consulte informações dos repositórios monitorados por meio da API do GitHub e
-                acompanhe o fluxo de desenvolvimento.
-              </p>
-
-              <ul className="capability-list">
-                <li>
-                  <Check size={14} />
-                  Repositórios e branches
-                </li>
-                <li>
-                  <Check size={14} />
-                  Dados das Pull Requests
-                </li>
-                <li>
-                  <Check size={14} />
-                  Informações das equipes
-                </li>
-                <li>
-                  <Check size={14} />
-                  Atualização das atividades
-                </li>
-              </ul>
-            </div>
-
-            <div className="capability-card elevation-1">
-              <div className="capability-icon">
-                <RefreshCw size={24} />
-              </div>
-
-              <h3>Automação com GitHub Actions</h3>
-
-              <p>
-                Automatize verificações e análises para reduzir a necessidade de acompanhamento
-                manual das informações.
-              </p>
-
-              <ul className="capability-list">
-                <li>
-                  <Check size={14} />
-                  Execução automatizada
-                </li>
-                <li>
-                  <Check size={14} />
-                  Coleta periódica de dados
-                </li>
-                <li>
-                  <Check size={14} />
-                  Análise de condições definidas
-                </li>
-                <li>
-                  <Check size={14} />
-                  Apoio ao monitoramento contínuo
-                </li>
-              </ul>
-            </div>
-
-            <div className="capability-card elevation-1">
-              <div className="capability-icon">
-                <BarChart3 size={24} />
-              </div>
-
-              <h3>Indicadores de Governança</h3>
-
-              <p>
-                Visualize métricas que ajudam a compreender o andamento dos projetos e a identificar
-                tendências ou desvios.
-              </p>
-
-              <ul className="capability-list">
-                <li>
-                  <Check size={14} />
-                  Índice de Governança por projeto
-                </li>
-                <li>
-                  <Check size={14} />
-                  Frequência de entregas
-                </li>
-                <li>
-                  <Check size={14} />
-                  Lead time e tempo de revisão
-                </li>
-                <li>
-                  <Check size={14} />
-                  Taxas de falha e atenção
-                </li>
-              </ul>
-            </div>
-
-            <div className="capability-card elevation-1">
-              <div className="capability-icon">
-                <Bell size={24} />
-              </div>
-
-              <h3>Alertas e Pontos de Atenção</h3>
-
-              <p>
-                Identifique situações que podem impactar prazos, entregas ou a conformidade dos
-                processos de desenvolvimento.
-              </p>
-
-              <ul className="capability-list">
-                <li>
-                  <Check size={14} />
-                  Pull Requests antigas
-                </li>
-                <li>
-                  <Check size={14} />
-                  Atrasos em aprovações
-                </li>
-                <li>
-                  <Check size={14} />
-                  Falhas em pipelines
-                </li>
-                <li>
-                  <Check size={14} />
-                  Riscos e desvios de processo
-                </li>
-              </ul>
-            </div>
-
-            <div className="capability-card elevation-1">
-              <div className="capability-icon">
-                <Shield size={24} />
-              </div>
-
-              <h3>Rastreabilidade e Auditoria</h3>
-
-              <p>
-                Mantenha o histórico dos eventos relevantes para apoiar auditorias, controles
-                internos e a melhoria dos processos.
-              </p>
-
-              <ul className="capability-list">
-                <li>
-                  <Check size={14} />
-                  Registro de eventos críticos
-                </li>
-                <li>
-                  <Check size={14} />
-                  Aprovações e alterações
-                </li>
-                <li>
-                  <Check size={14} />
-                  Rastreabilidade das atividades
-                </li>
-                <li>
-                  <Check size={14} />
-                  Exportação das informações
-                </li>
-              </ul>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -402,114 +374,67 @@ export default function LandingPage() {
             <h2>Do registro técnico ao indicador de gestão</h2>
 
             <p className="section-subtitle">
-              A solução conecta as atividades realizadas pelas equipes de desenvolvimento às
-              necessidades de acompanhamento da Governança de TI.
+              Quatro passos ligam o trabalho das equipes de desenvolvimento ao acompanhamento da
+              Governança de TI.
             </p>
           </div>
 
           <div className="process-grid">
-            <article className="process-step">
-              <span className="process-number">01</span>
+            {STEPS.map(({ icon: Icon, title, text }, index) => (
+              <article key={title} className="process-step">
+                <span className="process-number">{String(index + 1).padStart(2, '0')}</span>
 
-              <div className="process-icon">
-                <GitBranch size={22} />
-              </div>
+                <div className="process-icon">
+                  <Icon size={22} />
+                </div>
 
-              <h3>Coleta</h3>
+                <h3>{title}</h3>
 
-              <p>
-                As informações das Pull Requests e dos repositórios são consultadas por meio da API
-                do GitHub.
-              </p>
-            </article>
-
-            <article className="process-step">
-              <span className="process-number">02</span>
-
-              <div className="process-icon">
-                <RefreshCw size={22} />
-              </div>
-
-              <h3>Automação</h3>
-
-              <p>
-                O GitHub Actions executa as rotinas de verificação e análise conforme as condições
-                definidas.
-              </p>
-            </article>
-
-            <article className="process-step">
-              <span className="process-number">03</span>
-
-              <div className="process-icon">
-                <Gauge size={22} />
-              </div>
-
-              <h3>Análise</h3>
-
-              <p>
-                Os dados são organizados em indicadores, classificações e situações que merecem
-                acompanhamento.
-              </p>
-            </article>
-
-            <article className="process-step">
-              <span className="process-number">04</span>
-
-              <div className="process-icon">
-                <Bell size={22} />
-              </div>
-
-              <h3>Acompanhamento</h3>
-
-              <p>
-                Gestores e profissionais de Governança visualizam alertas e informações para apoiar
-                a tomada de decisão.
-              </p>
-            </article>
+                <p>{text}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Governança */}
+      {/* Processos */}
       <section className="governance-section">
         <div className="container governance-content">
           <div className="governance-text">
-            <span className="section-tag">GOVERNANÇA DE TI</span>
+            <span className="section-tag">PROCESSOS</span>
 
-            <h2>Evidências do desenvolvimento para apoiar a gestão</h2>
+            <h2>Evidências do desenvolvimento para apoiar a avaliação de processos</h2>
 
             <p>
-              As atividades registradas durante o desenvolvimento podem ser utilizadas como
-              evidências para o acompanhamento dos processos, identificação de pontos de melhoria e
-              controle dos riscos.
+              A página Processos relaciona os critérios do Índice de Governança a quatro áreas de
+              processo do CMMI-DEV 1.3 e aos processos correspondentes da ISO/IEC/IEEE 12207. Cada
+              critério alimenta uma única área, então nenhuma evidência é contada duas vezes.
             </p>
 
             <p>
-              A proposta também busca aproximar os registros técnicos dos critérios de avaliação de
-              processos relacionados ao SPICE/MMI, contribuindo para uma visão mais estruturada da
-              evolução dos projetos.
+              Para cada área a tela mostra a nota atual, de onde vem o dado no GitHub e qual prática
+              do modelo a evidência apoia.
             </p>
 
             <div className="governance-points">
               <div className="governance-point">
                 <Check size={17} />
-                <span>Maior visibilidade do andamento dos projetos</span>
+                <span>Evidência ligada a um dado verificável do GitHub</span>
               </div>
 
               <div className="governance-point">
                 <Check size={17} />
-                <span>Redução do acompanhamento manual</span>
+                <span>Mesmos pesos e regras do Índice de Governança</span>
               </div>
 
               <div className="governance-point">
                 <Check size={17} />
-                <span>Identificação antecipada de riscos</span>
+                <span>Texto simples para quem não é técnico</span>
               </div>
 
               <div className="governance-point">
                 <Check size={17} />
-                <span>Suporte à melhoria contínua dos processos</span>
+                <span>Visível para todos os papéis</span>
               </div>
             </div>
           </div>
@@ -517,46 +442,25 @@ export default function LandingPage() {
           <div className="governance-card elevation-2">
             <div className="governance-card-header">
               <Shield size={20} />
-              <span>Visão de Governança</span>
+              <span>Áreas de processo e evidências</span>
             </div>
 
             <div className="governance-card-body">
-              <div className="governance-metric">
-                <div className="metric-label">
-                  <span>Índice de Governança</span>
-                  <strong>78</strong>
+              {PROCESS_AREAS.map(({ area, evidence }) => (
+                <div key={area} className="governance-metric">
+                  <div className="metric-label">
+                    <span>{area}</span>
+                    <strong>{evidence}</strong>
+                  </div>
                 </div>
-
-                <div className="metric-bar">
-                  <span style={{ width: '78%' }} />
-                </div>
-              </div>
-
-              <div className="governance-metric">
-                <div className="metric-label">
-                  <span>Pull Requests revisadas</span>
-                  <strong>86%</strong>
-                </div>
-
-                <div className="metric-bar">
-                  <span style={{ width: '86%' }} />
-                </div>
-              </div>
-
-              <div className="governance-metric">
-                <div className="metric-label">
-                  <span>Processos sem alerta</span>
-                  <strong>92%</strong>
-                </div>
-
-                <div className="metric-bar">
-                  <span style={{ width: '92%' }} />
-                </div>
-              </div>
+              ))}
 
               <div className="governance-alert">
-                <Bell size={16} />
-                <span>3 pontos de atenção identificados no período</span>
+                <Info size={16} />
+                <span>
+                  A nota é evidência de apoio, não avaliação formal de maturidade. Atribuir nível de
+                  capacidade exige um avaliador qualificado.
+                </span>
               </div>
             </div>
           </div>
@@ -569,79 +473,31 @@ export default function LandingPage() {
           <div className="section-header">
             <span className="section-tag">REFERENCIAIS</span>
 
-            <h2>Baseado em práticas de governança, processos e segurança</h2>
+            <h2>Modelos que orientam os critérios da plataforma</h2>
 
             <p className="section-subtitle">
-              A proposta considera referências utilizadas para estruturar a governança, o
-              gerenciamento de serviços, a segurança da informação e a avaliação dos processos.
+              Estes referenciais embasam o Índice de Governança, as métricas e a página Processos. O
+              GovTech fornece evidências de apoio; não certifica conformidade nem atribui nível de
+              maturidade.
             </p>
           </div>
 
           <div className="standards-grid">
-            <div className="standard-card elevation-1">
-              <div className="standard-logo">SPICE/MMI</div>
+            {STANDARDS.map(({ logo, title, text, items }) => (
+              <div key={title} className="standard-card elevation-1">
+                <div className="standard-logo">{logo}</div>
 
-              <h3>SPICE/MMI</h3>
+                <h3>{title}</h3>
 
-              <p>
-                Referencial para avaliação, acompanhamento e melhoria dos processos de
-                desenvolvimento.
-              </p>
+                <p>{text}</p>
 
-              <ul className="standard-list">
-                <li>Avaliação de processos</li>
-                <li>Evidências do desenvolvimento</li>
-                <li>Melhoria contínua</li>
-              </ul>
-            </div>
-
-            <div className="standard-card elevation-1">
-              <div className="standard-logo">COBIT</div>
-
-              <h3>COBIT</h3>
-
-              <p>
-                Referência para governança e gestão de Tecnologia da Informação alinhada aos
-                objetivos organizacionais.
-              </p>
-
-              <ul className="standard-list">
-                <li>Gestão de riscos</li>
-                <li>Alinhamento estratégico</li>
-                <li>Monitoramento e controle</li>
-              </ul>
-            </div>
-
-            <div className="standard-card elevation-1">
-              <div className="standard-logo">ITIL</div>
-
-              <h3>ITIL</h3>
-
-              <p>
-                Práticas para gerenciamento de serviços, mudanças e melhoria contínua no ambiente de
-                TI.
-              </p>
-
-              <ul className="standard-list">
-                <li>Gestão de mudanças</li>
-                <li>Gestão de incidentes</li>
-                <li>Melhoria contínua</li>
-              </ul>
-            </div>
-
-            <div className="standard-card elevation-1">
-              <div className="standard-logo">ISO</div>
-
-              <h3>ISO/IEC 38500</h3>
-
-              <p>Referência para a governança corporativa da Tecnologia da Informação.</p>
-
-              <ul className="standard-list">
-                <li>Uso responsável da TI</li>
-                <li>Direcionamento organizacional</li>
-                <li>Acompanhamento de resultados</li>
-              </ul>
-            </div>
+                <ul className="standard-list">
+                  {items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -651,39 +507,39 @@ export default function LandingPage() {
         <div className="container">
           <div className="demo-content elevation-2">
             <div className="demo-text">
-              <span className="section-tag">EXPERIMENTE A SOLUÇÃO</span>
+              <span className="section-tag">COMECE AGORA</span>
 
               <h2>Acompanhe seus projetos com mais clareza</h2>
 
               <p>
-                Acesse a plataforma e visualize como os dados das atividades de desenvolvimento
-                podem ser apresentados para a gestão e a Governança de TI.
+                Crie sua conta, cadastre a empresa e conecte os repositórios do GitHub. O cadastro é
+                aberto, e quem entra com o código de convite de uma empresa começa como Stakeholder.
               </p>
 
               <div className="demo-features">
                 <div className="demo-feature">
                   <Check size={18} />
-                  <span>Dashboard de acompanhamento</span>
+                  <span>Visão geral com métricas e alertas</span>
                 </div>
 
                 <div className="demo-feature">
                   <Check size={18} />
-                  <span>Monitoramento de Pull Requests</span>
+                  <span>Índice de Governança com histórico</span>
                 </div>
 
                 <div className="demo-feature">
                   <Check size={18} />
-                  <span>Indicadores e pontos de atenção</span>
+                  <span>Estratégia, Processos e Auditoria</span>
                 </div>
 
                 <div className="demo-feature">
                   <Check size={18} />
-                  <span>Controle e rastreabilidade</span>
+                  <span>Assistente com IA sobre os dados</span>
                 </div>
               </div>
 
-              <a href="/login" className="primary-button large">
-                Acessar plataforma
+              <a href="/cadastro" className="primary-button large">
+                Criar conta
                 <ChevronRight size={18} />
               </a>
             </div>
@@ -691,22 +547,17 @@ export default function LandingPage() {
             <div className="demo-visual">
               <div className="demo-card">
                 <div className="demo-card-header">
-                  <span>Acesso à plataforma</span>
+                  <span>Papéis de acesso</span>
                 </div>
 
                 <div className="demo-card-body">
-                  <div className="demo-input">
-                    <span>Usuário autorizado</span>
-                  </div>
-
-                  <div className="demo-input">
-                    <span>••••••••••</span>
-                  </div>
-
-                  <button type="button" className="demo-button">
-                    Entrar na plataforma
-                    <ChevronRight size={16} />
-                  </button>
+                  {ROLES.map(({ role, can }) => (
+                    <div key={role} className="demo-input">
+                      <span>
+                        <strong>{role}:</strong> {can}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -721,8 +572,8 @@ export default function LandingPage() {
             <Brand />
 
             <p>
-              Plataforma para governança e monitoramento do progresso de projetos de Tecnologia da
-              Informação.
+              Plataforma de governança de projetos de TI baseada nos dados do GitHub, com métricas,
+              alertas, Índice de Governança e auditoria.
             </p>
           </div>
 
@@ -736,26 +587,17 @@ export default function LandingPage() {
             </div>
 
             <div className="footer-column">
-              <h4>Recursos</h4>
+              <h4>Acesso</h4>
 
-              <a href="/login">Login</a>
-              <a href="/landing#demo">Demonstração</a>
-              <a href="/landing#capabilities">Monitoramento</a>
-            </div>
-
-            <div className="footer-column">
-              <h4>Projeto</h4>
-              <a href="#demo">Termos de uso</a>
-              <a href="#demo">Privacidade</a>
+              <a href="/login">Entrar</a>
+              <a href="/cadastro">Criar conta</a>
             </div>
           </div>
         </div>
 
         <div className="footer-bottom">
           <div className="container">
-            <p>
-              © 2026 GovTech. Projeto acadêmico de Governança e Monitoramento de Projetos de TI.
-            </p>
+            <p>© 2026 GovTech. Projeto acadêmico (TCC) de governança de projetos de TI.</p>
           </div>
         </div>
       </footer>
