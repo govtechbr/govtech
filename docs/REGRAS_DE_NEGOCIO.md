@@ -16,6 +16,7 @@ Fonte única das regras do produto. Definidas com o dono do projeto em 02/11/202
 | A4 | Uma empresa **nunca fica sem admin**: o último admin não pode ser rebaixado nem sair | ✅ |
 | A5 | Uma pessoa pode estar em **várias empresas** e troca pela barra lateral (workspace). Ao entrar, abre a **última empresa usada** (guardada no navegador) | ✅ E2 (03/11/2026) |
 | A6 | A barra lateral tem **"Adicionar empresa"**, que leva a criar uma empresa ou entrar com código | ✅ E2 |
+| A7 | **Saiu ou foi removido** de uma empresa (decisão de 13/11/2026): se ainda tem outra empresa, o app abre essa outra; se não tem nenhuma, vai para a tela de criar empresa ou entrar com código. Nada é criado sozinho. A remoção feita por um admin é percebida ao voltar para a aba ou em até 1 minuto, sem recarregar a página | ✅ |
 
 ## 2. Papéis
 
