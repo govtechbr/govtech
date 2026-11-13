@@ -281,7 +281,7 @@ Tudo calculado em `shared/lib/governance.js` a partir dos dados sincronizados do
 - Filtro por projeto e três abas: **Repositórios**, **Pull Requests** e **Branches**.
 - Dados das tabelas `repositories`, `pull_requests`, `branches` (e `commits`), preenchidas pela Edge Function `github`. Um repositório é guardado **uma vez por empresa** e ligado aos projetos por `project_repositories`: se dois projetos o usam, ele aparece uma vez, com a coluna **Projetos** listando os dois.
 - Números calculados (`utils/metrics.js`): PRs abertos, PRs mergeados nos últimos 30 dias e tempo médio até o merge. A lista de PRs mostra as **aprovações**.
-- Limites por sincronização: 100 repositórios por chave; os 100 PRs mais recentes e 100 branches por repositório; commits da branch padrão dos últimos 90 dias; execuções do CI dos últimos 90 dias.
+- Limites por sincronização (regra G9, `LIMITS` em `functions/github/github.js`): até 500 repositórios por chave; por repositório, até 1.000 PRs (abertos mais os atualizados nos últimos 90 dias), 500 branches, 1.000 commits da branch padrão (90 dias) e 1.000 execuções do CI (90 dias). Se algum teto for atingido, a tela avisa "dados parciais".
 - Sem nada sincronizado, a página explica como conectar.
 
 ### 8.6 `StrategyPage` — Estratégia (regras S1–S7)
@@ -507,6 +507,6 @@ A Vercel roda `npm run build` e publica `dist/`. O `rewrites` é essencial numa 
 - **Chave do GitHub pessoal:** uma por projeto, colada pelo admin. A evolução natural é um GitHub App (ver `docs/RELATORIO_TCC.md`).
 - **Fora do escopo até 18/11/2026** (`docs/REGRAS_DE_NEGOCIO.md` §8): convite por e-mail, CI no Índice de Governança, separar PRs por projeto dentro de um repositório compartilhado, cadeia de hash e retenção automática na auditoria, histórico salvo das conversas com o assistente.
 - **Processos:** o sistema dá **evidências**, não avalia nível de maturidade (isso exige um avaliador qualificado).
-- **Limites de sincronização:** 100 repositórios, 100 PRs e 100 branches por repositório, 90 dias de commits e execuções do CI.
+- **Limites de sincronização (G9):** até 500 repositórios; por repositório, 1.000 PRs, 500 branches, 1.000 commits e 1.000 execuções do CI, numa janela de 90 dias. Acima disso a tela avisa "dados parciais".
 - **Sem e2e nem ambiente local do Supabase:** os testes pgTAP rodam no projeto remoto.
 - **Pendências de código:** nomes de ícone por texto em `shared/ui/Icon.jsx` (com fallback silencioso) e alguns estilos inline antigos em `app.css` e nas páginas (novos não devem ser criados).
